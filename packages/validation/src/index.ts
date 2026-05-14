@@ -1,6 +1,15 @@
-// Shared Zod schemas for Huddle.
+// =====================================================================
+// @huddle/validation — Zod schemas shared between web and mobile
+// =====================================================================
+// All form-input shapes for the MVP. Schemas mirror the database
+// CHECK constraints so client-side validation and database-level
+// enforcement agree on what's valid.
 //
-// In Phase 1+, schemas for auth payloads, groups, ideas, etc. will be
-// exported from this module. Phase 0 leaves it empty by design.
+// Schemas use `.trim()` and `.toLowerCase()` where appropriate so
+// callers don't have to remember to normalise input.
+// =====================================================================
 
-export {};
+export * from './username';
+export * from './display-name';
+export * from './auth';
+export * from './profile';

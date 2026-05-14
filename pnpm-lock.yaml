@@ -237,6 +237,9 @@ importers:
       '@huddle/config':
         specifier: workspace:*
         version: link:../config
+      '@huddle/types':
+        specifier: workspace:*
+        version: link:../types
       eslint:
         specifier: 9.18.0
         version: 9.18.0(jiti@2.7.0)
