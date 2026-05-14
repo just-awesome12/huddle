@@ -1,0 +1,22 @@
+# Build outputs (also gitignored, but Prettier doesn't read .gitignore by default in all cases)
+**/node_modules/**
+**/dist/**
+**/build/**
+**/.next/**
+**/.expo/**
+**/.turbo/**
+**/coverage/**
+
+# Editor configs (often JSONC with comments Prettier can't parse)
+**/.vscode/**
+**/.idea/**
+
+# Lockfiles
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Generated
+**/*.tsbuildinfo
+**/next-env.d.ts
+**/expo-env.d.ts

@@ -1,0 +1,26 @@
+{
+  "name": "huddle",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Huddle — group-based idea sharing app (web + mobile).",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.18.0",
+    "pnpm": ">=9.15.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\" --ignore-path .gitignore",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "prettier": "3.4.2",
+    "turbo": "2.9.12",
+    "typescript": "5.7.3"
+  }
+}
