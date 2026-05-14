@@ -11,6 +11,7 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "types:generate": "supabase gen types typescript --local --schema public > src/database.ts",
     "clean": "rm -rf .turbo dist *.tsbuildinfo"
   },
   "devDependencies": {
