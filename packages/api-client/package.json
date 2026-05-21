@@ -6,20 +6,38 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./browser": "./src/client.browser.ts",
+    "./server": "./src/client.server.ts",
+    "./service-role": "./src/client.service-role.ts",
+    "./native": "./src/client.native.ts",
+    "./errors": "./src/errors.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf .turbo dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@supabase/ssr": "0.5.2",
     "@supabase/supabase-js": "2.47.10"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "expo-secure-store": ">=13.0.0",
+    "react-native": ">=0.74.0"
+  },
+  "peerDependenciesMeta": {
+    "next": { "optional": true },
+    "expo-secure-store": { "optional": true },
+    "react-native": { "optional": true }
   },
   "devDependencies": {
     "@huddle/config": "workspace:*",
     "@huddle/types": "workspace:*",
+    "@types/node": "20.17.10",
     "eslint": "9.18.0",
     "typescript": "5.7.3",
     "vitest": "2.1.8"
