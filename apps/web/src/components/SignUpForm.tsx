@@ -5,8 +5,13 @@ import { signUpAction } from '@/actions/auth';
 import { EMPTY_AUTH_STATE } from '@/actions/auth-state';
 import { Button } from './Button';
 import { FormField } from './FormField';
+import { TurnstileWidget } from './TurnstileWidget';
 
-export function SignUpForm() {
+interface SignUpFormProps {
+  turnstileSiteKey: string;
+}
+
+export function SignUpForm({ turnstileSiteKey }: SignUpFormProps) {
   const [state, formAction, pending] = useActionState(signUpAction, EMPTY_AUTH_STATE);
 
   return (
@@ -44,6 +49,14 @@ export function SignUpForm() {
         hint="What others will see in your groups."
         error={state.fieldErrors?.displayName?.[0]}
       />
+
+      <TurnstileWidget siteKey={turnstileSiteKey} />
+
+      {state.fieldErrors?.turnstileToken && (
+        <p className="text-xs text-red-600" role="alert">
+          {state.fieldErrors.turnstileToken[0]}
+        </p>
+      )}
       {state.formError && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.formError}

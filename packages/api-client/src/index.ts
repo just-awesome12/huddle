@@ -8,6 +8,8 @@
 //   - Token storage uses the right backend per platform
 //   - The Database<...> generic type is wired up everywhere
 //   - Errors are normalised via mapSupabaseError / unwrap
+//   - External-service helpers (Turnstile) sit alongside the rest of
+//     the platform seam
 //
 // Subpath exports (preferred — better tree-shaking):
 //
@@ -16,6 +18,7 @@
 //   import { createServiceRoleSupabaseClient } from '@huddle/api-client/service-role';
 //   import { createNativeSupabaseClient } from '@huddle/api-client/native';
 //   import { mapSupabaseError, unwrap, isHuddleError } from '@huddle/api-client/errors';
+//   import { verifyTurnstileToken } from '@huddle/api-client/turnstile';
 //
 // The root export re-exports everything for convenience.
 // =====================================================================
@@ -26,3 +29,4 @@ export * from './client.service-role';
 export * from './client.native';
 export * from './errors';
 export * from './env';
+export * from './turnstile';

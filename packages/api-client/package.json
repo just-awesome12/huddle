@@ -11,7 +11,8 @@
     "./server": "./src/client.server.ts",
     "./service-role": "./src/client.service-role.ts",
     "./native": "./src/client.native.ts",
-    "./errors": "./src/errors.ts"
+    "./errors": "./src/errors.ts",
+    "./turnstile": "./src/turnstile.ts"
   },
   "scripts": {
     "lint": "eslint .",

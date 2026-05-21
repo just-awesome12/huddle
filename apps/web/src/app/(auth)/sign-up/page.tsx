@@ -3,6 +3,18 @@ import { SignUpForm } from '@/components/SignUpForm';
 import { OAuthProviderButtons } from '@/components/OAuthProviderButtons';
 
 export default function SignUpPage() {
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  if (!siteKey) {
+    return (
+      <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-900">
+        Sign-up is misconfigured: <code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code>{' '}
+        is not set in <code>apps/web/.env.local</code>. See the Phase 2.5
+        setup instructions.
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -20,7 +32,7 @@ export default function SignUpPage() {
         <span className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <SignUpForm />
+      <SignUpForm turnstileSiteKey={siteKey} />
 
       <p className="text-sm text-slate-600">
         Already have an account?{' '}

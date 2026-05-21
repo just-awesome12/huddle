@@ -2,18 +2,28 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { signUpSchema, signInSchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
+import { verifyTurnstileToken } from '@huddle/api-client/turnstile';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import type { AuthActionState } from './auth-state';
+
+/**
+ * Cloudflare publishes always-pass test keys for dev/CI:
+ *   https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+ *
+ * When the configured secret matches the always-passes test secret AND
+ * NEXT_PUBLIC_TURNSTILE_TEST_MODE=true, we skip the verify round-trip
+ * entirely. The pair must both be true to activate the bypass — that
+ * way a misconfigured production with only the test secret set still
+ * fails closed.
+ */
+const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA';
 
 
 // =====================================================================
 // Sign up
-// =====================================================================
-// Per Phase 2.3 D30: we accept a Turnstile token in the schema so the
-// shape matches Phase 2.5, but we do NOT verify it server-side yet.
-// Phase 2.5 adds that verification.
 // =====================================================================
 
 export async function signUpAction(
@@ -25,23 +35,46 @@ export async function signUpAction(
     password: formData.get('password'),
     username: formData.get('username'),
     displayName: formData.get('displayName'),
-    // Placeholder until Phase 2.5 wires up the real Turnstile widget.
-    turnstileToken: formData.get('turnstileToken') ?? 'dev-placeholder',
+    turnstileToken: formData.get('turnstileToken'),
   });
 
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY ?? '';
+  const isTestMode =
+    process.env.NEXT_PUBLIC_TURNSTILE_TEST_MODE === 'true' &&
+    turnstileSecret === TURNSTILE_TEST_SECRET;
+
+  if (!isTestMode) {
+    const h = await headers();
+    const clientIp =
+      h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      h.get('x-real-ip') ??
+      undefined;
+    const turnstile = await verifyTurnstileToken(
+      parsed.data.turnstileToken,
+      turnstileSecret,
+      clientIp,
+    );
+    if (!turnstile.success) {
+      return {
+        formError:
+          'Human-verification check failed. Please refresh the page and try again.',
+      };
+    }
+  }
+  // In test mode: the client widget populated a dummy token and we
+  // skip the Cloudflare round-trip entirely. The full verification
+  // path is still tested by the @huddle/api-client/turnstile unit
+  // tests (vitest).
+
   const supabase = await getSupabaseServerClient();
-  const { error: signUpError } = await supabase.auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      // Stash the chosen username + display_name in user_metadata so
-      // the onboarding step (Phase 2.5) can read them. We do NOT
-      // write to profiles directly here — the handle_new_user trigger
-      // creates the placeholder profile row.
       data: {
         pending_username: parsed.data.username,
         pending_display_name: parsed.data.displayName,
@@ -54,10 +87,30 @@ export async function signUpAction(
     return { formError: friendlyAuthErrorMessage(mapped) };
   }
 
-  // Local dev has email confirmation OFF, so signUp returns a session
-  // immediately. In production (Phase 9) we'll branch on whether the
-  // session exists and route to "check your email" instead. For now
-  // we just go to the app.
+  if (signUpData.user) {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        username: parsed.data.username,
+        display_name: parsed.data.displayName,
+      })
+      .eq('id', signUpData.user.id);
+
+    if (profileError) {
+      const mapped = mapSupabaseError(profileError);
+      if (mapped.kind === 'conflict') {
+        return {
+          fieldErrors: {
+            username: ['That username is already taken. Try another.'],
+          },
+        };
+      }
+      // Any other profile-write error: still allow the redirect; the
+      // proxy will catch them with the placeholder username and route
+      // them to /onboarding.
+    }
+  }
+
   redirect('/');
 }
 
@@ -107,7 +160,7 @@ export async function signOutAction(): Promise<void> {
 
 
 // =====================================================================
-// Helpers (not exported — internal to this server-actions file)
+// Helpers
 // =====================================================================
 
 function friendlyAuthErrorMessage(
