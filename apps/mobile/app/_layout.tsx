@@ -1,59 +1,72 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/components/useColorScheme';
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+import { Stack, Redirect, useSegments } from 'expo-router';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <AuthProvider>
+      <GatedStack />
+    </AuthProvider>
   );
 }
+
+/**
+ * Inner stack that reads auth state and redirects appropriately.
+ *
+ * Mobile equivalent of the Next.js proxy. Reads from the AuthContext
+ * and uses Expo Router's <Redirect> to enforce the right destination
+ * for each combination of (signed-in, needsOnboarding, currentSegment).
+ */
+function GatedStack() {
+  const { session, needsOnboarding, loading } = useAuth();
+  const segments = useSegments();
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#0f172a" />
+      </View>
+    );
+  }
+
+  // Use array helpers instead of positional indexing so we don't trip
+  // over noUncheckedIndexedAccess / typed-routes tuple narrowing.
+  const segmentList = segments as readonly string[];
+  const inAuthGroup = segmentList[0] === '(auth)';
+  const onOnboarding = segmentList.includes('onboarding');
+
+  // Unauthenticated user not on an auth screen → /sign-in
+  if (!session && !inAuthGroup) {
+    return <Redirect href="/sign-in" />;
+  }
+  // Onboarding requires a session; bounce signed-out users to sign-in
+  if (!session && onOnboarding) {
+    return <Redirect href="/sign-in" />;
+  }
+
+  // Authenticated, needs onboarding, not already there → /onboarding
+  if (session && needsOnboarding && !onOnboarding) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  // Authenticated, onboarded, but sitting on an auth screen → /
+  if (session && !needsOnboarding && inAuthGroup) {
+    return <Redirect href="/" />;
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(app)" />
+    </Stack>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+  },
+});

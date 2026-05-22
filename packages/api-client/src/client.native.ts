@@ -76,3 +76,12 @@ export function createNativeSupabaseClient(
 export function __resetNativeClientForTests(): void {
   cached = null;
 }
+
+/**
+ * Re-export commonly-needed Supabase types so mobile app code can
+ * import them from @huddle/api-client/native instead of depending on
+ * @supabase/supabase-js directly. Keeps the api-client package as the
+ * single seam between apps and Supabase.
+ */
+export type { Session, SupabaseClient, User } from '@supabase/supabase-js';
+export type { Database } from '@huddle/types';

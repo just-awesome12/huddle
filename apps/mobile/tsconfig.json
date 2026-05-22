@@ -1,8 +1,25 @@
 {
-  "extends": "@huddle/config/tsconfig/expo.json",
+  "extends": "@huddle/config/tsconfig/base.json",
   "compilerOptions": {
+    "jsx": "react-native",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "baseUrl": ".",
-    "paths": { "@/*": ["./*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "react": ["./node_modules/@types/react"]
+    },
+    "types": ["react", "react-native"],
+    "declaration": false,
+    "declarationMap": false,
+    "composite": false
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": [
+    "app/**/*",
+    "src/**/*",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": ["node_modules", ".expo"]
 }
