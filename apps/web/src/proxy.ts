@@ -56,8 +56,15 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Unauthenticated user trying to visit a non-public page → /sign-in.
+  // Carry the original path as ?next= so deep links (e.g. invite URLs)
+  // survive the auth round-trip. Only the path goes in — the sign-in
+  // action re-validates it before redirecting (open-redirect guard).
   if (!user && !isPublicPath(pathname) && pathname !== ONBOARDING_PATH) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+    const signInUrl = new URL('/sign-in', request.url);
+    if (pathname !== '/') {
+      signInUrl.searchParams.set('next', pathname);
+    }
+    return NextResponse.redirect(signInUrl);
   }
 
   // Authenticated user trying to visit /sign-in or /sign-up → /.

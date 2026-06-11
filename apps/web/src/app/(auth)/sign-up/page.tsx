@@ -2,7 +2,12 @@ import Link from 'next/link';
 import { SignUpForm } from '@/components/SignUpForm';
 import { OAuthProviderButtons } from '@/components/OAuthProviderButtons';
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   if (!siteKey) {
@@ -32,11 +37,14 @@ export default function SignUpPage() {
         <span className="h-px flex-1 bg-slate-200" />
       </div>
 
-      <SignUpForm turnstileSiteKey={siteKey} />
+      <SignUpForm turnstileSiteKey={siteKey} next={next} />
 
       <p className="text-sm text-slate-600">
         Already have an account?{' '}
-        <Link href="/sign-in" className="font-medium text-slate-900 underline">
+        <Link
+          href={next ? `/sign-in?next=${encodeURIComponent(next)}` : '/sign-in'}
+          className="font-medium text-slate-900 underline"
+        >
           Sign in
         </Link>
         .

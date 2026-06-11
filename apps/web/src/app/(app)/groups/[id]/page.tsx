@@ -49,12 +49,20 @@ export default async function GroupDetailPage({
           {group.name}
         </h2>
         {isAdmin && (
-          <Link
-            href={`/groups/${id}/settings`}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            Settings
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/groups/${id}/invite`}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              Invite
+            </Link>
+            <Link
+              href={`/groups/${id}/settings`}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              Settings
+            </Link>
+          </div>
         )}
       </div>
 

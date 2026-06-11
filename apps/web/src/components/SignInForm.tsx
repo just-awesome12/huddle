@@ -6,11 +6,17 @@ import { EMPTY_AUTH_STATE } from '@/actions/auth-state';
 import { Button } from './Button';
 import { FormField } from './FormField';
 
-export function SignInForm() {
+interface SignInFormProps {
+  /** Validated server-side; see safeNextPath in actions/auth.ts. */
+  next?: string;
+}
+
+export function SignInForm({ next }: SignInFormProps) {
   const [state, formAction, pending] = useActionState(signInAction, EMPTY_AUTH_STATE);
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <FormField
         label="Email"
         name="email"
