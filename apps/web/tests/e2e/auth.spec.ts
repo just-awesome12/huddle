@@ -54,7 +54,8 @@ async function signUp(page: Page, user: TestUser) {
   await page.getByLabel('Display name').fill(user.displayName);
   await waitForTurnstileToken(page);
   await page.getByRole('button', { name: 'Create account' }).click();
-  await page.waitForURL('/');
+  // Home (/) immediately forwards to /groups (Phase 3).
+  await page.waitForURL('/groups');
 }
 
 async function signIn(page: Page, user: TestUser) {
@@ -62,7 +63,7 @@ async function signIn(page: Page, user: TestUser) {
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Password').fill(user.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await page.waitForURL('/');
+  await page.waitForURL('/groups');
 }
 
 
@@ -75,7 +76,7 @@ test('unauthenticated user is redirected from / to /sign-in', async ({ page }) =
 test('sign-up creates an account and lands on the app shell', async ({ page }) => {
   const user = makeTestUser();
   await signUp(page, user);
-  await expect(page.getByText("You're signed in.")).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your groups' })).toBeVisible();
   await expect(page.getByTestId('signed-in-email')).toHaveText(user.email);
 });
 
@@ -83,8 +84,8 @@ test('signed-in user is redirected away from /sign-in', async ({ page }) => {
   const user = makeTestUser();
   await signUp(page, user);
   await page.goto('/sign-in');
-  await page.waitForURL('/');
-  await expect(page.getByText("You're signed in.")).toBeVisible();
+  await page.waitForURL('/groups');
+  await expect(page.getByRole('heading', { name: 'Your groups' })).toBeVisible();
 });
 
 test('sign-out returns to /sign-in', async ({ page }) => {
@@ -101,7 +102,7 @@ test('sign-in after sign-out lands on the app shell again', async ({ page }) => 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.waitForURL('/sign-in');
   await signIn(page, user);
-  await expect(page.getByText("You're signed in.")).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your groups' })).toBeVisible();
 });
 
 test('sign-in with bad password shows an error', async ({ page }) => {

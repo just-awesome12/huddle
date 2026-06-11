@@ -16,6 +16,7 @@
     "@huddle/api-client": "workspace:*",
     "@huddle/types": "workspace:*",
     "@huddle/validation": "workspace:*",
+    "@tanstack/react-query": "^5.101.0",
     "next": "16.2.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -23,10 +24,10 @@
   "devDependencies": {
     "@huddle/config": "workspace:*",
     "@playwright/test": "1.49.1",
+    "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "20.17.10",
     "@types/react": "19.1.17",
     "@types/react-dom": "19.1.6",
-    "@tailwindcss/postcss": "^4.3.0",
     "eslint": "9.18.0",
     "eslint-config-next": "16.2.6",
     "postcss": "8.4.49",
