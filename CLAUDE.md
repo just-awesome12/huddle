@@ -19,16 +19,16 @@ Targets: **web (Next.js)** and **mobile (Expo / React Native)**, sharing a TypeS
 | Layer | Choice | Notes |
 |---|---|---|
 | Monorepo | Turborepo + pnpm workspaces | `pnpm install` at root |
-| Web | Next.js 16 (App Router) + Tailwind v4 | Server Actions for auth mutations |
+| Web | Next.js 16 (App Router) + Tailwind v4 | Server Actions for all mutations; Server Components for reads |
 | Mobile | Expo SDK 55 + React Native + Expo Router | File-based routing mirrors App Router |
 | Backend | Supabase (Postgres + Auth + RLS + Realtime + Storage) | Local stack via `supabase start` |
 | Auth | Email/password + Google OAuth | Apple deferred (needs developer account) |
 | Anti-scraping | Cloudflare Turnstile (web) + auth wall + Cloudflare proxy | Mobile has no Turnstile equivalent |
 | Push | Expo Push v1 | Real APNs/FCM later |
-| Web E2E | Playwright | 16 tests, all passing |
-| Mobile E2E | Maestro (deferred to Phase 9) | Not set up yet |
-| Unit | Vitest | 37 (validation) + 50 (api-client) = 87 |
-| RLS | pgTAP | 120 assertions across 9 files |
+| Web E2E | Playwright | 24 tests, all passing |
+| Mobile E2E | Maestro (deferred to Phase 9) | Not set up yet; Expo web preview used for smoke tests |
+| Unit | Vitest | 49 (validation) + 72 (api-client) = 121 |
+| RLS | pgTAP | 127 assertions across 10 files |
 
 ### Workspace layout
 
@@ -43,26 +43,28 @@ packages/
   core/         Reserved for shared logic (not heavily used yet)
   config/       Shared tsconfig + eslint configs
 supabase/
-  migrations/   SQL migrations (11 so far)
+  migrations/   SQL migrations (12 so far)
   tests/        pgTAP tests
   seed.sql      Test users + seed group
   config.toml   Local Supabase config
 docs/
   ARCHITECTURE.md
-  ARCHITECTURE_PHASE2_APPENDIX.md   ← full Phase 2 design + decision log
-ROADMAP.md     ← phase plan (Phase 2 = ✅ COMPLETE)
+  ARCHITECTURE_PHASE2_APPENDIX.md   ← full Phase 2 design + decision log D26–D42
+  ARCHITECTURE_PHASE3_APPENDIX.md   ← full Phase 3 design + decision log D43–D47
+ROADMAP.md     ← phase plan (Phases 0–3 = ✅ COMPLETE)
 SETUP.md       ← env setup
 ```
 
 ### Subpath import conventions
 
-- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile}`
-- Mobile imports Supabase only via `@huddle/api-client/{native,errors}`
+- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups}`
+- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks}`
+- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Future features (ideas, decisions) follow the same pattern.
 - Apps **never** import from `@supabase/*` directly — types like `Session`, `User`, `SupabaseClient` are re-exported through the api-client `/native` and `/server` subpaths
 
 ---
 
-## 3. What's shipped (Phases 0–2)
+## 3. What's shipped (Phases 0–3)
 
 **Phase 0** — Monorepo scaffold, Next.js 16 + Expo SDK 55 apps, 5 shared packages, Supabase config, GitHub Actions CI. Repo: `github.com/just-awesome12/huddle`.
 
@@ -72,11 +74,13 @@ SETUP.md       ← env setup
 
 The Phase 2 close point is tagged `phase-2-complete`.
 
+**Phase 3** — Groups & Membership. Group CRUD + member management on web and mobile. Shared data layer split: raw functions in `@huddle/api-client/groups` (web Server Components/Actions), TanStack Query hooks in `/groups-hooks` (mobile). `create_group` SECURITY DEFINER RPC works around an INSERT…RETURNING vs RLS interaction. Web reads via Server Components, mutations via Server Actions; mobile screens mirror the web URL shape. **Full architecture in `docs/ARCHITECTURE_PHASE3_APPENDIX.md`.** Shipped via PR #1 (branch `phase-3-groups`).
+
 ---
 
-## 4. Decision log (D1–D42)
+## 4. Decision log (D1–D47)
 
-D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. Highlights that affect ongoing work:
+D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. Highlights that affect ongoing work:
 
 | # | Decision |
 |---|---|
@@ -95,6 +99,11 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D40 | Mobile navigation uses Expo Router (file-based). |
 | D41 | Mobile auth errors are shown inline (no toasts). |
 | D42 | Mobile Google OAuth uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` + manual `setSession`. Native SDK (`react-native-google-signin`) is more robust but needs a custom dev build — revisit later if OAuth UX needs improvement. |
+| D43 | Web reads use Server Components + raw api-client functions; mutations use Server Actions. TanStack Query hooks are for mobile / client components only. |
+| D44 | api-client splits framework-free raw functions (`/groups`) from react-query hooks (`/groups-hooks`) so server bundles never import react-query. |
+| D45 | Group creation goes through the `create_group` SECURITY DEFINER RPC (INSERT…RETURNING is checked against the SELECT policy before the membership trigger runs). |
+| D46 | Mobile screen routes mirror the web URL shape for deep-link parity (`huddle://groups/...`, Phase 4). |
+| D47 | `react` is pinned in api-client devDependencies to mobile's version so pnpm builds exactly one react-query instance (see lesson 12). |
 
 ---
 
@@ -122,6 +131,12 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 
 10. **Web-search current framework behavior BEFORE generating code that depends on framework specifics**, not after it fails. Especially: Expo SDK behaviors, native module web compatibility, Next.js App Router conventions for the current major version, pnpm + TypeScript interactions. Justin's biggest source of round-trips in Phase 2 was Claude generating from memory instead of checking.
 
+11. **tsconfig `paths` is part of Metro's RUNTIME resolution on mobile.** Expo's Metro resolves modules through tsconfig `paths`. A TS-only workaround like `"react": ["./node_modules/@types/react"]` makes Metro bundle the type-stubs package as the real module (Phase 3 found every mobile web bundle broken since 2.6 this way). Never add tsconfig path mappings on mobile for type-resolution reasons — and remember "typecheck green" says nothing about whether the app bundles. Smoke the bundle after dependency or tsconfig changes.
+
+12. **pnpm can build two instances of the same package version.** Peer dependencies resolve per importer; `@tanstack/react-query@5.101.0` existed twice (`…_react@19.2.0` and `…_react@19.2.4`) because api-client didn't pin react. Context-based libraries then fail at runtime ("No QueryClient set") while typecheck stays green. Diagnose with `require.resolve(pkg, { paths: [dirA, dirB] })`; fix by pinning the peer to the consuming app's version (D47).
+
+13. **`INSERT…RETURNING` is checked against the SELECT policy before AFTER-triggers run.** If a row's visibility depends on a trigger-created row (e.g. groups visible via membership the trigger inserts), `insert().select()` fails with 42501 even though the plain insert succeeds. Use a SECURITY DEFINER RPC that returns the row (D45).
+
 ---
 
 ## 6. Working norms
@@ -129,7 +144,7 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 - **Small slices.** Even small features ship in sub-phases (e.g., Phase 2 became 2.1 through 2.7). Each sub-phase has an explicit test gate.
 - **Tests before "done."** Unit/integration tests for shared packages. Playwright for web flows. pgTAP for RLS regressions. Manual smoke for mobile (Maestro deferred to Phase 9).
 - **Honest documentation of deferrals.** When something can't be done now (Apple OAuth, native mobile OAuth verification, Maestro), capture WHY in the roadmap rather than pretending it's complete.
-- **Architecture decisions get a log entry.** Numbered (continue from D42), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
+- **Architecture decisions get a log entry.** Numbered (continue from D47), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
 - **Justin debugs by sharing exact error output.** Encourage this — it's the most efficient diagnostic path. The Phase 2 work showed it consistently saved iteration cycles.
 
 ---
@@ -206,17 +221,17 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 - **OQ-8** ToS / Privacy policy authorship
 - **OQ-11** License (currently "all rights reserved")
 
-These shouldn't block Phase 3 work but should get answered before Phase 10.
+These shouldn't block Phase 4 work but should get answered before Phase 10.
 
 ---
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 2 (Authentication). Tag: `phase-2-complete`. Test suite green: typecheck/lint across 7 packages, 87 unit tests, 16 Playwright tests, 120 pgTAP assertions.
+**Just closed:** Phase 3 (Groups & Membership), shipped as 3.1 (shared data layer), 3.2 (web UI), 3.3 (mobile UI) on branch `phase-3-groups` / PR #1. Test suite green: typecheck/lint across 7 packages, 121 unit tests, 24 Playwright tests, 127 pgTAP assertions. Mobile verified via Expo web preview smoke (full group CRUD loop).
 
-**Up next:** **Phase 3 — Groups & Membership.** See `ROADMAP.md` for the planned tasks. The first slice (Phase 3.1) will likely be the Zod schemas in `packages/validation` and the basic hooks in `packages/api-client`. The "You're signed in" placeholder home screen on web and mobile gets replaced with the real group list as part of this phase.
+**Up next:** **Phase 4 — Group Invitations.** See `ROADMAP.md`: `create_invite` / `accept_invite` Edge Functions, invite links, username search, accept-invite pages + deep links. Note: mobile routes already mirror web (`/groups/...`) for deep-link parity (D46). Once invites can add a second member, exercise the deferred multi-member UI flows from Phase 3 (remove member, removed member loses access).
 
-**Not yet verified on a real device** (carried over from Phase 2): native mobile Google OAuth + `huddle://` deep-link round-trip. Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
+**Not yet verified on a real device** (carried over from Phase 2): native mobile Google OAuth + `huddle://` deep-link round-trip; Phase 3 group screens on a native runtime (SecureStore, native navigation). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 
 ---
 
