@@ -10,6 +10,8 @@ import {
   createGroupSchema,
   updateGroupSchema,
   groupMemberRoleSchema,
+  createInviteSchema,
+  acceptInviteSchema,
 } from '../src';
 
 // =====================================================================
@@ -331,5 +333,72 @@ describe('groupMemberRoleSchema', () => {
   it('rejects unknown roles', () => {
     expect(() => groupMemberRoleSchema.parse('owner')).toThrow();
     expect(() => groupMemberRoleSchema.parse('')).toThrow();
+  });
+});
+
+// =====================================================================
+// Invites (Phase 4.1)
+// =====================================================================
+
+describe('inviteTokenSchema (via acceptInviteSchema)', () => {
+  const goodToken = 'A'.repeat(43);
+
+  it('accepts a base64url token of typical length', () => {
+    expect(acceptInviteSchema.parse({ token: goodToken })).toEqual({ token: goodToken });
+  });
+
+  it('accepts - and _ characters', () => {
+    const token = `ab-cd_ef${'x'.repeat(35)}`;
+    expect(acceptInviteSchema.parse({ token })).toEqual({ token });
+  });
+
+  it('rejects tokens that are too short', () => {
+    expect(() => acceptInviteSchema.parse({ token: 'short' })).toThrow(/not valid/);
+  });
+
+  it('rejects tokens with invalid characters', () => {
+    expect(() => acceptInviteSchema.parse({ token: `${'a'.repeat(42)}+` })).toThrow(/not valid/);
+  });
+});
+
+describe('createInviteSchema', () => {
+  const groupId = '6f9619ff-8b86-4d01-b42d-00cf4fc964ff';
+
+  it('accepts a bare link invite', () => {
+    expect(createInviteSchema.parse({ groupId })).toEqual({ groupId });
+  });
+
+  it('accepts an email invite and normalises the email', () => {
+    expect(
+      createInviteSchema.parse({ groupId, invitedEmail: '  Pal@Example.COM ' }),
+    ).toEqual({ groupId, invitedEmail: 'pal@example.com' });
+  });
+
+  it('accepts a by-user invite', () => {
+    const invitedUserId = '6f9619ff-8b86-4d01-b42d-00cf4fc964fe';
+    expect(createInviteSchema.parse({ groupId, invitedUserId })).toEqual({
+      groupId,
+      invitedUserId,
+    });
+  });
+
+  it('rejects email and userId together', () => {
+    expect(() =>
+      createInviteSchema.parse({
+        groupId,
+        invitedEmail: 'pal@example.com',
+        invitedUserId: '6f9619ff-8b86-4d01-b42d-00cf4fc964fe',
+      }),
+    ).toThrow(/either an email or a user/);
+  });
+
+  it('rejects a malformed group id', () => {
+    expect(() => createInviteSchema.parse({ groupId: 'nope' })).toThrow(/Invalid group id/);
+  });
+
+  it('rejects a malformed email', () => {
+    expect(() =>
+      createInviteSchema.parse({ groupId, invitedEmail: 'not-an-email' }),
+    ).toThrow(/valid email/);
   });
 });

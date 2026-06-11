@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@huddle/types';
-import { mapSupabaseError, isHuddleError } from './errors';
+import { throwMapped, requireUserId } from './internal';
 
 /**
  * Raw group data functions, framework-free. Server code (Next.js Server
@@ -43,26 +43,6 @@ export const groupQueryKeys = {
   detail: (id: string) => ['groups', id] as const,
   members: (id: string) => ['groups', id, 'members'] as const,
 };
-
-// -----------------------------------------------------------------------
-// Internal helpers
-// -----------------------------------------------------------------------
-
-function throwMapped(error: unknown): never {
-  if (isHuddleError(error)) throw error;
-  const mapped = mapSupabaseError(error);
-  const e = Object.assign(new Error(mapped.message), { huddle: mapped });
-  throw e;
-}
-
-async function requireUserId(client: HuddleClient): Promise<string> {
-  const {
-    data: { user },
-    error,
-  } = await client.auth.getUser();
-  if (error || !user) throwMapped({ status: 401, message: 'Not authenticated' });
-  return user!.id;
-}
 
 // -----------------------------------------------------------------------
 // Reads

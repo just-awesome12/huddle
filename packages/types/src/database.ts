@@ -346,6 +346,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invite: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "groups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_group: {
         Args: { p_name: string }
         Returns: {
@@ -366,6 +382,16 @@ export type Database = {
       is_group_admin: { Args: { p_group_id: string }; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_valid_username: { Args: { value: string }; Returns: boolean }
+      peek_invite: {
+        Args: { p_token: string }
+        Returns: {
+          expires_at: string
+          group_id: string
+          group_name: string
+          inviter_display_name: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       group_member_role: "admin" | "member"
