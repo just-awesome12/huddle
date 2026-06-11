@@ -111,7 +111,7 @@ export async function signUpAction(
     }
   }
 
-  redirect('/');
+  redirect(safeNextPath(formData.get('next')));
 }
 
 
@@ -143,7 +143,7 @@ export async function signInAction(
     return { formError: friendlyAuthErrorMessage(mapped) };
   }
 
-  redirect('/');
+  redirect(safeNextPath(formData.get('next')));
 }
 
 
@@ -162,6 +162,20 @@ export async function signOutAction(): Promise<void> {
 // =====================================================================
 // Helpers
 // =====================================================================
+
+/**
+ * Sanitise a post-auth redirect target (the ?next= round-trip the proxy
+ * starts for deep links like invite URLs). Only same-origin relative
+ * paths pass; anything else — absolute URLs, protocol-relative '//',
+ * missing — falls back to '/'. Prevents open-redirect via ?next=.
+ */
+function safeNextPath(raw: unknown): string {
+  if (typeof raw !== 'string' || raw.length === 0) return '/';
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
+    return '/';
+  }
+  return raw;
+}
 
 function friendlyAuthErrorMessage(
   mapped: { kind: string; message: string },

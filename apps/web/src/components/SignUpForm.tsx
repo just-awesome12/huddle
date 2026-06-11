@@ -9,13 +9,16 @@ import { TurnstileWidget } from './TurnstileWidget';
 
 interface SignUpFormProps {
   turnstileSiteKey: string;
+  /** Validated server-side; see safeNextPath in actions/auth.ts. */
+  next?: string;
 }
 
-export function SignUpForm({ turnstileSiteKey }: SignUpFormProps) {
+export function SignUpForm({ turnstileSiteKey, next }: SignUpFormProps) {
   const [state, formAction, pending] = useActionState(signUpAction, EMPTY_AUTH_STATE);
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <FormField
         label="Email"
         name="email"

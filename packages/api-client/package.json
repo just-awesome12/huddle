@@ -14,7 +14,9 @@
     "./errors": "./src/errors.ts",
     "./turnstile": "./src/turnstile.ts",
     "./groups": "./src/groups.ts",
-    "./groups-hooks": "./src/groups-hooks.ts"
+    "./groups-hooks": "./src/groups-hooks.ts",
+    "./invites": "./src/invites.ts",
+    "./invites-hooks": "./src/invites-hooks.ts"
   },
   "scripts": {
     "lint": "eslint .",
