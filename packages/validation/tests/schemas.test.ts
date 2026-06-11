@@ -7,6 +7,9 @@ import {
   displayNameSchema,
   profileUpdateSchema,
   onboardingSchema,
+  createGroupSchema,
+  updateGroupSchema,
+  groupMemberRoleSchema,
 } from '../src';
 
 // =====================================================================
@@ -267,5 +270,66 @@ describe('onboardingSchema', () => {
   it('requires both fields', () => {
     expect(() => onboardingSchema.parse({ username: 'alice' })).toThrow();
     expect(() => onboardingSchema.parse({ displayName: 'Alice' })).toThrow();
+  });
+});
+
+
+// =====================================================================
+// Groups
+// =====================================================================
+
+describe('createGroupSchema', () => {
+  it('accepts a valid name', () => {
+    expect(createGroupSchema.parse({ name: 'Game Night' })).toEqual({ name: 'Game Night' });
+  });
+
+  it('trims whitespace', () => {
+    expect(createGroupSchema.parse({ name: '  Foodies  ' })).toEqual({ name: 'Foodies' });
+  });
+
+  it('rejects an empty name', () => {
+    expect(() => createGroupSchema.parse({ name: '' })).toThrow(/required/);
+  });
+
+  it('rejects a whitespace-only name', () => {
+    expect(() => createGroupSchema.parse({ name: '   ' })).toThrow(/required/);
+  });
+
+  it('rejects a name longer than 80 characters', () => {
+    expect(() => createGroupSchema.parse({ name: 'a'.repeat(81) })).toThrow(/at most 80/);
+  });
+
+  it('accepts a name at exactly 80 characters', () => {
+    const name = 'a'.repeat(80);
+    expect(createGroupSchema.parse({ name })).toEqual({ name });
+  });
+});
+
+describe('updateGroupSchema', () => {
+  it('accepts a partial update with just a name', () => {
+    expect(updateGroupSchema.parse({ name: 'New Name' })).toEqual({ name: 'New Name' });
+  });
+
+  it('accepts an empty object (nothing to update)', () => {
+    expect(updateGroupSchema.parse({})).toEqual({});
+  });
+
+  it('rejects an invalid name when provided', () => {
+    expect(() => updateGroupSchema.parse({ name: '' })).toThrow(/required/);
+  });
+});
+
+describe('groupMemberRoleSchema', () => {
+  it('accepts admin', () => {
+    expect(groupMemberRoleSchema.parse('admin')).toBe('admin');
+  });
+
+  it('accepts member', () => {
+    expect(groupMemberRoleSchema.parse('member')).toBe('member');
+  });
+
+  it('rejects unknown roles', () => {
+    expect(() => groupMemberRoleSchema.parse('owner')).toThrow();
+    expect(() => groupMemberRoleSchema.parse('')).toThrow();
   });
 });
