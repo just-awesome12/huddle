@@ -58,22 +58,23 @@ test('sign-up with Turnstile + immediate profile finalization', async ({ page })
   const user = makeTestUser();
   await fillSignUpForm(page, user);
   await page.getByRole('button', { name: 'Create account' }).click();
-  // We should land directly at /, not /onboarding, because the
-  // server action set username/display_name immediately after signup.
-  await page.waitForURL('/');
-  await expect(page.getByText("You're signed in.")).toBeVisible();
+  // We should land in the app (/ forwards to /groups), not /onboarding,
+  // because the server action set username/display_name immediately
+  // after signup.
+  await page.waitForURL('/groups');
+  await expect(page.getByRole('heading', { name: 'Your groups' })).toBeVisible();
 });
 
 test('finished users on /onboarding are redirected home', async ({ page }) => {
   const user = makeTestUser();
   await fillSignUpForm(page, user);
   await page.getByRole('button', { name: 'Create account' }).click();
-  await page.waitForURL('/');
+  await page.waitForURL('/groups');
 
   // User has finished onboarding. Visiting /onboarding directly should
-  // bounce them back to /.
+  // bounce them back into the app (/ forwards to /groups).
   await page.goto('/onboarding');
-  await page.waitForURL('/');
+  await page.waitForURL('/groups');
 });
 
 test('signed-out users hitting /onboarding go to /sign-in', async ({ page }) => {
