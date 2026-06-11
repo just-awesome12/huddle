@@ -7,8 +7,7 @@
     "moduleResolution": "Bundler",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "react": ["./node_modules/@types/react"]
+      "@/*": ["./src/*"]
     },
     "types": ["react", "react-native"],
     "declaration": false,

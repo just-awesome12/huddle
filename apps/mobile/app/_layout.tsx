@@ -1,12 +1,32 @@
+import { useState } from 'react';
 import { Stack, Redirect, useSegments } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
 export default function RootLayout() {
+  // One QueryClient for the app's lifetime. useState (not a module
+  // global) keeps Fast Refresh from sharing a cache across reloads.
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            // Mobile sessions are long-lived; don't refetch on every
+            // focus change. Mutations invalidate what they touch.
+            staleTime: 30_000,
+            retry: 1,
+          },
+        },
+      }),
+  );
+
   return (
-    <AuthProvider>
-      <GatedStack />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <GatedStack />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
