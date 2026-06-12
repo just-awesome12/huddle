@@ -16,6 +16,19 @@ export type GroupInviteRow = Database['public']['Tables']['group_invites']['Row'
 export type InvitePeek =
   Database['public']['Functions']['peek_invite']['Returns'][number];
 
+/** Invite row as listed on the admin invite page, with the invited
+ *  user's username when the invite is addressed to a specific user. */
+export interface GroupInviteWithInvitee extends GroupInviteRow {
+  invited_profile: { username: string } | null;
+}
+
+/** Invite addressed to the current user, with who sent it. The group
+ *  name is NOT here — RLS hides groups from non-members; use
+ *  peekInvite(token) for that. */
+export interface PendingInvite extends GroupInviteRow {
+  inviter: { username: string; display_name: string } | null;
+}
+
 // -----------------------------------------------------------------------
 // Invite-flow error contract (HD### SQLSTATEs raised by the RPCs)
 // -----------------------------------------------------------------------
@@ -49,6 +62,7 @@ export function inviteErrorKind(e: unknown): InviteErrorKind | null {
 export const inviteQueryKeys = {
   forGroup: (groupId: string) => ['groups', groupId, 'invites'] as const,
   peek: (token: string) => ['invites', 'peek', token] as const,
+  mine: ['invites', 'mine'] as const,
 };
 
 // -----------------------------------------------------------------------
@@ -92,16 +106,40 @@ export async function createInvite(
 export async function fetchGroupInvites(
   client: HuddleClient,
   groupId: string,
-): Promise<GroupInviteRow[]> {
+): Promise<GroupInviteWithInvitee[]> {
   const { data, error } = await client
     .from('group_invites')
-    .select('*')
+    // Explicit FK hint — group_invites has three FKs to profiles
+    // (created_by, invited_user_id, accepted_by).
+    .select('*, invited_profile:profiles!group_invites_invited_user_id_fkey(username)')
     .eq('group_id', groupId)
     .is('accepted_at', null)
     .order('created_at', { ascending: false });
 
   if (error) throwMapped(error);
-  return data ?? [];
+  return (data ?? []) as unknown as GroupInviteWithInvitee[];
+}
+
+/**
+ * Invites addressed to the current user (via add-by-username) that are
+ * still open and unexpired. RLS allows the invited user to see these.
+ * Surfaced as "Invites for you" on the groups list.
+ */
+export async function fetchMyPendingInvites(
+  client: HuddleClient,
+): Promise<PendingInvite[]> {
+  const userId = await requireUserId(client);
+
+  const { data, error } = await client
+    .from('group_invites')
+    .select('*, inviter:profiles!group_invites_created_by_fkey(username, display_name)')
+    .eq('invited_user_id', userId)
+    .is('accepted_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) throwMapped(error);
+  return (data ?? []) as unknown as PendingInvite[];
 }
 
 /** Revoke (delete) an open invite. Admins only via RLS. */

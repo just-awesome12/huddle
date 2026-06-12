@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createInvite,
   fetchGroupInvites,
+  fetchMyPendingInvites,
   revokeInvite,
   peekInvite,
   acceptInvite,
@@ -41,6 +42,7 @@ function makeClient({
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     is: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
     then: vi.fn((resolve: (v: unknown) => void) => resolve(result)),
@@ -142,6 +144,24 @@ describe('fetchGroupInvites', () => {
   it('returns [] for empty data', async () => {
     const client = makeClient({ queryData: null });
     await expect(fetchGroupInvites(client as never, 'group-1')).resolves.toEqual([]);
+  });
+});
+
+describe('fetchMyPendingInvites', () => {
+  it('filters to open, unexpired invites addressed to the caller', async () => {
+    const client = makeClient({ queryData: [makeInvite({ invited_user_id: 'user-1' })] });
+    const result = await fetchMyPendingInvites(client as never);
+    expect(result).toHaveLength(1);
+    expect(client._chain.eq).toHaveBeenCalledWith('invited_user_id', 'user-1');
+    expect(client._chain.is).toHaveBeenCalledWith('accepted_at', null);
+    expect(client._chain.gt).toHaveBeenCalledWith('expires_at', expect.any(String));
+  });
+
+  it('throws unauthorized when not signed in', async () => {
+    const client = makeClient({ user: null as never });
+    await expect(fetchMyPendingInvites(client as never)).rejects.toMatchObject({
+      huddle: { kind: 'unauthorized' },
+    });
   });
 });
 

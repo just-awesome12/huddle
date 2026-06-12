@@ -18,11 +18,14 @@ export async function createInviteAction(
   formData: FormData,
 ): Promise<InviteActionState> {
   const rawEmail = formData.get('invitedEmail');
+  const rawUserId = formData.get('invitedUserId');
   const parsed = createInviteSchema.safeParse({
     groupId: formData.get('groupId'),
     // Empty input means a plain link invite, not an empty email.
     invitedEmail:
       typeof rawEmail === 'string' && rawEmail.trim() !== '' ? rawEmail : undefined,
+    invitedUserId:
+      typeof rawUserId === 'string' && rawUserId !== '' ? rawUserId : undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
@@ -34,6 +37,7 @@ export async function createInviteAction(
     const invite = await createInvite(supabase, {
       groupId: parsed.data.groupId,
       invitedEmail: parsed.data.invitedEmail,
+      invitedUserId: parsed.data.invitedUserId,
     });
     token = invite.token;
   } catch (e) {

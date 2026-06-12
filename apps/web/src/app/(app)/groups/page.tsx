@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { fetchMyGroups } from '@huddle/api-client/groups';
+import { fetchMyPendingInvites, peekInvite } from '@huddle/api-client/invites';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { RoleBadge } from '@/components/RoleBadge';
 
@@ -7,8 +8,49 @@ export default async function GroupsPage() {
   const supabase = await getSupabaseServerClient();
   const groups = await fetchMyGroups(supabase);
 
+  // Invites addressed to me (add-by-username). The group name comes
+  // from peek_invite — RLS hides the groups table from non-members.
+  const pendingInvites = await fetchMyPendingInvites(supabase);
+  const pendingWithNames = await Promise.all(
+    pendingInvites.map(async (invite) => {
+      try {
+        const peek = await peekInvite(supabase, invite.token);
+        return { invite, groupName: peek.group_name };
+      } catch {
+        return null; // revoked between queries — just skip it
+      }
+    }),
+  );
+  const invitesForMe = pendingWithNames.filter((x) => x !== null);
+
   return (
     <div className="mx-auto max-w-2xl">
+      {invitesForMe.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Invites for you ({invitesForMe.length})
+          </h2>
+          <ul className="mt-3 flex flex-col gap-2" data-testid="pending-invites">
+            {invitesForMe.map(({ invite, groupName }) => (
+              <li key={invite.id}>
+                <Link
+                  href={`/invites/${invite.token}`}
+                  className="flex items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 transition-colors hover:border-slate-400"
+                >
+                  <span className="flex flex-col">
+                    <span className="text-sm font-medium text-slate-900">{groupName}</span>
+                    <span className="text-xs text-slate-500">
+                      Invited by {invite.inviter?.display_name ?? 'someone'}
+                    </span>
+                  </span>
+                  <span className="text-sm font-medium text-slate-700">View invite →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-medium">Your groups</h2>
         <Link

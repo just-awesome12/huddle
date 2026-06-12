@@ -5,14 +5,19 @@ import {
   fetchGroupMembers,
   type GroupMemberWithProfile,
 } from '@huddle/api-client/groups';
-import { fetchGroupInvites, type GroupInviteRow } from '@huddle/api-client/invites';
+import {
+  fetchGroupInvites,
+  type GroupInviteWithInvitee,
+} from '@huddle/api-client/invites';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { revokeInviteAction } from '@/actions/invites';
 import { InviteCreator } from '@/components/InviteCreator';
+import { UsernameSearch } from '@/components/UsernameSearch';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 
-function describeInvite(invite: GroupInviteRow): string {
+function describeInvite(invite: GroupInviteWithInvitee): string {
   if (invite.invited_email) return `For ${invite.invited_email}`;
+  if (invite.invited_profile) return `For @${invite.invited_profile.username}`;
   if (invite.invited_user_id) return 'For a specific user';
   return 'Open link';
 }
@@ -32,7 +37,7 @@ export default async function GroupInvitePage({
 
   let groupName: string;
   let members: GroupMemberWithProfile[];
-  let invites: GroupInviteRow[];
+  let invites: GroupInviteWithInvitee[];
   try {
     const group = await fetchGroup(supabase, id);
     groupName = group.name;
@@ -62,6 +67,10 @@ export default async function GroupInvitePage({
 
       <section className="mt-6">
         <InviteCreator groupId={id} />
+      </section>
+
+      <section className="mt-10 border-t border-slate-200 pt-6">
+        <UsernameSearch groupId={id} />
       </section>
 
       <section className="mt-10">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -19,8 +19,9 @@ import {
   useGroupInvites,
   useCreateInvite,
   useRevokeInvite,
-  type GroupInviteRow,
+  type GroupInviteWithInvitee,
 } from '@huddle/api-client/invites-hooks';
+import { useSearchProfiles } from '@huddle/api-client/profiles-hooks';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { inviteWebUrl } from '@/lib/invite-url';
@@ -28,11 +29,14 @@ import { Button } from '@/components/Button';
 import { FormField } from '@/components/FormField';
 import { ConfirmAction } from '@/components/ConfirmAction';
 
-function describeInvite(invite: GroupInviteRow): string {
+function describeInvite(invite: GroupInviteWithInvitee): string {
   if (invite.invited_email) return `For ${invite.invited_email}`;
+  if (invite.invited_profile) return `For @${invite.invited_profile.username}`;
   if (invite.invited_user_id) return 'For a specific user';
   return 'Open link';
 }
+
+const SEARCH_QUERY_RE = /^[a-z0-9_]{1,30}$/;
 
 export default function GroupInviteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -51,6 +55,25 @@ export default function GroupInviteScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Add-by-username search (debounced; queries Supabase directly —
+  // the perimeter rate limit for this path lands in Phase 9).
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [invitedIds, setInvitedIds] = useState<Record<string, boolean>>({});
+  const [searchInviteError, setSearchInviteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchQuery(searchInput.trim().toLowerCase());
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const searchEnabled = SEARCH_QUERY_RE.test(searchQuery);
+  const search = useSearchProfiles(supabase, searchQuery, {
+    enabled: searchEnabled,
+  });
 
   if (group.isPending || members.isPending || invites.isPending) {
     return (
@@ -183,6 +206,63 @@ export default function GroupInviteScreen() {
               ) : null}
             </View>
 
+            <View style={styles.card}>
+              <FormField
+                label="Add by username"
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="Start typing a username…"
+                value={searchInput}
+                onChangeText={setSearchInput}
+                hint="Invites the person directly — only their account can accept."
+              />
+              {searchInviteError ? (
+                <View style={styles.alert}>
+                  <Text style={styles.alertText} accessibilityRole="alert">
+                    {searchInviteError}
+                  </Text>
+                </View>
+              ) : null}
+              {searchEnabled && search.isSuccess && search.data.length === 0 ? (
+                <Text style={styles.muted}>No matching usernames.</Text>
+              ) : null}
+              {searchEnabled && search.isSuccess
+                ? search.data.map((profile) => (
+                    <View key={profile.id} style={styles.resultRow}>
+                      <View style={styles.inviteInfo}>
+                        <Text style={styles.inviteKind}>{profile.display_name}</Text>
+                        <Text style={styles.inviteMeta}>@{profile.username}</Text>
+                      </View>
+                      {invitedIds[profile.id] ? (
+                        <Text style={styles.invitedMark}>Invited ✓</Text>
+                      ) : (
+                        <Button
+                          label="Invite"
+                          variant="secondary"
+                          loading={createInvite.isPending}
+                          onPress={() => {
+                            setSearchInviteError(null);
+                            createInvite.mutate(
+                              { groupId: id, invitedUserId: profile.id },
+                              {
+                                onSuccess: () =>
+                                  setInvitedIds((prev) => ({ ...prev, [profile.id]: true })),
+                                onError: (e) =>
+                                  setSearchInviteError(
+                                    /already a member/i.test(e.message)
+                                      ? `@${profile.username} is already a member.`
+                                      : 'Could not create the invite. Please try again.',
+                                  ),
+                              },
+                            );
+                          }}
+                        />
+                      )}
+                    </View>
+                  ))
+                : null}
+            </View>
+
             <Text style={styles.sectionTitle}>
               Open invites ({invites.data.length})
             </Text>
@@ -294,4 +374,13 @@ const styles = StyleSheet.create({
   inviteKind: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
   inviteMeta: { fontSize: 12, color: '#64748b' },
   expired: { color: '#dc2626' },
+  resultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    paddingTop: 10,
+  },
+  invitedMark: { fontSize: 13, fontWeight: '600', color: '#15803d' },
 });

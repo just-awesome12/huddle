@@ -9,14 +9,45 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMyGroups } from '@huddle/api-client/groups-hooks';
+import {
+  useMyPendingInvites,
+  usePeekInvite,
+  type PendingInvite,
+} from '@huddle/api-client/invites-hooks';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
+
+/** One pending invite card. Group name comes from peek_invite — RLS
+ *  hides the groups table from non-members. */
+function PendingInviteCard({ invite }: { invite: PendingInvite }) {
+  const router = useRouter();
+  const peek = usePeekInvite(supabase, invite.token);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.inviteCard, pressed && styles.rowPressed]}
+      onPress={() => router.push(`/invites/${invite.token}`)}
+    >
+      <View>
+        <Text style={styles.rowName}>
+          {peek.isSuccess ? peek.data.group_name : 'Group invite'}
+        </Text>
+        <Text style={styles.inviteFrom}>
+          Invited by {invite.inviter?.display_name ?? 'someone'}
+        </Text>
+      </View>
+      <Text style={styles.viewInvite}>View →</Text>
+    </Pressable>
+  );
+}
 
 export default function GroupListScreen() {
   const router = useRouter();
   const { data: groups, isPending, isError, refetch, isRefetching } =
     useMyGroups(supabase);
+  const pendingInvites = useMyPendingInvites(supabase);
 
   return (
     <View style={styles.container}>
@@ -24,6 +55,17 @@ export default function GroupListScreen() {
         <Text style={styles.title}>Huddle</Text>
         <Button label="Sign out" variant="ghost" onPress={() => supabase.auth.signOut()} />
       </View>
+
+      {pendingInvites.isSuccess && pendingInvites.data.length > 0 ? (
+        <View style={styles.invitesBlock}>
+          <Text style={styles.invitesTitle}>
+            Invites for you ({pendingInvites.data.length})
+          </Text>
+          {pendingInvites.data.map((invite) => (
+            <PendingInviteCard key={invite.id} invite={invite} />
+          ))}
+        </View>
+      ) : null}
 
       <View style={styles.toolbar}>
         <Text style={styles.heading}>Your groups</Text>
@@ -120,4 +162,25 @@ const styles = StyleSheet.create({
   },
   rowPressed: { backgroundColor: '#f1f5f9' },
   rowName: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
+  invitesBlock: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
+  invitesTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#64748b',
+  },
+  inviteCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  inviteFrom: { fontSize: 12, color: '#64748b' },
+  viewInvite: { fontSize: 13, fontWeight: '600', color: '#334155' },
 });
