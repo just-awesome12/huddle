@@ -61,11 +61,18 @@ export default function GroupDetailScreen() {
       <View style={styles.header}>
         <Button label="← Groups" variant="ghost" onPress={() => router.replace('/groups')} />
         {isAdmin ? (
-          <Button
-            label="Settings"
-            variant="ghost"
-            onPress={() => router.push(`/groups/${id}/settings`)}
-          />
+          <View style={styles.headerActions}>
+            <Button
+              label="Invite"
+              variant="ghost"
+              onPress={() => router.push(`/groups/${id}/invite`)}
+            />
+            <Button
+              label="Settings"
+              variant="ghost"
+              onPress={() => router.push(`/groups/${id}/settings`)}
+            />
+          </View>
         ) : null}
       </View>
 
@@ -164,6 +171,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e2e8f0',
     backgroundColor: '#fff',
   },
+  headerActions: { flexDirection: 'row', gap: 4 },
   body: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
   groupName: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
   heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
