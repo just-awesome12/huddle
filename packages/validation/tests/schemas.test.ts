@@ -13,6 +13,10 @@ import {
   createInviteSchema,
   acceptInviteSchema,
   usernameSearchSchema,
+  createIdeaSchema,
+  updateIdeaSchema,
+  updateIdeaStatusSchema,
+  ideaFiltersSchema,
 } from '../src';
 
 // =====================================================================
@@ -424,5 +428,84 @@ describe('usernameSearchSchema', () => {
   it('rejects ILIKE wildcards and other invalid characters', () => {
     expect(() => usernameSearchSchema.parse({ q: 'a%' })).toThrow(/only letters/);
     expect(() => usernameSearchSchema.parse({ q: 'a b' })).toThrow(/only letters/);
+  });
+});
+
+// =====================================================================
+// Ideas (Phase 5.1)
+// =====================================================================
+
+describe('createIdeaSchema', () => {
+  const groupId = '6f9619ff-8b86-4d01-b42d-00cf4fc964ff';
+  const base = { groupId, title: 'Taco night', category: 'food' };
+
+  it('accepts a minimal idea (title + category)', () => {
+    expect(createIdeaSchema.parse(base)).toEqual(base);
+  });
+
+  it('trims the title and rejects whitespace-only titles', () => {
+    expect(createIdeaSchema.parse({ ...base, title: '  Taco night  ' }).title).toBe('Taco night');
+    expect(() => createIdeaSchema.parse({ ...base, title: '   ' })).toThrow(/required/);
+  });
+
+  it('rejects titles over 200 characters', () => {
+    expect(() => createIdeaSchema.parse({ ...base, title: 'a'.repeat(201) })).toThrow(/at most 200/);
+  });
+
+  it('rejects unknown categories', () => {
+    expect(() => createIdeaSchema.parse({ ...base, category: 'sports' })).toThrow();
+  });
+
+  it('turns empty description/link into undefined', () => {
+    const parsed = createIdeaSchema.parse({ ...base, description: '', link: '' });
+    expect(parsed.description).toBeUndefined();
+    expect(parsed.link).toBeUndefined();
+  });
+
+  it('rejects descriptions over 4000 characters', () => {
+    expect(() =>
+      createIdeaSchema.parse({ ...base, description: 'a'.repeat(4001) }),
+    ).toThrow(/at most 4000/);
+  });
+
+  it('accepts http(s) links and rejects other schemes', () => {
+    expect(createIdeaSchema.parse({ ...base, link: 'https://example.com/x' }).link).toBe('https://example.com/x');
+    expect(() => createIdeaSchema.parse({ ...base, link: 'javascript:alert(1)' })).toThrow(/valid http/);
+    expect(() => createIdeaSchema.parse({ ...base, link: 'not a url' })).toThrow(/valid http/);
+  });
+});
+
+describe('updateIdeaSchema', () => {
+  it('accepts a partial update', () => {
+    expect(updateIdeaSchema.parse({ title: 'New title' })).toEqual({ title: 'New title' });
+  });
+
+  it('accepts an empty object', () => {
+    expect(updateIdeaSchema.parse({})).toEqual({});
+  });
+
+  it('still validates provided fields', () => {
+    expect(() => updateIdeaSchema.parse({ category: 'nope' })).toThrow();
+  });
+});
+
+describe('updateIdeaStatusSchema / ideaFiltersSchema', () => {
+  it('accepts each valid status', () => {
+    for (const status of ['on_radar', 'done', 'dismissed']) {
+      expect(updateIdeaStatusSchema.parse({ status })).toEqual({ status });
+    }
+  });
+
+  it('rejects unknown statuses', () => {
+    expect(() => updateIdeaStatusSchema.parse({ status: 'archived' })).toThrow();
+  });
+
+  it('filters are optional and validated', () => {
+    expect(ideaFiltersSchema.parse({})).toEqual({});
+    expect(ideaFiltersSchema.parse({ status: 'done', category: 'food' })).toEqual({
+      status: 'done',
+      category: 'food',
+    });
+    expect(() => ideaFiltersSchema.parse({ status: 'nope' })).toThrow();
   });
 });
