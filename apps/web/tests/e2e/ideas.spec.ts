@@ -1,4 +1,4 @@
-import { test, expect, type Page, type Browser } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * Phase 5.2 — Ideas web UI.
