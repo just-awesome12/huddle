@@ -1,8 +1,18 @@
 import { useState } from 'react';
-import { Stack, Redirect, useSegments } from 'expo-router';
+import { Stack, Redirect, useSegments, usePathname, type Href } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+
+/**
+ * Deep link captured while the user was signed out (e.g. an invite
+ * URL). Mobile equivalent of the web proxy's ?next= round-trip: when
+ * GatedStack bounces a signed-out user to /sign-in, it stashes the
+ * intended path here and resumes it once authentication completes.
+ * Module scope (not state) on purpose — it must survive the re-renders
+ * and unmounts that happen across the auth transition.
+ */
+let pendingPath: string | null = null;
 
 export default function RootLayout() {
   // One QueryClient for the app's lifetime. useState (not a module
@@ -40,6 +50,7 @@ export default function RootLayout() {
 function GatedStack() {
   const { session, needsOnboarding, loading } = useAuth();
   const segments = useSegments();
+  const pathname = usePathname();
 
   if (loading) {
     return (
@@ -55,8 +66,13 @@ function GatedStack() {
   const inAuthGroup = segmentList[0] === '(auth)';
   const onOnboarding = segmentList.includes('onboarding');
 
-  // Unauthenticated user not on an auth screen → /sign-in
+  // Unauthenticated user not on an auth screen → /sign-in.
+  // Stash the intended path (deep links, e.g. /invites/<token>) so it
+  // can resume after sign-in / sign-up.
   if (!session && !inAuthGroup) {
+    if (pathname && pathname !== '/') {
+      pendingPath = pathname;
+    }
     return <Redirect href="/sign-in" />;
   }
   // Onboarding requires a session; bounce signed-out users to sign-in
@@ -64,14 +80,18 @@ function GatedStack() {
     return <Redirect href="/sign-in" />;
   }
 
-  // Authenticated, needs onboarding, not already there → /onboarding
+  // Authenticated, needs onboarding, not already there → /onboarding.
+  // (pendingPath intentionally survives onboarding — it resumes below.)
   if (session && needsOnboarding && !onOnboarding) {
     return <Redirect href="/onboarding" />;
   }
 
-  // Authenticated, onboarded, but sitting on an auth screen → /
+  // Authenticated, onboarded, but sitting on an auth screen → resume
+  // the stashed deep link if there is one, otherwise home.
   if (session && !needsOnboarding && inAuthGroup) {
-    return <Redirect href="/" />;
+    const target = pendingPath ?? '/';
+    pendingPath = null;
+    return <Redirect href={target as Href} />;
   }
 
   return (
