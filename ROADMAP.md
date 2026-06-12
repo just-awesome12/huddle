@@ -434,17 +434,27 @@ project-root/
 
 ---
 
-### Phase 4 — Group Invitations
+### Phase 4 — Group Invitations ✅ COMPLETE (pending merge)
 
 **Objective:** Three working invite paths — invite link, email invite (in-app, not actual email yet for v1 since email notifications are v2), and username search.
 
+**Status (closed 2026-06-13):** Shipped in sub-phases 4.1 (RPCs + data layer), 4.2 (web UI + auth deep links), 4.3 (mobile UI + deep-link resume), 4.4 (username search + add-by-username) on branch `phase-4-invites` (PR #4). Full design + decision log D48–D51 in `docs/ARCHITECTURE_PHASE4_APPENDIX.md`.
+
+**What shipped vs. plan:**
+- 🔄 **No Edge Functions.** `accept_invite` + `peek_invite` are SECURITY DEFINER RPCs (D48, extends D45); `create_invite` needed nothing at all — Phase 1's column-default token generation + admin RLS INSERT…RETURNING already covered it. Edge Function infra debuts in Phase 7 (picker).
+- 🔄 Tokens are generated **in Postgres** (Phase 1's `generate_invite_token()`); the planned `packages/core/invite-token.ts` never needed to exist.
+- ➕ "Invites for you" section on the groups list (web + mobile) so addressed invites are discoverable — not in the original plan but required to complete the username-invite loop.
+- ➕ Deep links survive the auth wall: web `?next=` round-trip (open-redirect-guarded), mobile pending-path stash in GatedStack (D49).
+- ➕ Fixed a latent Phase 2 bug found by the 4.4 mobile smoke: supabase-js auth-callback deadlock (see appendix gotchas).
+- ⚠️ v1 search rate limit is in-memory per-user in the route handler (D51); the perimeter limit is a Phase 9 Cloudflare item. Mobile searches Supabase directly — same Phase 9 item.
+
 **Tasks**
-- [ ] Edge Function: `create_invite` — generates a cryptographically random token, writes `group_invites` row, returns shareable URL
-- [ ] Edge Function: `accept_invite` — validates token + expiry + not-already-accepted, inserts `group_members` row
-- [ ] **Web/Mobile:** "Invite to group" UI: generate link button, copy-to-clipboard, QR code (mobile)
-- [ ] Username search: `/api/profiles/search?q=...` (Next.js route handler) with case-insensitive prefix match, capped at 10 results, rate-limited
-- [ ] "Add by username" flow that creates an invite addressed to a `user_id`
-- [ ] Accept-invite page (web) and deep link handler (mobile) for `/invites/[token]`
+- [x] ~~Edge Function:~~ `create_invite` — plain RLS INSERT with DB-generated token (no function needed)
+- [x] ~~Edge Function:~~ `accept_invite` — SECURITY DEFINER RPC + `peek_invite` RPC (D48)
+- [x] **Web/Mobile:** "Invite to group" UI: generate link button, copy-to-clipboard, QR code (mobile), share sheet (mobile), revoke list (both — OQ-10 resolved: yes, revocation via DELETE)
+- [x] Username search: `/api/profiles/search?q=...` (Next.js route handler) with case-insensitive prefix match, capped at 10 results, rate-limited
+- [x] "Add by username" flow that creates an invite addressed to a `user_id`
+- [x] Accept-invite page (web) and deep link handler (mobile) for `/invites/[token]`
 
 **Files likely affected**
 - `supabase/functions/create-invite/index.ts`
@@ -463,18 +473,18 @@ project-root/
 - Deep links: use Expo's `scheme` and `expo-linking`.
 
 **Validation steps**
-- [ ] Generate invite link → second user opens link signed-out → prompted to sign in → after auth, accept flow runs → they're a member
-- [ ] Reused token (already accepted) → friendly error
-- [ ] Expired token → friendly error
-- [ ] Username search returns matches; non-existent username returns empty
-- [ ] Username search rate-limited after 10 rapid calls
-- [ ] Mobile deep link `groupdecide://invites/<token>` opens accept screen
+- [x] Generate invite link → second user opens link signed-out → prompted to sign in → after auth, accept flow runs → they're a member (web E2E with ?next= round-trip; mobile smoke with pending-path resume)
+- [x] Reused token (already accepted) → friendly error (E2E + pgTAP HD002)
+- [~] Expired token → friendly error — *pgTAP-verified (HD001) + status-card unit path; not E2E'd end-to-end since default expiry is 7 days*
+- [x] Username search returns matches; non-existent username returns empty (E2E)
+- [x] Username search rate-limited after 10 rapid calls (E2E asserts the 11th request returns 429)
+- [~] Mobile deep link `huddle://invites/<token>` opens accept screen — *path routing verified via Expo web preview (identical route mapping); real scheme-based open deferred with the other native-device items (Phase 10)*
 
 **Tests that must pass before Phase 5**
-- [ ] **Unit:** invite token generator (length, charset, uniqueness over 1M draws)
-- [ ] **Integration:** Edge Functions tested with `supabase functions serve` locally
-- [ ] **E2E (web):** two-browser test — admin invites, second user accepts
-- [ ] **Regression:** prior phases green
+- [x] **Unit:** ~~invite token generator~~ — token generation lives in Postgres (Phase 1); format enforced by CHECK constraint + pgTAP; client-side schemas tested (15 new validation tests, total 64)
+- [x] **Integration:** ~~Edge Functions~~ — replaced by RPC pgTAP suite (17 assertions, total 144) + 24 new api-client tests (total 96)
+- [x] **E2E (web):** two-browser tests — admin invites, second user accepts (link AND username paths); 8 new tests, total 32
+- [x] **Regression:** prior phases green (32 Playwright, 144 pgTAP, 160 unit)
 
 ---
 
@@ -756,7 +766,7 @@ Every phase enforces these gates before progressing.
 - [ ] **OQ-7: Geographic scope.** US only? Global? Affects compliance posture.
 - [ ] **OQ-8: Terms of Service & Privacy Policy authorship.** Are you writing these, using a template (Termly, iubenda), or hiring? Required by both app stores.
 - [ ] **OQ-9: Username vs display name uniqueness rules.** Username is unique; display name is free-form. Confirm.
-- [ ] **OQ-10: Invite link revocation.** Should admins be able to revoke an unused invite? (Recommended: yes, via a "revoked" flag — small addition to Phase 4.)
+- [x] **OQ-10: Invite link revocation.** Resolved in Phase 4 → yes. Implemented as DELETE (per the Phase 1 RLS design) rather than a flag; a revoked token reads as "not found", indistinguishable from never-existed.
 - [ ] **OQ-11: License.** Currently "all rights reserved" by default. Pick a license (MIT, Apache-2.0, GPL, or proprietary) before public launch. Affects whether outside contributors can engage.
 
 ---

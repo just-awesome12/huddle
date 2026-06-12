@@ -25,10 +25,10 @@ Targets: **web (Next.js)** and **mobile (Expo / React Native)**, sharing a TypeS
 | Auth | Email/password + Google OAuth | Apple deferred (needs developer account) |
 | Anti-scraping | Cloudflare Turnstile (web) + auth wall + Cloudflare proxy | Mobile has no Turnstile equivalent |
 | Push | Expo Push v1 | Real APNs/FCM later |
-| Web E2E | Playwright | 24 tests, all passing |
+| Web E2E | Playwright | 32 tests, all passing |
 | Mobile E2E | Maestro (deferred to Phase 9) | Not set up yet; Expo web preview used for smoke tests |
-| Unit | Vitest | 49 (validation) + 72 (api-client) = 121 |
-| RLS | pgTAP | 127 assertions across 10 files |
+| Unit | Vitest | 64 (validation) + 96 (api-client) = 160 |
+| RLS | pgTAP | 144 assertions across 11 files |
 
 ### Workspace layout
 
@@ -43,7 +43,7 @@ packages/
   core/         Reserved for shared logic (not heavily used yet)
   config/       Shared tsconfig + eslint configs
 supabase/
-  migrations/   SQL migrations (12 so far)
+  migrations/   SQL migrations (13 so far)
   tests/        pgTAP tests
   seed.sql      Test users + seed group
   config.toml   Local Supabase config
@@ -51,20 +51,21 @@ docs/
   ARCHITECTURE.md
   ARCHITECTURE_PHASE2_APPENDIX.md   ← full Phase 2 design + decision log D26–D42
   ARCHITECTURE_PHASE3_APPENDIX.md   ← full Phase 3 design + decision log D43–D47
-ROADMAP.md     ← phase plan (Phases 0–3 = ✅ COMPLETE)
+  ARCHITECTURE_PHASE4_APPENDIX.md   ← full Phase 4 design + decision log D48–D51
+ROADMAP.md     ← phase plan (Phases 0–4 = ✅ COMPLETE)
 SETUP.md       ← env setup
 ```
 
 ### Subpath import conventions
 
-- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups}`
-- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks}`
-- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Future features (ideas, decisions) follow the same pattern.
+- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles}`
+- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks}`
+- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites` and `/profiles`. Future features (ideas, decisions) follow the same pattern.
 - Apps **never** import from `@supabase/*` directly — types like `Session`, `User`, `SupabaseClient` are re-exported through the api-client `/native` and `/server` subpaths
 
 ---
 
-## 3. What's shipped (Phases 0–3)
+## 3. What's shipped (Phases 0–4)
 
 **Phase 0** — Monorepo scaffold, Next.js 16 + Expo SDK 55 apps, 5 shared packages, Supabase config, GitHub Actions CI. Repo: `github.com/just-awesome12/huddle`.
 
@@ -76,11 +77,13 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 **Phase 3** — Groups & Membership. Group CRUD + member management on web and mobile. Shared data layer split: raw functions in `@huddle/api-client/groups` (web Server Components/Actions), TanStack Query hooks in `/groups-hooks` (mobile). `create_group` SECURITY DEFINER RPC works around an INSERT…RETURNING vs RLS interaction. Web reads via Server Components, mutations via Server Actions; mobile screens mirror the web URL shape. **Full architecture in `docs/ARCHITECTURE_PHASE3_APPENDIX.md`.** Shipped via PR #1 (branch `phase-3-groups`).
 
+**Phase 4** — Group Invitations. All three join paths (link / email / username) on web and mobile. `peek_invite` + `accept_invite` SECURITY DEFINER RPCs with the HD000–HD004 error contract — no Edge Functions (D48). Deep links survive auth: web `?next=` round-trip, mobile pending-path stash (D49). Invites share as web URLs via `EXPO_PUBLIC_WEB_URL` (D50). Rate-limited `/api/profiles/search` + "Invites for you" sections. Also fixed a latent Phase 2 supabase-js auth-callback deadlock (lesson 14). **Full architecture in `docs/ARCHITECTURE_PHASE4_APPENDIX.md`.** Shipped via PR #4 (branch `phase-4-invites`).
+
 ---
 
-## 4. Decision log (D1–D47)
+## 4. Decision log (D1–D51)
 
-D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. Highlights that affect ongoing work:
+D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. Highlights that affect ongoing work:
 
 | # | Decision |
 |---|---|
@@ -104,6 +107,10 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D45 | Group creation goes through the `create_group` SECURITY DEFINER RPC (INSERT…RETURNING is checked against the SELECT policy before the membership trigger runs). |
 | D46 | Mobile screen routes mirror the web URL shape for deep-link parity (`huddle://groups/...`, Phase 4). |
 | D47 | `react` is pinned in api-client devDependencies to mobile's version so pnpm builds exactly one react-query instance (see lesson 12). |
+| D48 | Invite acceptance via `peek_invite` / `accept_invite` SECURITY DEFINER RPCs (not Edge Functions); custom HD000–HD004 SQLSTATEs are the client error contract — map by code, never by message text. Edge Functions debut in Phase 7. |
+| D49 | Mobile resumes deep links after auth via a module-scope pending-path stash in GatedStack (web equivalent: the proxy's `?next=` round-trip, open-redirect-guarded in the auth actions). |
+| D50 | Invites are shared as web URLs built from `EXPO_PUBLIC_WEB_URL` so recipients without the app can join; `huddle://` resolves the same path in-app. Universal links are Phase 10. |
+| D51 | v1 search rate limiting is an in-memory per-user sliding window in the Next route handler — defence-in-depth only; the perimeter limit is Phase 9 (Cloudflare). Mobile queries PostgREST directly until then. |
 
 ---
 
@@ -137,6 +144,10 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 
 13. **`INSERT…RETURNING` is checked against the SELECT policy before AFTER-triggers run.** If a row's visibility depends on a trigger-created row (e.g. groups visible via membership the trigger inserts), `insert().select()` fails with 42501 even though the plain insert succeeds. Use a SECURITY DEFINER RPC that returns the row (D45).
 
+14. **Never await supabase queries inside `onAuthStateChange`.** The callback fires while supabase-js holds its auth lock (Web Locks API on web); any `.from()`/`.rpc()` call re-acquires that lock to attach the access token → the entire client deadlocks (infinite spinner, sign-out does nothing). Defer queries out of the callback (`setTimeout(..., 0)`). It's intermittent on web (races hydration) and **impossible on native** (no Web Locks), so green native behavior proves nothing. Diagnose with `navigator.locks.query()` — `lock:sb-127-auth-token` held with an empty pending list is the smoking gun. Bit us from Phase 2 until the Phase 4.4 smoke test caught it.
+
+15. **PostgREST embeds need explicit FK hints when a table has multiple FKs to the same target.** `group_invites` has three FKs to `profiles`; `select('*, profiles(...)')` is ambiguous — name the constraint: `profiles!group_invites_invited_user_id_fkey(...)`.
+
 ---
 
 ## 6. Working norms
@@ -144,7 +155,7 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 - **Small slices.** Even small features ship in sub-phases (e.g., Phase 2 became 2.1 through 2.7). Each sub-phase has an explicit test gate.
 - **Tests before "done."** Unit/integration tests for shared packages. Playwright for web flows. pgTAP for RLS regressions. Manual smoke for mobile (Maestro deferred to Phase 9).
 - **Honest documentation of deferrals.** When something can't be done now (Apple OAuth, native mobile OAuth verification, Maestro), capture WHY in the roadmap rather than pretending it's complete.
-- **Architecture decisions get a log entry.** Numbered (continue from D47), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
+- **Architecture decisions get a log entry.** Numbered (continue from D51), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
 - **Justin debugs by sharing exact error output.** Encourage this — it's the most efficient diagnostic path. The Phase 2 work showed it consistently saved iteration cycles.
 
 ---
@@ -221,17 +232,17 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 - **OQ-8** ToS / Privacy policy authorship
 - **OQ-11** License (currently "all rights reserved")
 
-These shouldn't block Phase 4 work but should get answered before Phase 10.
+These shouldn't block Phase 5 work but should get answered before Phase 10.
 
 ---
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 3 (Groups & Membership), shipped as 3.1 (shared data layer), 3.2 (web UI), 3.3 (mobile UI) on branch `phase-3-groups` / PR #1. Test suite green: typecheck/lint across 7 packages, 121 unit tests, 24 Playwright tests, 127 pgTAP assertions. Mobile verified via Expo web preview smoke (full group CRUD loop).
+**Just closed:** Phase 4 (Group Invitations), shipped as 4.1 (RPCs + data layer), 4.2 (web UI + auth deep links), 4.3 (mobile UI + deep-link resume), 4.4 (username search + add-by-username) on branch `phase-4-invites` / PR #4. Test suite green: typecheck/lint across 7 packages, 160 unit tests, 32 Playwright tests, 144 pgTAP assertions. Mobile verified via Expo web preview smoke. The Phase 3 multi-member deferrals (remove member, removed member loses access) are now E2E-covered. Phase 4.4 also fixed a latent Phase 2 supabase-js auth-callback deadlock (lesson 14).
 
-**Up next:** **Phase 4 — Group Invitations.** See `ROADMAP.md`: `create_invite` / `accept_invite` Edge Functions, invite links, username search, accept-invite pages + deep links. Note: mobile routes already mirror web (`/groups/...`) for deep-link parity (D46). Once invites can add a second member, exercise the deferred multi-member UI flows from Phase 3 (remove member, removed member loses access).
+**Up next:** **Phase 5 — Ideas (CRUD + photo upload).** See `ROADMAP.md`: idea schemas + hooks (follow the `/ideas` + `/ideas-hooks` subpath pattern), Supabase Storage RLS for `idea-photos` (bucket + policies already exist from Phase 1 — verify against the path convention `{group_id}/{idea_id}/{uuid}.{ext}`), web + mobile list/create/detail/edit/status flows, image compression. **OQ-5 (image moderation) should get a decision before this phase ships photo upload.**
 
-**Not yet verified on a real device** (carried over from Phase 2): native mobile Google OAuth + `huddle://` deep-link round-trip; Phase 3 group screens on a native runtime (SecureStore, native navigation). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
+**Not yet verified on a real device** (carried over from Phase 2): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); group/invite screens on a native runtime (SecureStore, native navigation, real share sheet / QR scanning). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 
 ---
 
