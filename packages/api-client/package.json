@@ -18,7 +18,9 @@
     "./invites": "./src/invites.ts",
     "./invites-hooks": "./src/invites-hooks.ts",
     "./profiles": "./src/profiles.ts",
-    "./profiles-hooks": "./src/profiles-hooks.ts"
+    "./profiles-hooks": "./src/profiles-hooks.ts",
+    "./ideas": "./src/ideas.ts",
+    "./ideas-hooks": "./src/ideas-hooks.ts"
   },
   "scripts": {
     "lint": "eslint .",
