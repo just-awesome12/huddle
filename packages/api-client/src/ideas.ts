@@ -173,13 +173,139 @@ export async function updateIdeaStatus(
 }
 
 /**
- * Hard-delete an idea. RLS limits this to the proposer or an admin.
+ * Hard-delete an idea, including its storage photo if one exists
+ * (storage objects do NOT cascade with the DB row). The photo removal
+ * is best-effort: an orphaned object in a private bucket is a smaller
+ * failure than a delete that errors after the row is already gone.
+ *
  * NOTE (Phase 7 flag): decisions.chosen_idea_id is ON DELETE CASCADE —
  * once decisions exist, deleting a chosen idea would erase history
  * rows. Revisit the FK (likely RESTRICT + "dismiss instead" UX) when
  * the picker ships.
  */
-export async function deleteIdea(client: HuddleClient, ideaId: string): Promise<void> {
+export async function deleteIdea(
+  client: HuddleClient,
+  ideaId: string,
+  photoPath?: string | null,
+): Promise<void> {
   const { error } = await client.from('ideas').delete().eq('id', ideaId);
   if (error) throwMapped(error);
+
+  if (photoPath) {
+    await client.storage.from(IDEA_PHOTOS_BUCKET).remove([photoPath]);
+  }
+}
+
+// -----------------------------------------------------------------------
+// Photos (Phase 5.3)
+// -----------------------------------------------------------------------
+
+export const IDEA_PHOTOS_BUCKET = 'idea-photos';
+
+/** Signed URLs are short-lived by design (private bucket, D-photo). */
+export const IDEA_PHOTO_URL_TTL_SECONDS = 3600;
+
+/** Mirrors the bucket's allowed_mime_types (Phase 1 migration). */
+const PHOTO_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+export function isAllowedPhotoType(contentType: string): boolean {
+  return contentType in PHOTO_EXTENSIONS;
+}
+
+/**
+ * Build the object key for an idea photo:
+ *   {group_id}/{idea_id}/{unique}.{ext}
+ * The group_id prefix is what storage RLS authorizes against. The
+ * unique segment only needs collision-resistance within one idea's
+ * folder, so a timestamp+random suffix suffices — no crypto dependency
+ * (which RN lacks without a polyfill).
+ */
+export function buildIdeaPhotoPath(
+  groupId: string,
+  ideaId: string,
+  contentType: string,
+): string {
+  const ext = PHOTO_EXTENSIONS[contentType];
+  if (!ext) {
+    throwMapped({
+      code: '23514',
+      message: `unsupported photo type: ${contentType}`,
+    });
+  }
+  const unique = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${groupId}/${ideaId}/${unique}.${ext}`;
+}
+
+export interface UploadIdeaPhotoParams {
+  groupId: string;
+  ideaId: string;
+  /** Already-compressed image bytes. */
+  data: Blob | ArrayBuffer;
+  contentType: string;
+  /** Existing photo to replace; removed (best-effort) after the swap. */
+  previousPath?: string | null;
+}
+
+/**
+ * Upload a photo and point the idea at it. Order matters: upload →
+ * update row → remove old object, so a failure never leaves the row
+ * referencing a missing object.
+ */
+export async function uploadIdeaPhoto(
+  client: HuddleClient,
+  params: UploadIdeaPhotoParams,
+): Promise<string> {
+  const path = buildIdeaPhotoPath(params.groupId, params.ideaId, params.contentType);
+
+  const { error: uploadError } = await client.storage
+    .from(IDEA_PHOTOS_BUCKET)
+    .upload(path, params.data, { contentType: params.contentType });
+  if (uploadError) throwMapped(uploadError);
+
+  const { error: updateError } = await client
+    .from('ideas')
+    .update({ photo_path: path })
+    .eq('id', params.ideaId);
+  if (updateError) {
+    // Roll back the orphan object (best-effort) before surfacing.
+    await client.storage.from(IDEA_PHOTOS_BUCKET).remove([path]);
+    throwMapped(updateError);
+  }
+
+  if (params.previousPath) {
+    await client.storage.from(IDEA_PHOTOS_BUCKET).remove([params.previousPath]);
+  }
+
+  return path;
+}
+
+/** Remove an idea's photo: clear the row pointer, then the object. */
+export async function removeIdeaPhoto(
+  client: HuddleClient,
+  ideaId: string,
+  photoPath: string,
+): Promise<void> {
+  const { error } = await client
+    .from('ideas')
+    .update({ photo_path: null })
+    .eq('id', ideaId);
+  if (error) throwMapped(error);
+
+  await client.storage.from(IDEA_PHOTOS_BUCKET).remove([photoPath]);
+}
+
+/** Create a short-lived signed URL for a photo (private bucket). */
+export async function getIdeaPhotoUrl(
+  client: HuddleClient,
+  photoPath: string,
+): Promise<string> {
+  const { data, error } = await client.storage
+    .from(IDEA_PHOTOS_BUCKET)
+    .createSignedUrl(photoPath, IDEA_PHOTO_URL_TTL_SECONDS);
+  if (error) throwMapped(error);
+  return data!.signedUrl;
 }

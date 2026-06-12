@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroupMembers } from '@huddle/api-client/groups';
-import { fetchIdea, type IdeaWithProposer } from '@huddle/api-client/ideas';
+import {
+  fetchIdea,
+  getIdeaPhotoUrl,
+  type IdeaWithProposer,
+} from '@huddle/api-client/ideas';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
@@ -38,6 +42,16 @@ export default async function IdeaDetailPage({
 
   const statusAction = setIdeaStatusAction.bind(null, id, ideaId);
 
+  // Private bucket → short-lived signed URL, minted per render.
+  let photoUrl: string | null = null;
+  if (idea.photo_path) {
+    try {
+      photoUrl = await getIdeaPhotoUrl(supabase, idea.photo_path);
+    } catch {
+      // Render without the photo rather than failing the page.
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
       <Link
@@ -62,6 +76,15 @@ export default async function IdeaDetailPage({
           Proposed by {idea.proposer?.display_name ?? 'someone'} on{' '}
           {new Date(idea.created_at).toLocaleDateString()}
         </p>
+
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt={`Photo for ${idea.title}`}
+            data-testid="idea-photo"
+            className="mt-4 max-h-96 w-full rounded-lg border border-slate-200 object-cover"
+          />
+        )}
 
         {idea.description && (
           <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
