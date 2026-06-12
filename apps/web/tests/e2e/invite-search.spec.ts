@@ -93,10 +93,16 @@ test('add by username → invitee sees pending invite → accepts', async ({
   await page.getByRole('link', { name: 'Invite' }).click();
   await page.waitForURL(/\/invite$/);
 
-  await page.getByLabel('Add by username').fill(invitee.username.slice(0, 12));
+  // Search the FULL username: the DB persists across runs, so a short
+  // prefix matches stale users from earlier suites.
+  await page.getByLabel('Add by username').fill(invitee.username);
   const results = page.getByTestId('username-results');
   await expect(results).toContainText(`@${invitee.username}`);
-  await results.getByRole('button', { name: 'Invite' }).click();
+  await results
+    .locator('li')
+    .filter({ hasText: `@${invitee.username}` })
+    .getByRole('button', { name: 'Invite' })
+    .click();
   await expect(page.getByText('Invited ✓')).toBeVisible();
 
   // The addressed invite shows in the open-invites list.
