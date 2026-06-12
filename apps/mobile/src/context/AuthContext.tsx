@@ -67,11 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted) setLoading(false);
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       if (!mounted) return;
       setSession(next);
       if (next?.user.id) {
-        await fetchProfile(next.user.id);
+        // DEADLOCK GUARD: never await supabase queries inside this
+        // callback. It fires while the auth client holds its lock
+        // (Web Locks API on web), and .from() re-acquires that lock
+        // to attach the access token — awaiting it here wedges the
+        // whole client (spinner forever on web). setTimeout defers
+        // the query until the locked call stack has unwound.
+        const userId = next.user.id;
+        setTimeout(() => {
+          if (mounted) void fetchProfile(userId);
+        }, 0);
       } else {
         setUsername(null);
       }

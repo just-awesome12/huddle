@@ -16,7 +16,9 @@
     "./groups": "./src/groups.ts",
     "./groups-hooks": "./src/groups-hooks.ts",
     "./invites": "./src/invites.ts",
-    "./invites-hooks": "./src/invites-hooks.ts"
+    "./invites-hooks": "./src/invites-hooks.ts",
+    "./profiles": "./src/profiles.ts",
+    "./profiles-hooks": "./src/profiles-hooks.ts"
   },
   "scripts": {
     "lint": "eslint .",

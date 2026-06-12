@@ -12,6 +12,7 @@ import {
   groupMemberRoleSchema,
   createInviteSchema,
   acceptInviteSchema,
+  usernameSearchSchema,
 } from '../src';
 
 // =====================================================================
@@ -400,5 +401,28 @@ describe('createInviteSchema', () => {
     expect(() =>
       createInviteSchema.parse({ groupId, invitedEmail: 'not-an-email' }),
     ).toThrow(/valid email/);
+  });
+});
+
+describe('usernameSearchSchema', () => {
+  it('accepts a prefix and normalises case/whitespace', () => {
+    expect(usernameSearchSchema.parse({ q: '  PaL ' })).toEqual({ q: 'pal' });
+  });
+
+  it('accepts digits and underscores', () => {
+    expect(usernameSearchSchema.parse({ q: 'a_1' })).toEqual({ q: 'a_1' });
+  });
+
+  it('rejects empty / whitespace-only queries', () => {
+    expect(() => usernameSearchSchema.parse({ q: '   ' })).toThrow(/at least one/);
+  });
+
+  it('rejects queries over 30 characters', () => {
+    expect(() => usernameSearchSchema.parse({ q: 'a'.repeat(31) })).toThrow(/at most 30/);
+  });
+
+  it('rejects ILIKE wildcards and other invalid characters', () => {
+    expect(() => usernameSearchSchema.parse({ q: 'a%' })).toThrow(/only letters/);
+    expect(() => usernameSearchSchema.parse({ q: 'a b' })).toThrow(/only letters/);
   });
 });

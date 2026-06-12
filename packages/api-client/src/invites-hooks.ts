@@ -9,11 +9,13 @@ import {
   inviteQueryKeys,
   createInvite,
   fetchGroupInvites,
+  fetchMyPendingInvites,
   revokeInvite,
   peekInvite,
   acceptInvite,
   type CreateInviteParams,
-  type GroupInviteRow,
+  type GroupInviteWithInvitee,
+  type PendingInvite,
   type InvitePeek,
 } from './invites';
 import type { HuddleClient } from './internal';
@@ -28,6 +30,8 @@ export {
   inviteErrorKind,
   type InviteErrorKind,
   type GroupInviteRow,
+  type GroupInviteWithInvitee,
+  type PendingInvite,
   type InvitePeek,
   type CreateInviteParams,
 } from './invites';
@@ -35,11 +39,25 @@ export {
 export function useGroupInvites(
   client: HuddleClient,
   groupId: string,
-  options?: Omit<UseQueryOptions<GroupInviteRow[], Error>, 'queryKey' | 'queryFn'>,
+  options?: Omit<
+    UseQueryOptions<GroupInviteWithInvitee[], Error>,
+    'queryKey' | 'queryFn'
+  >,
 ) {
   return useQuery({
     queryKey: inviteQueryKeys.forGroup(groupId),
     queryFn: () => fetchGroupInvites(client, groupId),
+    ...options,
+  });
+}
+
+export function useMyPendingInvites(
+  client: HuddleClient,
+  options?: Omit<UseQueryOptions<PendingInvite[], Error>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery({
+    queryKey: inviteQueryKeys.mine,
+    queryFn: () => fetchMyPendingInvites(client),
     ...options,
   });
 }
@@ -87,8 +105,10 @@ export function useAcceptInvite(client: HuddleClient) {
   return useMutation({
     mutationFn: (token: string) => acceptInvite(client, token),
     onSuccess: () => {
-      // Joining a group changes the caller's group list.
+      // Joining a group changes the caller's group list and consumes
+      // one of their pending invites.
       void queryClient.invalidateQueries({ queryKey: groupQueryKeys.all });
+      void queryClient.invalidateQueries({ queryKey: inviteQueryKeys.mine });
     },
   });
 }

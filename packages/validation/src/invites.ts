@@ -38,3 +38,21 @@ export const acceptInviteSchema = z.object({
 });
 
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+
+/**
+ * Username search query (the "add by username" flow). A PREFIX of a
+ * username, so same charset as usernames but any length 1–30. The
+ * charset restriction doubles as injection protection for the
+ * ILIKE pattern built from it (no % allowed; _ is escaped DB-side).
+ */
+export const usernameSearchSchema = z.object({
+  q: z
+    .string({ required_error: 'Search query is required' })
+    .trim()
+    .toLowerCase()
+    .min(1, 'Type at least one character')
+    .max(30, 'Usernames are at most 30 characters')
+    .regex(/^[a-z0-9_]+$/, 'Usernames contain only letters, digits, and underscores'),
+});
+
+export type UsernameSearchInput = z.infer<typeof usernameSearchSchema>;
