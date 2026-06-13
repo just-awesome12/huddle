@@ -17,6 +17,7 @@
     "@huddle/types": "workspace:*",
     "@huddle/validation": "workspace:*",
     "@tanstack/react-query": "^5.101.0",
+    "browser-image-compression": "^2.0.2",
     "next": "16.2.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
