@@ -25,9 +25,9 @@ Targets: **web (Next.js)** and **mobile (Expo / React Native)**, sharing a TypeS
 | Auth | Email/password + Google OAuth | Apple deferred (needs developer account) |
 | Anti-scraping | Cloudflare Turnstile (web) + auth wall + Cloudflare proxy | Mobile has no Turnstile equivalent |
 | Push | Expo Push v1 | Real APNs/FCM later |
-| Web E2E | Playwright | 32 tests, all passing |
+| Web E2E | Playwright | 42 tests, all passing |
 | Mobile E2E | Maestro (deferred to Phase 9) | Not set up yet; Expo web preview used for smoke tests |
-| Unit | Vitest | 64 (validation) + 96 (api-client) = 160 |
+| Unit | Vitest | 77 (validation) + 121 (api-client) = 198 |
 | RLS | pgTAP | 144 assertions across 11 files |
 
 ### Workspace layout
@@ -52,20 +52,21 @@ docs/
   ARCHITECTURE_PHASE2_APPENDIX.md   ← full Phase 2 design + decision log D26–D42
   ARCHITECTURE_PHASE3_APPENDIX.md   ← full Phase 3 design + decision log D43–D47
   ARCHITECTURE_PHASE4_APPENDIX.md   ← full Phase 4 design + decision log D48–D51
-ROADMAP.md     ← phase plan (Phases 0–4 = ✅ COMPLETE)
+  ARCHITECTURE_PHASE5_APPENDIX.md   ← full Phase 5 design + decision log D52–D55
+ROADMAP.md     ← phase plan (Phases 0–5 = ✅ COMPLETE)
 SETUP.md       ← env setup
 ```
 
 ### Subpath import conventions
 
-- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles}`
-- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks}`
-- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites` and `/profiles`. Future features (ideas, decisions) follow the same pattern.
+- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles,ideas}`
+- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks,ideas-hooks}`
+- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites`, `/profiles`, `/ideas`. Future features (decisions) follow the same pattern.
 - Apps **never** import from `@supabase/*` directly — types like `Session`, `User`, `SupabaseClient` are re-exported through the api-client `/native` and `/server` subpaths
 
 ---
 
-## 3. What's shipped (Phases 0–4)
+## 3. What's shipped (Phases 0–5)
 
 **Phase 0** — Monorepo scaffold, Next.js 16 + Expo SDK 55 apps, 5 shared packages, Supabase config, GitHub Actions CI. Repo: `github.com/just-awesome12/huddle`.
 
@@ -79,11 +80,13 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 **Phase 4** — Group Invitations. All three join paths (link / email / username) on web and mobile. `peek_invite` + `accept_invite` SECURITY DEFINER RPCs with the HD000–HD004 error contract — no Edge Functions (D48). Deep links survive auth: web `?next=` round-trip, mobile pending-path stash (D49). Invites share as web URLs via `EXPO_PUBLIC_WEB_URL` (D50). Rate-limited `/api/profiles/search` + "Invites for you" sections. Also fixed a latent Phase 2 supabase-js auth-callback deadlock (lesson 14). **Full architecture in `docs/ARCHITECTURE_PHASE4_APPENDIX.md`.** Shipped via PR #4 (branch `phase-4-invites`).
 
+**Phase 5** — Ideas (CRUD + photo upload). Idea data layer (`/ideas` + `/ideas-hooks`), web + mobile list/filters/create/detail/edit/status/delete, photo upload to the `idea-photos` bucket. No migration — Phase 1's schema + bucket already covered it. Edit permissions keep the Phase 1 model (any member edits; UI gates to proposer/admin) (D52). OQ-5 → report-and-review moderation (D53). Web photos via Server Actions + `bodySizeLimit: 4mb` (D54); manual storage-object lifecycle with orphan rollback, non-crypto filenames (D55). Compression: `browser-image-compression` (web), `expo-image-manipulator` (mobile). **Full architecture in `docs/ARCHITECTURE_PHASE5_APPENDIX.md`.** Shipped via PR #6 (branch `phase-5-ideas`).
+
 ---
 
-## 4. Decision log (D1–D51)
+## 4. Decision log (D1–D55)
 
-D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. Highlights that affect ongoing work:
+D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. Highlights that affect ongoing work:
 
 | # | Decision |
 |---|---|
@@ -111,6 +114,10 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D49 | Mobile resumes deep links after auth via a module-scope pending-path stash in GatedStack (web equivalent: the proxy's `?next=` round-trip, open-redirect-guarded in the auth actions). |
 | D50 | Invites are shared as web URLs built from `EXPO_PUBLIC_WEB_URL` so recipients without the app can join; `huddle://` resolves the same path in-app. Universal links are Phase 10. |
 | D51 | v1 search rate limiting is an in-memory per-user sliding window in the Next route handler — defence-in-depth only; the perimeter limit is Phase 9 (Cloudflare). Mobile queries PostgREST directly until then. |
+| D52 | Idea edit permissions keep the Phase 1 model: any member may update any field at the DB; the UI gates edit/delete controls to proposer/admin as UX only. Delete is RLS-enforced. |
+| D53 | OQ-5 resolved → report-and-review moderation for v1 (no automated scanning); report button ships with Phase 10 store prep. Member-only photo visibility bounds the risk. |
+| D54 | Web photo uploads go through Server Actions as FormData with client-side compression; `serverActions.bodySizeLimit: 4mb` (default 1mb). Upholds the no-browser-Supabase-client rule (D26/D43). |
+| D55 | Photo storage objects are managed manually (upload→point row→cleanup old, with orphan rollback); `deleteIdea` removes the object since storage doesn't cascade; filenames are non-crypto unique (no RN polyfill). |
 
 ---
 
@@ -147,6 +154,10 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 14. **Never await supabase queries inside `onAuthStateChange`.** The callback fires while supabase-js holds its auth lock (Web Locks API on web); any `.from()`/`.rpc()` call re-acquires that lock to attach the access token → the entire client deadlocks (infinite spinner, sign-out does nothing). Defer queries out of the callback (`setTimeout(..., 0)`). It's intermittent on web (races hydration) and **impossible on native** (no Web Locks), so green native behavior proves nothing. Diagnose with `navigator.locks.query()` — `lock:sb-127-auth-token` held with an empty pending list is the smoking gun. Bit us from Phase 2 until the Phase 4.4 smoke test caught it.
 
 15. **PostgREST embeds need explicit FK hints when a table has multiple FKs to the same target.** `group_invites` has three FKs to `profiles`; `select('*, profiles(...)')` is ambiguous — name the constraint: `profiles!group_invites_invited_user_id_fkey(...)`.
+
+16. **Expo Router keeps prior screens mounted in the web-preview DOM.** When smoke-testing on the Expo web preview, `document.querySelector` across `[role="button"]` hits hidden underlying screens too — `find()` grabs the first (stale) match, so clicks land on the wrong screen and look like bugs. Scope to the LAST match (topmost screen) when driving the preview via DOM. (This is a test-harness gotcha, not an app bug.)
+
+17. **Verify library APIs against installed types, not memory** (a sharper restatement of lesson 10 for fast-moving SDKs). `expo-image-manipulator` in SDK 55 deprecated `manipulateAsync(uri, actions, opts)` in favour of a contextual API (`ImageManipulator.manipulate(uri).resize(...).renderAsync()` then `.saveAsync({format, compress, base64})`). Grep the package's `build/*.d.ts` before writing the call — generating from the older signature typechecks against nothing until runtime.
 
 ---
 
@@ -226,23 +237,24 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 - **OQ-2** Domain name (revisit in Phase 10)
 - **OQ-3** Real bundle IDs (currently `app.placeholder.huddle`)
 - **OQ-4** Visual design direction
-- **OQ-5** Image moderation strategy (Phase 5)
 - **OQ-6** Account deletion / GDPR flow
 - **OQ-7** Geographic scope (single-region vs multi-region)
 - **OQ-8** ToS / Privacy policy authorship
 - **OQ-11** License (currently "all rights reserved")
 
-These shouldn't block Phase 5 work but should get answered before Phase 10.
+(OQ-5 image moderation resolved in Phase 5 → report-and-review, D53.)
+
+These shouldn't block Phase 6 work but should get answered before Phase 10.
 
 ---
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 4 (Group Invitations), shipped as 4.1 (RPCs + data layer), 4.2 (web UI + auth deep links), 4.3 (mobile UI + deep-link resume), 4.4 (username search + add-by-username) on branch `phase-4-invites` / PR #4. Test suite green: typecheck/lint across 7 packages, 160 unit tests, 32 Playwright tests, 144 pgTAP assertions. Mobile verified via Expo web preview smoke. The Phase 3 multi-member deferrals (remove member, removed member loses access) are now E2E-covered. Phase 4.4 also fixed a latent Phase 2 supabase-js auth-callback deadlock (lesson 14).
+**Just closed:** Phase 5 (Ideas — CRUD + photo upload), shipped as 5.1 (data layer), 5.2 (web UI), 5.3 (web photos), 5.4 (mobile UI + photos) on branch `phase-5-ideas` / PR #6. Test suite green: typecheck/lint across 7 packages, 198 unit tests, 42 Playwright tests, 144 pgTAP assertions. Mobile verified via Expo web preview smoke. No migration needed — Phase 1's schema + `idea-photos` bucket already covered it.
 
-**Up next:** **Phase 5 — Ideas (CRUD + photo upload).** See `ROADMAP.md`: idea schemas + hooks (follow the `/ideas` + `/ideas-hooks` subpath pattern), Supabase Storage RLS for `idea-photos` (bucket + policies already exist from Phase 1 — verify against the path convention `{group_id}/{idea_id}/{uuid}.{ext}`), web + mobile list/create/detail/edit/status flows, image compression. **OQ-5 (image moderation) should get a decision before this phase ships photo upload.**
+**Up next:** **Phase 6 — Realtime.** See `ROADMAP.md`: enable Realtime publications for `groups`/`group_members`/`ideas`/`decisions`, a subscription hook in `@huddle/api-client` wired into the existing TanStack Query caches (invalidate/patch on event, throttled), connection-state indicator, mobile reconnect-on-resume. **Verify empirically that Realtime payloads respect RLS** (R-4 in the risk log — a channel a client filters but the server doesn't is a leak). First phase touching the `decisions` table indirectly; the picker itself is Phase 7.
 
-**Not yet verified on a real device** (carried over from Phase 2): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); group/invite screens on a native runtime (SecureStore, native navigation, real share sheet / QR scanning). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
+**Not yet verified on a real device** (carried over): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); native runtime behaviors (SecureStore, native navigation, real share sheet / QR scanning, **the photo picker** — `expo-image-picker` can't be driven in the web preview). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 
 ---
 

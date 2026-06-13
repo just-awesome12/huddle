@@ -488,18 +488,28 @@ project-root/
 
 ---
 
-### Phase 5 — Ideas (CRUD + Photo Upload)
+### Phase 5 — Ideas (CRUD + Photo Upload) ✅ COMPLETE (pending merge)
 
 **Objective:** Group members can create, view, edit (limited fields), change status of, and delete ideas. Photos upload to Supabase Storage with RLS-protected access.
 
+**Status (closed 2026-06-13):** Shipped in sub-phases 5.1 (data layer), 5.2 (web UI), 5.3 (web photos), 5.4 (mobile UI + photos) on branch `phase-5-ideas` (PR #6). Full design + decision log D52–D55 in `docs/ARCHITECTURE_PHASE5_APPENDIX.md`.
+
+**What shipped vs. plan:**
+- 🔄 **No migration needed.** Phase 1's `ideas` table, enums, constraints, triggers, RLS, and `idea-photos` bucket already covered the model — verified, not rebuilt.
+- 🔄 **Edit permissions kept the Phase 1 model** (any member edits any field; UI gates controls to proposer/admin as UX). Decided as D52 — the roadmap's "RLS blocks non-proposers" expectation was the looser-than-planned Phase 1 reality.
+- 🔄 **Hard delete** (D55), with manual storage-object cleanup since objects don't cascade. Phase 7 flag recorded: `decisions.chosen_idea_id` FK is `ON DELETE CASCADE` — revisit when the picker ships.
+- ➕ OQ-5 resolved → report-and-review moderation policy (D53); report button deferred to Phase 10 store prep.
+- ➕ Web photo upload via Server Actions + `bodySizeLimit: 4mb` (D54), keeping the no-browser-Supabase-client rule.
+- ⏸️ Optimistic status updates and skeleton loaders not implemented — query invalidation + spinners were sufficient; revisit if latency shows.
+
 **Tasks**
-- [ ] Zod schemas for idea create/update
-- [ ] Hooks: `useIdeas(groupId, filters)`, `useCreateIdea`, `useUpdateIdea`, `useUpdateIdeaStatus`, `useDeleteIdea`
-- [ ] Supabase Storage bucket `idea-photos` with RLS: read/write only by group members of the parent idea's group
-- [ ] **Web:** ideas list view per group with filters (status, category); create-idea form; idea detail; edit form (proposer/admin only)
-- [ ] **Mobile:** equivalents using native image picker (`expo-image-picker`)
-- [ ] Image compression before upload (max ~1MB, max 1920px long edge) using `browser-image-compression` (web) or `expo-image-manipulator` (mobile)
-- [ ] Empty states and skeleton loaders
+- [x] Zod schemas for idea create/update
+- [x] Hooks: `useGroupIdeas(groupId, filters)`, `useCreateIdea`, `useUpdateIdea`, `useUpdateIdeaStatus`, `useDeleteIdea` (+ photo hooks)
+- [x] ~~Supabase Storage bucket `idea-photos` with RLS~~ — already existed from Phase 1; verified against the path convention
+- [x] **Web:** ideas list view per group with filters (status, category); create-idea form; idea detail; edit form (proposer/admin only in UI, D52)
+- [x] **Mobile:** equivalents using native image picker (`expo-image-picker`)
+- [x] Image compression before upload (max ~1MB, max 1920px long edge) using `browser-image-compression` (web) or `expo-image-manipulator` (mobile)
+- [x] Empty states (skeleton loaders deferred — spinners used)
 
 **Files likely affected**
 - `packages/validation/src/ideas.ts`
@@ -515,19 +525,19 @@ project-root/
 - The "history view" requirement (FR-10) is satisfied by the ideas list with filters — no separate history page needed.
 
 **Validation steps**
-- [ ] Create idea with all fields → appears in list
-- [ ] Upload photo → renders; non-member cannot fetch the photo URL even if guessed
-- [ ] Filter by category → list updates
-- [ ] Filter by status → list updates
-- [ ] Non-proposer non-admin cannot edit title/description (UI hidden + RLS blocks)
-- [ ] Any member can mark on_radar → done
-- [ ] Soft-delete vs hard-delete: decide at implementation; if hard-delete, confirm cascades are correct
+- [x] Create idea with all fields → appears in list (web E2E + mobile smoke)
+- [x] Upload photo → renders; non-member cannot fetch the photo URL even if guessed (web E2E: loading signed image + 400 on direct/public object fetch)
+- [x] Filter by category → list updates (web E2E + mobile smoke)
+- [x] Filter by status → list updates (web E2E + mobile smoke)
+- [~] Non-proposer non-admin cannot edit title/description — *UI hides controls (E2E two-browser); RLS itself ALLOWS it per the Phase 1 model upheld in D52. Delete is RLS-blocked.*
+- [x] Any member can mark on_radar → done (web E2E two-browser proves a non-proposer member can change status)
+- [x] Hard-delete chosen (D55); storage object cleaned up manually; Phase 7 FK-cascade flag recorded for `decisions.chosen_idea_id`
 
 **Tests that must pass before Phase 6**
-- [ ] **Unit:** idea schema validations
-- [ ] **Integration:** photo upload + signed URL retrieval with correct/incorrect membership
-- [ ] **E2E (web):** create idea, upload photo, change status, filter
-- [ ] **Regression:** all prior tests green
+- [x] **Unit:** idea schema validations (13 new, total 77 validation)
+- [x] **Integration:** photo upload + signed URL retrieval, replace/rollback, guessed-URL rejection (11 new api-client tests, total 121; + web E2E storage check)
+- [x] **E2E (web):** create idea, upload photo, change status, filter, edit, delete, non-proposer gating (10 new tests, total 42)
+- [x] **Regression:** all prior tests green (42 Playwright, 144 pgTAP, 198 unit)
 
 ---
 
