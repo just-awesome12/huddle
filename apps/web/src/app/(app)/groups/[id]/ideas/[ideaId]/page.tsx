@@ -10,6 +10,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
+import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
 
 export default async function IdeaDetailPage({
@@ -54,6 +55,7 @@ export default async function IdeaDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl">
+      <GroupRealtime groupId={id} />
       <Link
         href={`/groups/${id}`}
         className="text-sm text-slate-500 hover:text-slate-700"

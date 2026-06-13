@@ -15,6 +15,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { leaveGroupAction, removeMemberAction } from '@/actions/groups';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
+import { GroupRealtime } from '@/components/GroupRealtime';
 import {
   CategoryBadge,
   StatusBadge,
@@ -95,6 +96,7 @@ export default async function GroupDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl">
+      <GroupRealtime groupId={id} />
       <Link href="/groups" className="text-sm text-slate-500 hover:text-slate-700">
         &larr; Back to groups
       </Link>

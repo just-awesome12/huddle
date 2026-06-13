@@ -29,6 +29,17 @@ export interface RealtimeChange {
   old: Record<string, unknown> | null;
 }
 
+/**
+ * Channel lifecycle status, surfaced for connection indicators.
+ * Mirrors supabase-js's subscribe() statuses, narrowed to what the UI
+ * cares about.
+ */
+export type RealtimeStatus =
+  | 'SUBSCRIBED'
+  | 'CHANNEL_ERROR'
+  | 'TIMED_OUT'
+  | 'CLOSED';
+
 function resolveGroupId(table: RealtimeTable, row: Record<string, unknown> | null): string | null {
   if (!row) return null;
   // `groups` keys the group on `id`; the rest carry `group_id`.
@@ -49,6 +60,7 @@ export function subscribeToGroup(
   client: HuddleClient,
   groupId: string,
   onChange: (change: RealtimeChange) => void,
+  onStatus?: (status: RealtimeStatus) => void,
 ): () => void {
   const channel = client.channel(`group:${groupId}`);
 
@@ -82,7 +94,7 @@ export function subscribeToGroup(
   bind('groups', `id=eq.${groupId}`);
   bind('decisions', `group_id=eq.${groupId}`);
 
-  channel.subscribe();
+  channel.subscribe((status) => onStatus?.(status as RealtimeStatus));
 
   return () => {
     void client.removeChannel(channel);
@@ -98,6 +110,7 @@ export function subscribeToMyGroups(
   client: HuddleClient,
   userId: string,
   onChange: (change: RealtimeChange) => void,
+  onStatus?: (status: RealtimeStatus) => void,
 ): () => void {
   const channel = client.channel(`my-groups:${userId}`);
 
@@ -146,7 +159,7 @@ export function subscribeToMyGroups(
     },
   );
 
-  channel.subscribe();
+  channel.subscribe((status) => onStatus?.(status as RealtimeStatus));
 
   return () => {
     void client.removeChannel(channel);

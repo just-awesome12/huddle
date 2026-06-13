@@ -34,8 +34,9 @@ function makeClient() {
           bindings.push({ config, cb });
           return chan;
         },
-        subscribe() {
+        subscribe(cb?: (status: string) => void) {
           chan.subscribed = true;
+          cb?.('SUBSCRIBED');
           return chan;
         },
       };
@@ -126,6 +127,13 @@ describe('subscribeToGroup', () => {
     const unsub = subscribeToGroup(client as never, 'g1', () => {});
     unsub();
     expect(client._removed).toEqual(['group:g1']);
+  });
+
+  it('forwards the subscribe status to onStatus', () => {
+    const client = makeClient();
+    const statuses: string[] = [];
+    subscribeToGroup(client as never, 'g1', () => {}, (s) => statuses.push(s));
+    expect(statuses).toEqual(['SUBSCRIBED']);
   });
 });
 
