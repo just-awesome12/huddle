@@ -20,7 +20,8 @@
     "./profiles": "./src/profiles.ts",
     "./profiles-hooks": "./src/profiles-hooks.ts",
     "./ideas": "./src/ideas.ts",
-    "./ideas-hooks": "./src/ideas-hooks.ts"
+    "./ideas-hooks": "./src/ideas-hooks.ts",
+    "./realtime": "./src/realtime.ts"
   },
   "scripts": {
     "lint": "eslint .",
