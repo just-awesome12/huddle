@@ -25,10 +25,11 @@ Targets: **web (Next.js)** and **mobile (Expo / React Native)**, sharing a TypeS
 | Auth | Email/password + Google OAuth | Apple deferred (needs developer account) |
 | Anti-scraping | Cloudflare Turnstile (web) + auth wall + Cloudflare proxy | Mobile has no Turnstile equivalent |
 | Push | Expo Push v1 | Real APNs/FCM later |
-| Web E2E | Playwright | 42 tests, all passing |
+| Web E2E | Playwright | 45 tests, all passing |
 | Mobile E2E | Maestro (deferred to Phase 9) | Not set up yet; Expo web preview used for smoke tests |
-| Unit | Vitest | 77 (validation) + 121 (api-client) = 198 |
+| Unit | Vitest | 77 (validation) + 129 (api-client) = 206 |
 | RLS | pgTAP | 144 assertions across 11 files |
+| Realtime RLS | node integration probe | `realtime-rls.integration.mjs` (live stack; verifies R-4) |
 
 ### Workspace layout
 
@@ -43,7 +44,7 @@ packages/
   core/         Reserved for shared logic (not heavily used yet)
   config/       Shared tsconfig + eslint configs
 supabase/
-  migrations/   SQL migrations (13 so far)
+  migrations/   SQL migrations (14 so far)
   tests/        pgTAP tests
   seed.sql      Test users + seed group
   config.toml   Local Supabase config
@@ -53,20 +54,22 @@ docs/
   ARCHITECTURE_PHASE3_APPENDIX.md   ← full Phase 3 design + decision log D43–D47
   ARCHITECTURE_PHASE4_APPENDIX.md   ← full Phase 4 design + decision log D48–D51
   ARCHITECTURE_PHASE5_APPENDIX.md   ← full Phase 5 design + decision log D52–D55
-ROADMAP.md     ← phase plan (Phases 0–5 = ✅ COMPLETE)
+  ARCHITECTURE_PHASE6_APPENDIX.md   ← full Phase 6 design + decision log D56–D59
+ROADMAP.md     ← phase plan (Phases 0–6 = ✅ COMPLETE)
 SETUP.md       ← env setup
 ```
 
 ### Subpath import conventions
 
-- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles,ideas}`
-- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks,ideas-hooks}`
+- Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles,ideas,realtime}`
+- Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks,ideas-hooks,realtime}`
 - Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites`, `/profiles`, `/ideas`. Future features (decisions) follow the same pattern.
+- `/realtime` is framework-free (channel helpers); platform providers add the react bindings (web `router.refresh()`, mobile query invalidation).
 - Apps **never** import from `@supabase/*` directly — types like `Session`, `User`, `SupabaseClient` are re-exported through the api-client `/native` and `/server` subpaths
 
 ---
 
-## 3. What's shipped (Phases 0–5)
+## 3. What's shipped (Phases 0–6)
 
 **Phase 0** — Monorepo scaffold, Next.js 16 + Expo SDK 55 apps, 5 shared packages, Supabase config, GitHub Actions CI. Repo: `github.com/just-awesome12/huddle`.
 
@@ -82,11 +85,13 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 **Phase 5** — Ideas (CRUD + photo upload). Idea data layer (`/ideas` + `/ideas-hooks`), web + mobile list/filters/create/detail/edit/status/delete, photo upload to the `idea-photos` bucket. No migration — Phase 1's schema + bucket already covered it. Edit permissions keep the Phase 1 model (any member edits; UI gates to proposer/admin) (D52). OQ-5 → report-and-review moderation (D53). Web photos via Server Actions + `bodySizeLimit: 4mb` (D54); manual storage-object lifecycle with orphan rollback, non-crypto filenames (D55). Compression: `browser-image-compression` (web), `expo-image-manipulator` (mobile). **Full architecture in `docs/ARCHITECTURE_PHASE5_APPENDIX.md`.** Shipped via PR #6 (branch `phase-5-ideas`).
 
+**Phase 6** — Realtime. Live updates for groups/ideas/members. Migration 014 adds the four tables to `supabase_realtime` (`REPLICA IDENTITY FULL`). Framework-free `@huddle/api-client/realtime` (`subscribeToGroup` / `subscribeToMyGroups`); web provider runs throttled `router.refresh()` (no client cache, D43/D57), mobile provider invalidates TanStack Query + reconnects on resume. **R-4 verified empirically** — Postgres Changes enforces RLS per subscriber, so plain channels are safe (D56). Connection-state dot on both apps. Fixed a browser env-inlining bug (D59). **Full architecture in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.** Shipped via PR #8 (branch `phase-6-realtime`).
+
 ---
 
-## 4. Decision log (D1–D55)
+## 4. Decision log (D1–D59)
 
-D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. Highlights that affect ongoing work:
+D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. Highlights that affect ongoing work:
 
 | # | Decision |
 |---|---|
@@ -118,6 +123,10 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D53 | OQ-5 resolved → report-and-review moderation for v1 (no automated scanning); report button ships with Phase 10 store prep. Member-only photo visibility bounds the risk. |
 | D54 | Web photo uploads go through Server Actions as FormData with client-side compression; `serverActions.bodySizeLimit: 4mb` (default 1mb). Upholds the no-browser-Supabase-client rule (D26/D43). |
 | D55 | Photo storage objects are managed manually (upload→point row→cleanup old, with orphan rollback); `deleteIdea` removes the object since storage doesn't cascade; filenames are non-crypto unique (no RN polyfill). |
+| D56 | Realtime uses plain Postgres Changes channels — RLS enforcement on Postgres Changes verified empirically (R-4: member receives, non-member receives nothing). No private-channel broadcast workaround. Socket must be authed as the user (`realtime.setAuth`). |
+| D57 | One framework-free realtime helper (`subscribeToGroup`/`subscribeToMyGroups`); platform providers invalidate differently — web throttled `router.refresh()` (no client cache, D43), mobile TanStack Query invalidation. |
+| D58 | Realtime invalidations are throttled (web 500ms leading+trailing) and subscriptions scoped (per-group channel + a my-groups channel) — never "refetch everything on any change". |
+| D59 | `createBrowserSupabaseClient` accepts a resolved env; the web app passes statically-referenced `NEXT_PUBLIC_*` (the env helper's dynamic `process.env[key]` is undefined in client bundles — see lesson 19). |
 
 ---
 
@@ -159,6 +168,10 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 
 17. **Verify library APIs against installed types, not memory** (a sharper restatement of lesson 10 for fast-moving SDKs). `expo-image-manipulator` in SDK 55 deprecated `manipulateAsync(uri, actions, opts)` in favour of a contextual API (`ImageManipulator.manipulate(uri).resize(...).renderAsync()` then `.saveAsync({format, compress, base64})`). Grep the package's `build/*.d.ts` before writing the call — generating from the older signature typechecks against nothing until runtime.
 
+18. **Supabase Realtime reads the publication at boot.** Adding tables to `supabase_realtime` via migration *after* `supabase start` delivers no events until a clean stack restart (`supabase stop && supabase start`). After any publication change, re-verify with a live subscriber — a green channel that delivers nothing looks identical to a wiring bug. (Also: postgres_changes RLS is enforced per-subscriber on this stack, but the socket must be authed as the user via `realtime.setAuth` or it's anon and gets nothing.)
+
+19. **Next inlines only STATIC `process.env.NEXT_PUBLIC_*`.** A dynamic `process.env[key]` lookup (e.g. a shared env helper) returns undefined in the browser bundle — fine server-side where Node has the full env, but client components get nothing. Reference the vars statically in app code, or hand resolved values to the library (we did the latter: `createBrowserSupabaseClient(env)` fed by `apps/web/src/lib/supabase-browser.ts`). Expo/Metro inlines `EXPO_PUBLIC_*` more permissively, so mobile didn't hit this.
+
 ---
 
 ## 6. Working norms
@@ -166,7 +179,7 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 - **Small slices.** Even small features ship in sub-phases (e.g., Phase 2 became 2.1 through 2.7). Each sub-phase has an explicit test gate.
 - **Tests before "done."** Unit/integration tests for shared packages. Playwright for web flows. pgTAP for RLS regressions. Manual smoke for mobile (Maestro deferred to Phase 9).
 - **Honest documentation of deferrals.** When something can't be done now (Apple OAuth, native mobile OAuth verification, Maestro), capture WHY in the roadmap rather than pretending it's complete.
-- **Architecture decisions get a log entry.** Numbered (continue from D51), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
+- **Architecture decisions get a log entry.** Numbered (continue from D59), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
 - **Justin debugs by sharing exact error output.** Encourage this — it's the most efficient diagnostic path. The Phase 2 work showed it consistently saved iteration cycles.
 
 ---
@@ -250,11 +263,11 @@ These shouldn't block Phase 6 work but should get answered before Phase 10.
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 5 (Ideas — CRUD + photo upload), shipped as 5.1 (data layer), 5.2 (web UI), 5.3 (web photos), 5.4 (mobile UI + photos) on branch `phase-5-ideas` / PR #6. Test suite green: typecheck/lint across 7 packages, 198 unit tests, 42 Playwright tests, 144 pgTAP assertions. Mobile verified via Expo web preview smoke. No migration needed — Phase 1's schema + `idea-photos` bucket already covered it.
+**Just closed:** Phase 6 (Realtime), shipped as 6.1 (publication + framework-free helper + R-4 verification), 6.2 (web provider), 6.3 (mobile provider) on branch `phase-6-realtime` / PR #8. Test suite green: typecheck/lint across 7 packages, 206 unit tests, 45 Playwright tests, 144 pgTAP assertions, plus the realtime RLS integration probe. R-4 closed empirically: Postgres Changes enforces RLS per subscriber.
 
-**Up next:** **Phase 6 — Realtime.** See `ROADMAP.md`: enable Realtime publications for `groups`/`group_members`/`ideas`/`decisions`, a subscription hook in `@huddle/api-client` wired into the existing TanStack Query caches (invalidate/patch on event, throttled), connection-state indicator, mobile reconnect-on-resume. **Verify empirically that Realtime payloads respect RLS** (R-4 in the risk log — a channel a client filters but the server doesn't is a leak). First phase touching the `decisions` table indirectly; the picker itself is Phase 7.
+**Up next:** **Phase 7 — Random Picker & Decision History.** See `ROADMAP.md`: this is the **first Edge Function** (`run_picker` — server-side crypto-random pick so a tampering client can't re-roll; `decisions` INSERT is service-role only). Pure shuffle logic in `packages/core/src/picker.ts` (unit-testable), picker UI (category filter + optional shortlist + animated reveal) on web/mobile, and a Decisions/History view. **Before this phase, revisit the `decisions.chosen_idea_id` FK** — it's currently `ON DELETE CASCADE`, so hard-deleting a chosen idea would erase history (flagged in `deleteIdea` + the Phase 5 appendix); likely change to `RESTRICT` + "dismiss instead". The `decisions` table is already in the realtime publication, so history will go live for free.
 
-**Not yet verified on a real device** (carried over): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); native runtime behaviors (SecureStore, native navigation, real share sheet / QR scanning, **the photo picker** — `expo-image-picker` can't be driven in the web preview). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
+**Not yet verified on a real device** (carried over): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); native runtime behaviors (SecureStore, native navigation, real share sheet / QR scanning, the photo picker, **realtime reconnect-on-resume across a real background/foreground cycle**). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 
 ---
 
