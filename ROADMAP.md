@@ -545,7 +545,7 @@ project-root/
 
 **Objective:** Changes to groups, ideas, and decisions appear in real time for all connected members without polling.
 
-**Status (closed 2026-06-14):** Shipped in sub-phases 6.1 (publication + framework-free helper + R-4 verification), 6.2 (web provider), 6.3 (mobile provider) on branch `phase-6-realtime` (PR #8). Full design + decision log D56–D59 in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.
+**Status (closed 2026-06-14):** Shipped in sub-phases 6.1 (publication + framework-free helper + R-4 verification), 6.2 (web provider), 6.3 (mobile provider) on branch `phase-6-realtime` (PR #9). Full design + decision log D56–D59 in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.
 
 **What shipped vs. plan:**
 - 🔄 **No `useRealtimeChannel` hook in api-client.** The shared piece is framework-free `subscribeToGroup` / `subscribeToMyGroups` (returns an unsubscribe); the react bindings live in the platform providers, because web and mobile invalidate differently (D57).
