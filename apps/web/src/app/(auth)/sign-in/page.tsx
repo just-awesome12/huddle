@@ -31,7 +31,7 @@ export default async function SignInPage({
 
       <p className="text-sm text-slate-600">
         New here?{' '}
-        <Link href={signUpHref} className="font-medium text-slate-900 underline">
+        <Link href={signUpHref} className="font-medium text-brand-700 underline">
           Create an account
         </Link>
         .

@@ -33,7 +33,7 @@ export function FormField({
             .filter(Boolean)
             .join(' ') || undefined
         }
-        className={`rounded-md border px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-1 ${
+        className={`rounded-md border px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 ${
           error ? 'border-red-500 bg-red-50' : 'border-slate-300 bg-white'
         } ${className}`}
       />

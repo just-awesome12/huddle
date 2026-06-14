@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-jakarta',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Huddle',
@@ -9,8 +17,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh bg-slate-50 text-slate-900 antialiased">{children}</body>
+    <html lang="en" className={jakarta.variable}>
+      <body className="min-h-dvh bg-canvas font-sans text-slate-900 antialiased">
+        {children}
+      </body>
     </html>
   );
 }

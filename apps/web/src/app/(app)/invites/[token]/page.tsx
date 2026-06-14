@@ -18,7 +18,7 @@ function StatusCard({ title, body }: { title: string; body: string }) {
         <p className="mt-2 text-sm text-slate-600">{body}</p>
         <Link
           href="/groups"
-          className="mt-4 inline-block text-sm font-medium text-slate-900 underline"
+          className="mt-4 inline-block text-sm font-medium text-brand-700 underline"
         >
           Go to your groups
         </Link>

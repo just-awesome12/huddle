@@ -43,7 +43,7 @@ export default async function SignUpPage({
         Already have an account?{' '}
         <Link
           href={next ? `/sign-in?next=${encodeURIComponent(next)}` : '/sign-in'}
-          className="font-medium text-slate-900 underline"
+          className="font-medium text-brand-700 underline"
         >
           Sign in
         </Link>

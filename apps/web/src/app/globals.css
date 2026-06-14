@@ -1,1 +1,30 @@
 @import 'tailwindcss';
+
+/*
+ * Huddle visual design — "Pop" direction (OQ-4).
+ * Brand: violet (c-purple ramp). Accent: pink (c-pink ramp).
+ * Neutrals stay slate. Type: Plus Jakarta Sans (loaded via next/font
+ * in the root layout, exposed as --font-jakarta).
+ */
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #eeedfe;
+  --color-brand-100: #cecbf6;
+  --color-brand-200: #afa9ec;
+  --color-brand-400: #7f77dd;
+  --color-brand-500: #665cc8;
+  --color-brand-600: #534ab7;
+  --color-brand-700: #473e9f;
+  --color-brand-800: #3c3489;
+  --color-brand-900: #26215c;
+
+  --color-accent-50: #fbeaf0;
+  --color-accent-100: #f4c0d1;
+  --color-accent-400: #d4537e;
+  --color-accent-600: #993556;
+  --color-accent-900: #4b1528;
+
+  /* Soft violet-tinted page background — warmer than cold slate-50. */
+  --color-canvas: #f7f6fd;
+}

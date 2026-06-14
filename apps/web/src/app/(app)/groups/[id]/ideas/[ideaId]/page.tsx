@@ -99,7 +99,7 @@ export default async function IdeaDetailPage({
             href={idea.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block break-all text-sm font-medium text-slate-900 underline"
+            className="mt-4 inline-block break-all text-sm font-medium text-brand-700 underline"
           >
             {idea.link}
           </a>
@@ -137,7 +137,7 @@ export default async function IdeaDetailPage({
         <div className="mt-6 flex items-center gap-4">
           <Link
             href={`/groups/${id}/ideas/${ideaId}/edit`}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            className="text-sm font-medium text-slate-600 hover:text-brand-700"
           >
             Edit idea
           </Link>

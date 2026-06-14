@@ -46,7 +46,7 @@ function FilterChip({
       href={href}
       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
         active
-          ? 'bg-slate-900 text-white'
+          ? 'bg-brand-600 text-white'
           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
       }`}
     >
@@ -109,13 +109,13 @@ export default async function GroupDetailPage({
           <div className="flex items-center gap-4">
             <Link
               href={`/groups/${id}/invite`}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="text-sm font-medium text-slate-600 hover:text-brand-700"
             >
               Invite
             </Link>
             <Link
               href={`/groups/${id}/settings`}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+              className="text-sm font-medium text-slate-600 hover:text-brand-700"
             >
               Settings
             </Link>
@@ -130,7 +130,7 @@ export default async function GroupDetailPage({
           </h3>
           <Link
             href={`/groups/${id}/ideas/new`}
-            className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             New idea
           </Link>
