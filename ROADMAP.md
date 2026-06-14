@@ -541,37 +541,40 @@ project-root/
 
 ---
 
-### Phase 6 — Realtime
+### Phase 6 — Realtime ✅ COMPLETE (pending merge)
 
 **Objective:** Changes to groups, ideas, and decisions appear in real time for all connected members without polling.
 
+**Status (closed 2026-06-14):** Shipped in sub-phases 6.1 (publication + framework-free helper + R-4 verification), 6.2 (web provider), 6.3 (mobile provider) on branch `phase-6-realtime` (PR #9). Full design + decision log D56–D59 in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.
+
+**What shipped vs. plan:**
+- 🔄 **No `useRealtimeChannel` hook in api-client.** The shared piece is framework-free `subscribeToGroup` / `subscribeToMyGroups` (returns an unsubscribe); the react bindings live in the platform providers, because web and mobile invalidate differently (D57).
+- 🔄 **Web does NOT invalidate a query cache** — it has none (RSC reads, D43). Events trigger a throttled `router.refresh()`. Only mobile invalidates TanStack Query.
+- ➕ R-4 verified with an asserting two-user integration test (member receives, non-member does not); plain Postgres Changes is safe (D56) — no private-channel broadcast needed.
+- ➕ Fixed the browser-env inlining bug (D59) surfaced by web's first client-side Supabase client.
+
 **Tasks**
-- [ ] Enable Realtime publications in Supabase for `groups`, `group_members`, `ideas`, `decisions`
-- [ ] Realtime subscription hook in `packages/api-client`: `useRealtimeChannel(channelName, filters)`
-- [ ] Wire subscriptions into existing TanStack Query caches: on event, invalidate or patch the relevant query
-- [ ] Connection state indicator (subtle, e.g., a small dot) for both apps
-- [ ] Reconnect-on-resume logic for mobile (when app returns from background)
+- [x] Enable Realtime publications for `groups`, `group_members`, `ideas`, `decisions` (migration 014, `REPLICA IDENTITY FULL`)
+- [x] ~~`useRealtimeChannel` hook~~ → framework-free `subscribeToGroup`/`subscribeToMyGroups` in `@huddle/api-client/realtime` (D57)
+- [x] Wire into caches: mobile invalidates TanStack Query; web runs throttled `router.refresh()` (RSC, no cache)
+- [x] Connection-state dot on both apps
+- [x] Reconnect-on-resume on mobile (`AppState` → reconnect + refetch)
 
-**Files likely affected**
-- `supabase/migrations/*realtime*.sql`
-- `packages/api-client/src/realtime.ts`
-- `apps/web/components/RealtimeProvider.tsx`
-- `apps/mobile/components/RealtimeProvider.tsx`
-
-**Implementation notes**
-- Don't naively invalidate everything on any change — scope subscriptions per group the user is viewing, plus a global "my groups" channel.
-- Realtime payloads still go through RLS; a user will not receive events for groups they aren't in. Verify this empirically — it's a common source of leaks if Realtime is misconfigured.
-- Throttle invalidations (e.g., one per 500ms per query key) to prevent storms.
+**Files affected**
+- `supabase/migrations/20260613120000_realtime_publication.sql`
+- `packages/api-client/src/realtime.ts` (+ `client.browser.ts` env override)
+- `apps/web/src/components/{RealtimeProvider,GroupRealtime,ConnectionDot}.tsx`, `apps/web/src/lib/supabase-browser.ts`
+- `apps/mobile/src/context/RealtimeContext.tsx`, `apps/mobile/src/components/ConnectionDot.tsx`, `apps/mobile/src/lib/realtime-invalidate.ts`
 
 **Validation steps**
-- [ ] Two browsers, same group: user A adds idea → user B sees it within ~1s
-- [ ] User B is removed from group → user B no longer receives events from that group
-- [ ] Mobile app backgrounded for 5 min and resumed → subscription reconnects and missed state is fetched
+- [x] Two browsers, same group: A adds idea → B sees it within ~1s (web E2E)
+- [x] User B removed from group → B no longer receives events / loses access (web E2E: B's page goes 404 live; RLS integration test confirms non-member receives nothing)
+- [~] Mobile backgrounded then resumed → reconnects + refetches — *code path verified; a real background/resume cycle needs a native device/emulator (Phase 10). The live-update path itself is preview-verified.*
 
 **Tests that must pass before Phase 7**
-- [ ] **Integration:** realtime subscription delivers events that match RLS scope
-- [ ] **E2E (web):** two-context Playwright test verifying live update
-- [ ] **Regression:** all prior tests green
+- [x] **Integration:** realtime subscription delivers events that match RLS scope (`realtime-rls.integration.mjs`, asserting)
+- [x] **E2E (web):** two-context Playwright test verifying live update (3 new, total 45)
+- [x] **Regression:** all prior tests green (45 Playwright, 144 pgTAP, 206 unit — 77 validation + 129 api-client incl. 8 realtime helper tests)
 
 ---
 

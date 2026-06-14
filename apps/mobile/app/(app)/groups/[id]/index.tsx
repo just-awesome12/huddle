@@ -18,6 +18,7 @@ import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks'
 import type { IdeaCategory, IdeaStatus } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useGroupRealtime } from '@/context/RealtimeContext';
 import { groupErrorMessage } from '@/lib/group-errors';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
@@ -68,6 +69,8 @@ export default function GroupDetailScreen() {
   const myUserId = session?.user.id;
 
   const [filters, setFilters] = useState<IdeaFilters>({});
+
+  useGroupRealtime(id);
 
   const group = useGroup(supabase, id);
   const members = useGroupMembers(supabase, id);

@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@huddle/types';
-import { resolvePublicEnv } from './env';
+import { resolvePublicEnv, type SupabaseEnv } from './env';
 
 /**
  * Singleton browser-side Supabase client.
@@ -20,9 +20,18 @@ import { resolvePublicEnv } from './env';
 
 let cached: SupabaseClient<Database> | null = null;
 
-export function createBrowserSupabaseClient(): SupabaseClient<Database> {
+/**
+ * @param env Optional, pre-resolved public env. Pass this from the app
+ *   when the values must come from STATIC `process.env.NEXT_PUBLIC_*`
+ *   references — Next.js (and Expo/Metro) only inline those into client
+ *   bundles, so the dynamic lookup inside resolvePublicEnv() yields
+ *   undefined in the browser. Server/native callers can omit it.
+ */
+export function createBrowserSupabaseClient(
+  env?: SupabaseEnv,
+): SupabaseClient<Database> {
   if (cached) return cached;
-  const { url, publishableKey } = resolvePublicEnv();
+  const { url, publishableKey } = env ?? resolvePublicEnv();
   cached = createBrowserClient<Database>(url, publishableKey);
   return cached;
 }
