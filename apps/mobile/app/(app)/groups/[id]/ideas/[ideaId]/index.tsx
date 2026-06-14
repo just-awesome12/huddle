@@ -18,6 +18,7 @@ import {
 } from '@huddle/api-client/ideas-hooks';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
 import { ConfirmAction } from '@/components/ConfirmAction';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
@@ -27,6 +28,8 @@ export default function IdeaDetailScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const myUserId = session?.user.id;
+
+  useGroupRealtime(id);
 
   const idea = useIdea(supabase, ideaId);
   const members = useGroupMembers(supabase, id);
