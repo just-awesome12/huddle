@@ -18,6 +18,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConnectionDot } from '@/components/ConnectionDot';
+import { Logo } from '@/components/Logo';
 
 /** One pending invite card. Group name comes from peek_invite — RLS
  *  hides the groups table from non-members. */
@@ -54,7 +55,7 @@ export default function GroupListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Huddle</Text>
+          <Logo />
           <ConnectionDot />
         </View>
         <Button label="Sign out" variant="ghost" onPress={() => supabase.auth.signOut()} />
@@ -117,7 +118,7 @@ export default function GroupListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#f7f6fd' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f6fd',
     borderWidth: 1,
     borderColor: '#cbd5e1',
     borderRadius: 12,

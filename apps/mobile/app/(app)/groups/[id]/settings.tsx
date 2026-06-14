@@ -154,13 +154,13 @@ export default function GroupSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f8fafc' },
+  flex: { flex: 1, backgroundColor: '#f7f6fd' },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f6fd',
   },
   scroll: { padding: 16, gap: 16 },
   heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },

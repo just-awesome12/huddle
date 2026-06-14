@@ -246,7 +246,7 @@ export function IdeaForm({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f8fafc' },
+  flex: { flex: 1, backgroundColor: '#f7f6fd' },
   scroll: { padding: 16 },
   card: {
     backgroundColor: '#fff',

@@ -5,6 +5,7 @@ import {
   Text,
   type PressableProps,
 } from 'react-native';
+import { colors } from '@/lib/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -59,22 +60,22 @@ const styles = StyleSheet.create({
 });
 
 const variantStyles: Record<Variant, object> = {
-  primary: { backgroundColor: '#0f172a' },
-  secondary: { backgroundColor: '#e2e8f0' },
+  primary: { backgroundColor: colors.brand[600] },
+  secondary: { backgroundColor: colors.brand[50] },
   ghost: { backgroundColor: 'transparent' },
-  danger: { backgroundColor: '#dc2626' },
+  danger: { backgroundColor: colors.danger },
 };
 
 const variantPressed: Record<Variant, object> = {
-  primary: { backgroundColor: '#1e293b' },
-  secondary: { backgroundColor: '#cbd5e1' },
-  ghost: { backgroundColor: '#f1f5f9' },
-  danger: { backgroundColor: '#b91c1c' },
+  primary: { backgroundColor: colors.brand[700] },
+  secondary: { backgroundColor: colors.brand[100] },
+  ghost: { backgroundColor: colors.brand[50] },
+  danger: { backgroundColor: colors.dangerText },
 };
 
 const variantLabel: Record<Variant, object> = {
-  primary: { color: '#fff' },
-  secondary: { color: '#0f172a' },
+  primary: { color: colors.white },
+  secondary: { color: colors.brand[800] },
   ghost: { color: '#475569' },
-  danger: { color: '#fff' },
+  danger: { color: colors.white },
 };

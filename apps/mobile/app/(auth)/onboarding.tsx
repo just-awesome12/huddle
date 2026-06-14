@@ -129,7 +129,7 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f8fafc' },
+  flex: { flex: 1, backgroundColor: '#f7f6fd' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   card: {
     backgroundColor: '#fff',

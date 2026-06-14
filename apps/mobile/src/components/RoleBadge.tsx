@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '@/lib/theme';
 
 interface RoleBadgeProps {
   role: 'admin' | 'member';
@@ -21,7 +22,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  admin: { backgroundColor: '#0f172a' },
+  admin: { backgroundColor: colors.brand[600] },
   member: { backgroundColor: '#f1f5f9' },
   label: { fontSize: 11, fontWeight: '600' },
   adminLabel: { color: '#fff' },

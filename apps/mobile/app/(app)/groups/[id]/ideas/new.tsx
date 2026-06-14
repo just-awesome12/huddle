@@ -61,7 +61,7 @@ export default function NewIdeaScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#f7f6fd' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

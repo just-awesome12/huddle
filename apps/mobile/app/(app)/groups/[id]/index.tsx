@@ -20,6 +20,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { groupErrorMessage } from '@/lib/group-errors';
+import { colors } from '@/lib/theme';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConfirmAction } from '@/components/ConfirmAction';
@@ -57,7 +58,7 @@ const chipStyles = StyleSheet.create({
     paddingVertical: 4,
     backgroundColor: '#f1f5f9',
   },
-  active: { backgroundColor: '#0f172a' },
+  active: { backgroundColor: colors.brand[600] },
   label: { fontSize: 12, fontWeight: '600', color: '#475569' },
   activeLabel: { color: '#fff' },
 });
@@ -282,13 +283,13 @@ export default function GroupDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#f7f6fd' },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f6fd',
   },
   header: {
     flexDirection: 'row',

@@ -181,13 +181,13 @@ export default function IdeaDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: '#f7f6fd' },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f6fd',
   },
   headerBar: {
     flexDirection: 'row',

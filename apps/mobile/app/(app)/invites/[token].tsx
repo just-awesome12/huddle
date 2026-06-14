@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f6fd',
   },
   card: {
     alignSelf: 'stretch',
