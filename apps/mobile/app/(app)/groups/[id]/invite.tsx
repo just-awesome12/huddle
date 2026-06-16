@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
@@ -39,6 +40,8 @@ function describeInvite(invite: GroupInviteWithInvitee): string {
 const SEARCH_QUERY_RE = /^[a-z0-9_]{1,30}$/;
 
 export default function GroupInviteScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -78,7 +81,7 @@ export default function GroupInviteScreen() {
   if (group.isPending || members.isPending || invites.isPending) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0f172a" />
+        <ActivityIndicator size="large" color={c.brand[600]} />
       </View>
     );
   }
@@ -303,14 +306,14 @@ export default function GroupInviteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f7f6fd' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.canvas },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f7f6fd',
+    backgroundColor: c.canvas,
   },
   header: {
     flexDirection: 'row',
@@ -318,27 +321,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderBottomColor: c.border,
+    backgroundColor: c.surface,
   },
   scroll: { padding: 16, gap: 8 },
   headerBlock: { gap: 16, marginBottom: 8 },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 12,
   },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
   linkBlock: {
     marginTop: 4,
     gap: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: c.border,
     paddingTop: 12,
   },
   linkLabel: {
@@ -346,9 +349,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#64748b',
+    color: c.muted,
   },
-  linkUrl: { fontSize: 12, color: '#0f172a' },
+  linkUrl: { fontSize: 12, color: c.text },
   qrWrap: { alignItems: 'center', paddingVertical: 8 },
   row: { flexDirection: 'row', gap: 8 },
   sectionTitle: {
@@ -356,30 +359,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#64748b',
+    color: c.muted,
   },
-  muted: { fontSize: 13, color: '#64748b' },
+  muted: { fontSize: 13, color: c.muted },
   inviteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   inviteInfo: { flexShrink: 1 },
-  inviteKind: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-  inviteMeta: { fontSize: 12, color: '#64748b' },
-  expired: { color: '#dc2626' },
+  inviteKind: { fontSize: 14, fontWeight: '600', color: c.text },
+  inviteMeta: { fontSize: 12, color: c.muted },
+  expired: { color: c.danger },
   resultRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: c.surface2,
     paddingTop: 10,
   },
   invitedMark: { fontSize: 13, fontWeight: '600', color: '#15803d' },

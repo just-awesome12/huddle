@@ -1,11 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '@/lib/theme';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 
 interface RoleBadgeProps {
   role: 'admin' | 'member';
 }
 
 export function RoleBadge({ role }: RoleBadgeProps) {
+  const c = useColors();
+  const styles = makeStyles(c);
   const isAdmin = role === 'admin';
   return (
     <View style={[styles.badge, isAdmin ? styles.admin : styles.member]}>
@@ -16,15 +18,15 @@ export function RoleBadge({ role }: RoleBadgeProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   badge: {
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  admin: { backgroundColor: colors.brand[600] },
-  member: { backgroundColor: '#f1f5f9' },
+  admin: { backgroundColor: c.brand[600] },
+  member: { backgroundColor: c.surface2 },
   label: { fontSize: 11, fontWeight: '600' },
-  adminLabel: { color: '#fff' },
-  memberLabel: { color: '#475569' },
+  adminLabel: { color: c.surface },
+  memberLabel: { color: c.muted },
 });

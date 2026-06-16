@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Link } from 'expo-router';
 import { signUpSchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
@@ -30,6 +31,8 @@ import { GoogleSignInButton } from '@/components/GoogleSignInButton';
  *     Function intercept in v1).
  */
 export default function SignUpScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -197,25 +200,25 @@ function friendlyAuthError(message: string): string {
   return message;
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f7f6fd' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  flex: { flex: 1, backgroundColor: c.canvas },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 14,
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#0f172a' },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
-  muted: { color: '#64748b', fontSize: 14 },
+  title: { fontSize: 24, fontWeight: '700', color: c.text },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
+  muted: { color: c.muted, fontSize: 14 },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  line: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
-  dividerLabel: { color: '#94a3b8', fontSize: 11, letterSpacing: 1.2 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
-  footer: { fontSize: 13, color: '#64748b' },
-  link: { color: '#0f172a', fontWeight: '600' },
+  line: { flex: 1, height: 1, backgroundColor: c.border },
+  dividerLabel: { color: c.faint, fontSize: 11, letterSpacing: 1.2 },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
+  footer: { fontSize: 13, color: c.muted },
+  link: { color: c.text, fontWeight: '600' },
 });

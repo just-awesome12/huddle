@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { onboardingSchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
 import { supabase } from '@/lib/supabase';
@@ -25,6 +26,8 @@ import { FormField } from '@/components/FormField';
  * is true.
  */
 export default function OnboardingScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { session, refreshProfile } = useAuth();
   const meta = session?.user.user_metadata ?? {};
   const suggested =
@@ -128,19 +131,19 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f7f6fd' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  flex: { flex: 1, backgroundColor: c.canvas },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 14,
   },
-  title: { fontSize: 22, fontWeight: '700', color: '#0f172a' },
-  muted: { color: '#64748b', fontSize: 14 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
+  title: { fontSize: 22, fontWeight: '700', color: c.text },
+  muted: { color: c.muted, fontSize: 14 },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
 });

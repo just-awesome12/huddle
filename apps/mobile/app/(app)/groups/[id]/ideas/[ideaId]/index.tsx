@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroupMembers } from '@huddle/api-client/groups-hooks';
 import {
@@ -24,6 +25,8 @@ import { ConfirmAction } from '@/components/ConfirmAction';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 
 export default function IdeaDetailScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { id, ideaId } = useLocalSearchParams<{ id: string; ideaId: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -41,7 +44,7 @@ export default function IdeaDetailScreen() {
   if (idea.isPending || members.isPending) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0f172a" />
+        <ActivityIndicator size="large" color={c.brand[600]} />
       </View>
     );
   }
@@ -180,14 +183,14 @@ export default function IdeaDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f7f6fd' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.canvas },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f7f6fd',
+    backgroundColor: c.canvas,
   },
   headerBar: {
     flexDirection: 'row',
@@ -195,32 +198,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderBottomColor: c.border,
+    backgroundColor: c.surface,
   },
   scroll: { padding: 16, gap: 16 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 10,
   },
-  title: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
+  title: { fontSize: 20, fontWeight: '700', color: c.text },
   badges: { flexDirection: 'row', gap: 8 },
-  meta: { fontSize: 12, color: '#64748b' },
+  meta: { fontSize: 12, color: c.muted },
   photo: {
     width: '100%',
     height: 220,
     borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: c.surface2,
   },
-  description: { fontSize: 14, color: '#334155', lineHeight: 20 },
+  description: { fontSize: 14, color: c.text, lineHeight: 20 },
   link: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f172a',
+    color: c.text,
     textDecorationLine: 'underline',
   },
   statusRow: {
@@ -228,11 +231,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: c.border,
     paddingTop: 12,
   },
   manageRow: { flexDirection: 'row', gap: 8 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
 });

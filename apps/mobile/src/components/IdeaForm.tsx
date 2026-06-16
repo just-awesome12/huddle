@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import * as ImagePicker from 'expo-image-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { createIdeaSchema, type IdeaCategory } from '@huddle/validation';
@@ -60,6 +61,8 @@ export function IdeaForm({
   currentPhotoUrl,
   onSubmit,
 }: IdeaFormProps) {
+  const c = useColors();
+  const styles = makeStyles(c);
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [category, setCategory] = useState<IdeaCategory>(initial?.category ?? 'food');
@@ -245,37 +248,37 @@ export function IdeaForm({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f7f6fd' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  flex: { flex: 1, backgroundColor: c.canvas },
   scroll: { padding: 16 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 16,
   },
   fieldBlock: { gap: 4 },
-  label: { fontSize: 13, fontWeight: '600', color: '#334155' },
+  label: { fontSize: 13, fontWeight: '600', color: c.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: c.surface2,
   },
-  chipActive: { backgroundColor: '#0f172a' },
-  chipLabel: { fontSize: 13, fontWeight: '600', color: '#475569' },
-  chipLabelActive: { color: '#fff' },
+  chipActive: { backgroundColor: c.text },
+  chipLabel: { fontSize: 13, fontWeight: '600', color: c.muted },
+  chipLabelActive: { color: c.surface },
   textarea: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: c.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     minHeight: 88,
     textAlignVertical: 'top',
   },
@@ -283,10 +286,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 160,
     borderRadius: 8,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: c.surface2,
   },
   row: { flexDirection: 'row', gap: 8 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
-  error: { fontSize: 12, color: '#dc2626' },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
+  error: { fontSize: 12, color: c.danger },
 });

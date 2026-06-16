@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useGroup,
@@ -20,7 +21,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { groupErrorMessage } from '@/lib/group-errors';
-import { colors } from '@/lib/theme';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConfirmAction } from '@/components/ConfirmAction';
@@ -40,6 +40,8 @@ function FilterChip({
   active: boolean;
   onPress: () => void;
 }) {
+  const c = useColors();
+  const chipStyles = makeChipStyles(c);
   return (
     <Pressable
       accessibilityRole="button"
@@ -51,19 +53,22 @@ function FilterChip({
   );
 }
 
-const chipStyles = StyleSheet.create({
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    backgroundColor: '#f1f5f9',
-  },
-  active: { backgroundColor: colors.brand[600] },
-  label: { fontSize: 12, fontWeight: '600', color: '#475569' },
-  activeLabel: { color: '#fff' },
-});
+const makeChipStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    chip: {
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      backgroundColor: c.surface2,
+    },
+    active: { backgroundColor: c.brand[600] },
+    label: { fontSize: 12, fontWeight: '600', color: c.muted },
+    activeLabel: { color: c.surface },
+  });
 
 export default function GroupDetailScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -82,7 +87,7 @@ export default function GroupDetailScreen() {
   if (group.isPending || members.isPending) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0f172a" />
+        <ActivityIndicator size="large" color={c.brand[600]} />
       </View>
     );
   }
@@ -176,7 +181,7 @@ export default function GroupDetailScreen() {
               </View>
 
               {ideas.isPending ? (
-                <ActivityIndicator color="#0f172a" />
+                <ActivityIndicator color={c.brand[600]} />
               ) : ideas.isError ? (
                 <Text style={styles.mutedText}>Couldn&apos;t load ideas.</Text>
               ) : ideas.data.length === 0 ? (
@@ -282,14 +287,14 @@ export default function GroupDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f7f6fd' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.canvas },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f7f6fd',
+    backgroundColor: c.canvas,
   },
   header: {
     flexDirection: 'row',
@@ -298,43 +303,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderBottomColor: c.border,
+    backgroundColor: c.surface,
   },
   headerActions: { flexDirection: 'row', gap: 4 },
   body: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  groupName: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
+  groupName: { fontSize: 20, fontWeight: '700', color: c.text },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
   sectionTitle: {
     marginTop: 16,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#64748b',
+    color: c.muted,
   },
   list: { paddingVertical: 12, gap: 8 },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   memberInfo: { flexShrink: 1 },
-  memberName: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-  you: { color: '#94a3b8', fontWeight: '400' },
-  memberUsername: { fontSize: 12, color: '#64748b' },
+  memberName: { fontSize: 14, fontWeight: '600', color: c.text },
+  you: { color: c.faint, fontWeight: '400' },
+  memberUsername: { fontSize: 12, color: c.muted },
   memberActions: { alignItems: 'flex-end', gap: 8 },
   footer: {
     marginTop: 24,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: c.border,
   },
   ideasBlock: { gap: 10 },
   ideasHeader: {
@@ -343,23 +348,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  mutedText: { fontSize: 13, color: '#64748b' },
+  mutedText: { fontSize: 13, color: c.muted },
   ideaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  ideaRowPressed: { backgroundColor: '#f1f5f9' },
+  ideaRowPressed: { backgroundColor: c.surface2 },
   ideaInfo: { flexShrink: 1 },
-  ideaTitle: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
-  ideaMeta: { fontSize: 12, color: '#64748b' },
+  ideaTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+  ideaMeta: { fontSize: 12, color: c.muted },
   ideaBadges: { flexDirection: 'row', gap: 6, flexShrink: 0 },
   membersTitle: { marginTop: 20 },
 });
