@@ -254,7 +254,7 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 - **OQ-8** ToS / Privacy policy authorship
 - **OQ-11** License (currently "all rights reserved")
 
-(OQ-5 image moderation resolved in Phase 5 → report-and-review, D53. OQ-4 visual design resolved → "Pop" direction: violet brand + pink accent + Plus Jakarta Sans on web; brand tokens in `globals.css` @theme / `apps/mobile/src/lib/theme.ts`; `Logo` component in both apps.)
+(OQ-5 image moderation resolved in Phase 5 → report-and-review, D53. OQ-4 visual design resolved → "Pop" direction: violet brand + pink accent, Montserrat/Lato type on web (mobile keeps system font); **light/dark mode with a persisted system/light/dark toggle on both apps** — web via semantic `@theme` tokens + `.dark` class, mobile via `useColors()` theme-aware `makeStyles(c)` factories; brand logo PNG (`apps/web/public/logo.png`, `apps/mobile/assets/images/logo.png`) in the `Logo` component. Shipped on PR #10.)
 
 These shouldn't block Phase 6 work but should get answered before Phase 10.
 
