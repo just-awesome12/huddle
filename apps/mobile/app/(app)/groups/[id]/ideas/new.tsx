@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCreateIdea, useUploadIdeaPhoto } from '@huddle/api-client/ideas-hooks';
 import { supabase } from '@/lib/supabase';
@@ -7,6 +8,8 @@ import { Button } from '@/components/Button';
 import { IdeaForm, type IdeaFormValues, type PickedPhoto } from '@/components/IdeaForm';
 
 export default function NewIdeaScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const createIdea = useCreateIdea(supabase);
@@ -60,8 +63,8 @@ export default function NewIdeaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.canvas },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -69,9 +72,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderBottomColor: c.border,
+    backgroundColor: c.surface,
   },
-  heading: { fontSize: 16, fontWeight: '600', color: '#0f172a' },
+  heading: { fontSize: 16, fontWeight: '600', color: c.text },
   spacer: { width: 64 },
 });

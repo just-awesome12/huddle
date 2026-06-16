@@ -80,7 +80,7 @@ export function UsernameSearch({ groupId }: UsernameSearchProps) {
         </p>
       )}
       {query.trim() !== '' && !searching && !searchError && results.length === 0 && (
-        <p className="text-sm text-slate-500">No matching usernames.</p>
+        <p className="text-sm text-muted">No matching usernames.</p>
       )}
       {results.length > 0 && (
         <ul className="flex flex-col gap-2" data-testid="username-results">
@@ -107,12 +107,12 @@ function SearchResultRow({
   const invited = !!state.createdToken;
 
   return (
-    <li className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
+    <li className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3">
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-slate-900">
+        <span className="text-sm font-medium text-content">
           {profile.display_name}
         </span>
-        <span className="text-xs text-slate-500">@{profile.username}</span>
+        <span className="text-xs text-muted">@{profile.username}</span>
       </div>
       <form action={formAction} className="flex flex-col items-end gap-1">
         <input type="hidden" name="groupId" value={groupId} />

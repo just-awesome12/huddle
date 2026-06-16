@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Button } from './Button';
 
 interface ConfirmActionProps {
@@ -33,6 +34,8 @@ export function ConfirmAction({
   error,
   variant = 'danger',
 }: ConfirmActionProps) {
+  const c = useColors();
+  const styles = makeStyles(c);
   const [confirming, setConfirming] = useState(false);
 
   if (!confirming) {
@@ -82,10 +85,10 @@ export function ConfirmAction({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   wrap: { gap: 8 },
-  prompt: { fontSize: 14, color: '#334155' },
+  prompt: { fontSize: 14, color: c.text },
   row: { flexDirection: 'row', gap: 8 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
 });

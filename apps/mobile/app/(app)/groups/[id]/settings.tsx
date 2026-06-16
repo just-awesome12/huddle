@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { createGroupSchema } from '@huddle/validation';
 import {
@@ -23,6 +24,8 @@ import { FormField } from '@/components/FormField';
 import { ConfirmAction } from '@/components/ConfirmAction';
 
 export default function GroupSettingsScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
@@ -46,7 +49,7 @@ export default function GroupSettingsScreen() {
   if (group.isPending || members.isPending) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0f172a" />
+        <ActivityIndicator size="large" color={c.brand[600]} />
       </View>
     );
   }
@@ -153,43 +156,43 @@ export default function GroupSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#f8fafc' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  flex: { flex: 1, backgroundColor: c.canvas },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: '#f8fafc',
+    backgroundColor: c.canvas,
   },
   scroll: { padding: 16, gap: 16 },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 12,
   },
-  dangerCard: { borderColor: '#fecaca', backgroundColor: '#fef2f2' },
+  dangerCard: { borderColor: '#fecaca', backgroundColor: c.dangerBg },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#64748b',
+    color: c.muted,
   },
   dangerTitle: {
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#b91c1c',
+    color: c.dangerText,
   },
-  muted: { color: '#64748b', fontSize: 13, lineHeight: 18 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
+  muted: { color: c.muted, fontSize: 13, lineHeight: 18 },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
   success: { backgroundColor: '#f0fdf4', padding: 10, borderRadius: 8 },
   successText: { color: '#15803d', fontSize: 13 },
 });

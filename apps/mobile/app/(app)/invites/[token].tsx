@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { acceptInviteSchema } from '@huddle/validation';
 import {
@@ -36,6 +37,8 @@ function StatusCard({
   body: string;
   onHome: () => void;
 }) {
+  const c = useColors();
+  const styles = makeStyles(c);
   return (
     <View style={styles.center}>
       <View style={styles.card}>
@@ -50,6 +53,8 @@ function StatusCard({
 }
 
 export default function AcceptInviteScreen() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
   const accept = useAcceptInvite(supabase);
@@ -75,7 +80,7 @@ export default function AcceptInviteScreen() {
   if (peek.isPending) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0f172a" />
+        <ActivityIndicator size="large" color={c.brand[600]} />
       </View>
     );
   }
@@ -161,27 +166,27 @@ export default function AcceptInviteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: '#f8fafc',
+    backgroundColor: c.canvas,
   },
   card: {
     alignSelf: 'stretch',
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     padding: 20,
     gap: 10,
   },
-  kicker: { fontSize: 13, color: '#64748b' },
-  groupName: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
-  body: { fontSize: 14, color: '#475569', lineHeight: 20 },
-  alert: { backgroundColor: '#fef2f2', padding: 10, borderRadius: 8 },
-  alertText: { color: '#b91c1c', fontSize: 13 },
+  kicker: { fontSize: 13, color: c.muted },
+  groupName: { fontSize: 20, fontWeight: '700', color: c.text },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
+  body: { fontSize: 14, color: c.muted, lineHeight: 20 },
+  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+  alertText: { color: c.dangerText, fontSize: 13 },
 });

@@ -3,6 +3,7 @@ import { Stack, Redirect, useSegments, usePathname, type Href } from 'expo-route
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ThemeProvider, useColors } from '@/context/ThemeContext';
 
 /**
  * Deep link captured while the user was signed out (e.g. an invite
@@ -32,11 +33,13 @@ export default function RootLayout() {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <GatedStack />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <GatedStack />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
@@ -51,11 +54,12 @@ function GatedStack() {
   const { session, needsOnboarding, loading } = useAuth();
   const segments = useSegments();
   const pathname = usePathname();
+  const c = useColors();
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0f172a" />
+      <View style={[styles.center, { backgroundColor: c.canvas }]}>
+        <ActivityIndicator size="large" color={c.brand[600]} />
       </View>
     );
   }
@@ -107,6 +111,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#f7f6fd',
   },
 });

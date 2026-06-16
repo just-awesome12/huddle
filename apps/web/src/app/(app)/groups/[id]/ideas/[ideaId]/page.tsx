@@ -58,12 +58,12 @@ export default async function IdeaDetailPage({
       <GroupRealtime groupId={id} />
       <Link
         href={`/groups/${id}`}
-        className="text-sm text-slate-500 hover:text-slate-700"
+        className="text-sm text-muted hover:text-content"
       >
         &larr; Back to ideas
       </Link>
 
-      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-6">
+      <div className="mt-4 rounded-lg border border-line bg-surface p-6">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-xl font-medium" data-testid="idea-title">
             {idea.title}
@@ -74,7 +74,7 @@ export default async function IdeaDetailPage({
           </div>
         </div>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-muted">
           Proposed by {idea.proposer?.display_name ?? 'someone'} on{' '}
           {new Date(idea.created_at).toLocaleDateString()}
         </p>
@@ -84,12 +84,12 @@ export default async function IdeaDetailPage({
             src={photoUrl}
             alt={`Photo for ${idea.title}`}
             data-testid="idea-photo"
-            className="mt-4 max-h-96 w-full rounded-lg border border-slate-200 object-cover"
+            className="mt-4 max-h-96 w-full rounded-lg border border-line object-cover"
           />
         )}
 
         {idea.description && (
-          <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
+          <p className="mt-4 whitespace-pre-wrap text-sm text-content">
             {idea.description}
           </p>
         )}
@@ -99,13 +99,13 @@ export default async function IdeaDetailPage({
             href={idea.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-block break-all text-sm font-medium text-slate-900 underline"
+            className="mt-4 inline-block break-all text-sm font-medium text-brand-ink underline"
           >
             {idea.link}
           </a>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-4">
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line pt-4">
           {idea.status !== 'done' && (
             <form action={statusAction}>
               <input type="hidden" name="status" value="done" />
@@ -137,7 +137,7 @@ export default async function IdeaDetailPage({
         <div className="mt-6 flex items-center gap-4">
           <Link
             href={`/groups/${id}/ideas/${ideaId}/edit`}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            className="text-sm font-medium text-muted hover:text-brand-ink"
           >
             Edit idea
           </Link>

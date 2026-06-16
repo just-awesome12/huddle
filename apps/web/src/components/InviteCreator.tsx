@@ -64,13 +64,13 @@ export function InviteCreator({ groupId }: InviteCreatorProps) {
       </form>
 
       {inviteUrl && (
-        <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface-2 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">
             Invite link — valid for 7 days
           </p>
           <code
             data-testid="invite-url"
-            className="break-all rounded bg-white px-2 py-1 text-xs text-slate-800"
+            className="break-all rounded bg-surface px-2 py-1 text-xs text-content"
           >
             {inviteUrl}
           </code>

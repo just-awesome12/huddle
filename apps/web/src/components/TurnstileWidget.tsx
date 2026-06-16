@@ -114,7 +114,7 @@ export function TurnstileWidget({ siteKey }: TurnstileWidgetProps) {
     <div>
       <div ref={containerRef} data-testid="turnstile-container">
         {testMode && (
-          <p className="text-xs text-slate-400" data-testid="turnstile-test-mode">
+          <p className="text-xs text-faint" data-testid="turnstile-test-mode">
             Turnstile test mode active (dev / E2E only).
           </p>
         )}

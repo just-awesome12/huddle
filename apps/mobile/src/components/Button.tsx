@@ -5,6 +5,7 @@ import {
   Text,
   type PressableProps,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -21,6 +22,8 @@ export function Button({
   disabled,
   ...rest
 }: ButtonProps) {
+  const c = useColors();
+  const v = variants(c);
   const isDisabled = disabled || loading;
   return (
     <Pressable
@@ -29,17 +32,17 @@ export function Button({
       {...rest}
       style={({ pressed }) => [
         styles.base,
-        variantStyles[variant],
-        pressed && !isDisabled && variantPressed[variant],
+        v[variant].bg,
+        pressed && !isDisabled && v[variant].pressed,
         isDisabled && styles.disabled,
       ]}
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' || variant === 'danger' ? '#fff' : '#0f172a'}
+          color={variant === 'primary' || variant === 'danger' ? c.white : c.brandInk}
         />
       ) : (
-        <Text style={[styles.label, variantLabel[variant]]}>{label}</Text>
+        <Text style={[styles.label, v[variant].label]}>{label}</Text>
       )}
     </Pressable>
   );
@@ -58,23 +61,34 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
 });
 
-const variantStyles: Record<Variant, object> = {
-  primary: { backgroundColor: '#0f172a' },
-  secondary: { backgroundColor: '#e2e8f0' },
-  ghost: { backgroundColor: 'transparent' },
-  danger: { backgroundColor: '#dc2626' },
-};
-
-const variantPressed: Record<Variant, object> = {
-  primary: { backgroundColor: '#1e293b' },
-  secondary: { backgroundColor: '#cbd5e1' },
-  ghost: { backgroundColor: '#f1f5f9' },
-  danger: { backgroundColor: '#b91c1c' },
-};
-
-const variantLabel: Record<Variant, object> = {
-  primary: { color: '#fff' },
-  secondary: { color: '#0f172a' },
-  ghost: { color: '#475569' },
-  danger: { color: '#fff' },
-};
+function variants(c: ThemeColors): Record<
+  Variant,
+  { bg: object; pressed: object; label: object }
+> {
+  // Secondary/ghost use surface-2 in dark so they're not bright lavender
+  // pills on a dark canvas; in light they keep the soft brand tint.
+  const subtle = c.surface === '#ffffff' ? c.brand[50] : c.surface2;
+  const subtlePressed = c.surface === '#ffffff' ? c.brand[100] : c.border;
+  return {
+    primary: {
+      bg: { backgroundColor: c.brand[600] },
+      pressed: { backgroundColor: c.brand[700] },
+      label: { color: c.white },
+    },
+    secondary: {
+      bg: { backgroundColor: subtle },
+      pressed: { backgroundColor: subtlePressed },
+      label: { color: c.brandInk },
+    },
+    ghost: {
+      bg: { backgroundColor: 'transparent' },
+      pressed: { backgroundColor: subtle },
+      label: { color: c.muted },
+    },
+    danger: {
+      bg: { backgroundColor: c.danger },
+      pressed: { backgroundColor: c.dangerText },
+      label: { color: c.white },
+    },
+  };
+}

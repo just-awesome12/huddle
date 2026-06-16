@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
 import { useMyGroups } from '@huddle/api-client/groups-hooks';
 import {
@@ -18,11 +19,15 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConnectionDot } from '@/components/ConnectionDot';
+import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /** One pending invite card. Group name comes from peek_invite — RLS
  *  hides the groups table from non-members. */
 function PendingInviteCard({ invite }: { invite: PendingInvite }) {
   const router = useRouter();
+  const c = useColors();
+  const styles = makeStyles(c);
   const peek = usePeekInvite(supabase, invite.token);
 
   return (
@@ -46,6 +51,8 @@ function PendingInviteCard({ invite }: { invite: PendingInvite }) {
 
 export default function GroupListScreen() {
   const router = useRouter();
+  const c = useColors();
+  const styles = makeStyles(c);
   const { data: groups, isPending, isError, refetch, isRefetching } =
     useMyGroups(supabase);
   const pendingInvites = useMyPendingInvites(supabase);
@@ -54,10 +61,13 @@ export default function GroupListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Huddle</Text>
+          <Logo />
           <ConnectionDot />
         </View>
-        <Button label="Sign out" variant="ghost" onPress={() => supabase.auth.signOut()} />
+        <View style={styles.titleRow}>
+          <ThemeToggle />
+          <Button label="Sign out" variant="ghost" onPress={() => supabase.auth.signOut()} />
+        </View>
       </View>
 
       {pendingInvites.isSuccess && pendingInvites.data.length > 0 ? (
@@ -78,7 +88,7 @@ export default function GroupListScreen() {
 
       {isPending ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0f172a" />
+          <ActivityIndicator size="large" color={c.brand[600]} />
         </View>
       ) : isError ? (
         <View style={styles.center}>
@@ -116,8 +126,8 @@ export default function GroupListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.canvas },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -125,11 +135,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    backgroundColor: '#fff',
+    borderBottomColor: c.border,
+    backgroundColor: c.surface,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
+  title: { fontSize: 20, fontWeight: '700', color: c.text },
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -138,54 +148,54 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
   },
-  heading: { fontSize: 18, fontWeight: '600', color: '#0f172a' },
+  heading: { fontSize: 18, fontWeight: '600', color: c.text },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  errorText: { fontSize: 14, color: '#b91c1c' },
+  errorText: { fontSize: 14, color: c.dangerText },
   empty: {
     margin: 16,
     padding: 24,
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#cbd5e1',
+    borderColor: c.border,
     alignItems: 'center',
     gap: 4,
   },
-  emptyTitle: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  emptyText: { fontSize: 13, color: '#64748b', textAlign: 'center' },
+  emptyTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+  emptyText: { fontSize: 13, color: c.muted, textAlign: 'center' },
   list: { padding: 16, gap: 8 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  rowPressed: { backgroundColor: '#f1f5f9' },
-  rowName: { fontSize: 14, fontWeight: '600', color: '#0f172a' },
+  rowPressed: { backgroundColor: c.surface2 },
+  rowName: { fontSize: 14, fontWeight: '600', color: c.text },
   invitesBlock: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
   invitesTitle: {
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#64748b',
+    color: c.muted,
   },
   inviteCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8fafc',
+    backgroundColor: c.canvas,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: c.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  inviteFrom: { fontSize: 12, color: '#64748b' },
-  viewInvite: { fontSize: 13, fontWeight: '600', color: '#334155' },
+  inviteFrom: { fontSize: 12, color: c.muted },
+  viewInvite: { fontSize: 13, fontWeight: '600', color: c.text },
 });

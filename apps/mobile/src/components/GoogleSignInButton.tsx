@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { Pressable, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -29,6 +30,8 @@ import { supabase } from '@/lib/supabase';
 WebBrowser.maybeCompleteAuthSession();
 
 export function GoogleSignInButton() {
+  const c = useColors();
+  const styles = makeStyles(c);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,12 +134,12 @@ export function GoogleSignInButton() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   wrap: { gap: 6 },
   button: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#fff',
+    borderColor: c.border,
+    backgroundColor: c.surface,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -144,8 +147,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 44,
   },
-  buttonPressed: { backgroundColor: '#f1f5f9' },
+  buttonPressed: { backgroundColor: c.surface2 },
   buttonDisabled: { opacity: 0.6 },
-  label: { fontSize: 14, fontWeight: '600', color: '#334155' },
-  error: { fontSize: 12, color: '#dc2626' },
+  label: { fontSize: 14, fontWeight: '600', color: c.text },
+  error: { fontSize: 12, color: c.danger },
 });

@@ -8,8 +8,8 @@ export function RoleBadge({ role }: RoleBadgeProps) {
       data-testid={`role-badge-${role}`}
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
         role === 'admin'
-          ? 'bg-slate-900 text-white'
-          : 'bg-slate-100 text-slate-600'
+          ? 'bg-brand-600 text-white'
+          : 'bg-surface-2 text-muted'
       }`}
     >
       {role === 'admin' ? 'Admin' : 'Member'}

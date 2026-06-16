@@ -1,1 +1,68 @@
 @import 'tailwindcss';
+
+/*
+ * Huddle visual design — "Pop" direction (OQ-4) + dark mode.
+ * Brand: violet (c-purple). Accent: pink (c-pink). Type: Montserrat
+ * (display/headings) + Lato (body), loaded via next/font in the root
+ * layout. Dark mode is class-based (.dark on <html>) so the in-app
+ * toggle can override the OS preference.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-lato), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #eeedfe;
+  --color-brand-100: #cecbf6;
+  --color-brand-200: #afa9ec;
+  --color-brand-300: #9a92e6;
+  --color-brand-400: #7f77dd;
+  --color-brand-500: #665cc8;
+  --color-brand-600: #534ab7;
+  --color-brand-700: #473e9f;
+  --color-brand-800: #3c3489;
+  --color-brand-900: #26215c;
+
+  --color-accent-50: #fbeaf0;
+  --color-accent-100: #f4c0d1;
+  --color-accent-400: #d4537e;
+  --color-accent-600: #993556;
+  --color-accent-900: #4b1528;
+
+  /*
+   * Semantic neutral tokens — components use these (bg-canvas,
+   * bg-surface, text-content, border-line, …) so a single set of
+   * dark overrides flips the whole app. Defaults are light mode.
+   */
+  --color-canvas: #f7f6fd;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f0fb;
+  --color-content: #0f172a;
+  --color-muted: #5b5b73;
+  --color-faint: #94a3b8;
+  --color-line: #e6e3f5;
+  /* Brand text (links/wordmark) — readable stop per mode. */
+  --color-brand-ink: #473e9f;
+}
+
+.dark {
+  --color-canvas: #0d0d18;
+  --color-surface: #17172a;
+  --color-surface-2: #21213a;
+  --color-content: #ececf5;
+  --color-muted: #a6a6bd;
+  --color-faint: #6f6f88;
+  --color-line: #2e2e48;
+  --color-brand-ink: #afa9ec;
+}
+
+@layer base {
+  /* Headings use the display face; body inherits Lato via --font-sans. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+}

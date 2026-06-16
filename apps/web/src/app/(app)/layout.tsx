@@ -4,6 +4,8 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { SignOutButton } from '@/components/SignOutButton';
 import { RealtimeProvider } from '@/components/RealtimeProvider';
 import { ConnectionDot } from '@/components/ConnectionDot';
+import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // Defence in depth: middleware also gates this group, but if the
@@ -21,11 +23,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <RealtimeProvider userId={user.id}>
       <div className="flex min-h-dvh flex-col">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-          <h1 className="text-lg font-semibold">Huddle</h1>
-          <div className="flex items-center gap-3 text-sm text-slate-600">
+        <header className="flex items-center justify-between border-b border-line bg-surface px-6 py-3">
+          <Logo />
+          <div className="flex items-center gap-3 text-sm text-muted">
             <ConnectionDot />
-            <span data-testid="signed-in-email">{user.email}</span>
+            <span data-testid="signed-in-email" className="hidden sm:inline">
+              {user.email}
+            </span>
+            <ThemeToggle />
             <SignOutButton />
           </div>
         </header>

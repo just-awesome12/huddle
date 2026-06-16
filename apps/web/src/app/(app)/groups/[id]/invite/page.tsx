@@ -59,7 +59,7 @@ export default async function GroupInvitePage({
     <div className="mx-auto max-w-md">
       <Link
         href={`/groups/${id}`}
-        className="text-sm text-slate-500 hover:text-slate-700"
+        className="text-sm text-muted hover:text-content"
       >
         &larr; Back to {groupName}
       </Link>
@@ -69,16 +69,16 @@ export default async function GroupInvitePage({
         <InviteCreator groupId={id} />
       </section>
 
-      <section className="mt-10 border-t border-slate-200 pt-6">
+      <section className="mt-10 border-t border-line pt-6">
         <UsernameSearch groupId={id} />
       </section>
 
       <section className="mt-10">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
           Open invites ({invites.length})
         </h3>
         {invites.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-muted">
             No open invites. Generate a link above to invite someone.
           </p>
         ) : (
@@ -88,13 +88,13 @@ export default async function GroupInvitePage({
               return (
                 <li
                   key={invite.id}
-                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3"
+                  className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3"
                 >
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-slate-900">
+                    <span className="text-sm font-medium text-content">
                       {describeInvite(invite)}
                     </span>
-                    <span className={`text-xs ${expired ? 'text-red-600' : 'text-slate-500'}`}>
+                    <span className={`text-xs ${expired ? 'text-red-600' : 'text-muted'}`}>
                       {expired
                         ? 'Expired'
                         : `Expires ${new Date(invite.expires_at).toLocaleDateString()}`}
