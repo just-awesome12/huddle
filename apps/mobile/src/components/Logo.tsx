@@ -1,25 +1,31 @@
-import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { colors } from '@/lib/theme';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { useColors } from '@/context/ThemeContext';
 
 /**
- * Huddle logo: three overlapping circles (a "huddle") + wordmark.
- * Brand violet/pink (Pop direction, OQ-4).
+ * Huddle logo: brand mark PNG (works on light + dark) + the "HUDDLE"
+ * wordmark in theme-coloured text. Mark-only via `wordmark={false}`.
  */
 export function Logo({ wordmark = true }: { wordmark?: boolean }) {
+  const c = useColors();
   return (
     <View style={styles.row}>
-      <Svg width={24} height={24} viewBox="0 0 34 34">
-        <Circle cx={12} cy={13} r={7} fill={colors.brand[600]} />
-        <Circle cx={22} cy={13} r={7} fill={colors.accent[400]} />
-        <Circle cx={17} cy={22} r={7} fill={colors.brand[400]} />
-      </Svg>
-      {wordmark ? <Text style={styles.word}>Huddle</Text> : null}
+      <Image
+        source={require('../../assets/images/logo.png')}
+        style={styles.mark}
+        resizeMode="contain"
+        accessibilityLabel="Huddle"
+      />
+      {wordmark ? (
+        <Text style={[styles.word, { color: c.brandInk }]}>HUDDLE</Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  word: { fontSize: 20, fontWeight: '700', color: colors.brand[900] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  // 1408×768 source → explicit w/h (RN Web ignores aspectRatio here and
+  // would render at the intrinsic 1408px width, blowing out the header).
+  mark: { width: 51, height: 28 },
+  word: { fontSize: 20, fontWeight: '700', letterSpacing: 1 },
 });

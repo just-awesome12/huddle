@@ -1,7 +1,8 @@
 /**
- * Huddle logo: three overlapping circles (a "huddle" of people) + the
- * wordmark. Brand violet/pink (Pop direction, OQ-4). Mark-only via
- * `wordmark={false}` for tight spots.
+ * Huddle logo: the brand mark (figures around a lightbulb) + the
+ * "HUDDLE" wordmark. The mark PNG works on light and dark; the wordmark
+ * is theme-coloured text (Montserrat) so it stays legible in both modes.
+ * Mark-only via `wordmark={false}` for tight spots.
  */
 export function Logo({
   wordmark = true,
@@ -12,21 +13,11 @@ export function Logo({
 }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <svg
-        width="26"
-        height="26"
-        viewBox="0 0 34 34"
-        role="img"
-        aria-label="Huddle"
-        className="shrink-0"
-      >
-        <circle cx="12" cy="13" r="7" fill="#534ab7" />
-        <circle cx="22" cy="13" r="7" fill="#d4537e" />
-        <circle cx="17" cy="22" r="7" fill="#7f77dd" />
-      </svg>
+      {/* Mark is a fixed-height PNG; width scales to its aspect ratio. */}
+      <img src="/logo.png" alt="Huddle" className="h-8 w-auto shrink-0" />
       {wordmark && (
-        <span className="font-display text-lg font-bold tracking-tight text-brand-ink">
-          Huddle
+        <span className="font-display text-lg font-bold tracking-wide text-brand-ink">
+          HUDDLE
         </span>
       )}
     </span>
