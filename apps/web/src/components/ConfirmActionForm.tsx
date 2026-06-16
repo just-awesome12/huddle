@@ -59,7 +59,7 @@ export function ConfirmActionForm({
       {Object.entries(fields).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
-      <p className="text-sm text-slate-700">{confirmPrompt}</p>
+      <p className="text-sm text-content">{confirmPrompt}</p>
       <div className="flex items-center gap-2">
         <Button type="submit" variant="danger" loading={pending}>
           {confirmLabel}

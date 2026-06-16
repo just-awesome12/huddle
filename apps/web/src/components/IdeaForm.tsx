@@ -25,7 +25,7 @@ interface IdeaFormProps {
 }
 
 const inputClasses =
-  'rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
+  'rounded-md border border-line bg-surface px-3 py-2 text-sm shadow-sm placeholder:text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1';
 
 /**
  * Shared create/edit form. Category is a native <select>, description a
@@ -93,7 +93,7 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
       />
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="field-category" className="text-sm font-medium text-slate-700">
+        <label htmlFor="field-category" className="text-sm font-medium text-content">
           Category
         </label>
         <select
@@ -117,8 +117,8 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="field-description" className="text-sm font-medium text-slate-700">
-          Description <span className="font-normal text-slate-400">(optional)</span>
+        <label htmlFor="field-description" className="text-sm font-medium text-content">
+          Description <span className="font-normal text-faint">(optional)</span>
         </label>
         <textarea
           id="field-description"
@@ -147,17 +147,17 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
       />
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="field-photo" className="text-sm font-medium text-slate-700">
-          Photo <span className="font-normal text-slate-400">(optional)</span>
+        <label htmlFor="field-photo" className="text-sm font-medium text-content">
+          Photo <span className="font-normal text-faint">(optional)</span>
         </label>
         {isEdit && currentPhotoUrl && (
           <div className="mb-1 flex items-center gap-3">
             <img
               src={currentPhotoUrl}
               alt="Current photo"
-              className="h-16 w-16 rounded-md border border-slate-200 object-cover"
+              className="h-16 w-16 rounded-md border border-line object-cover"
             />
-            <label className="flex items-center gap-2 text-sm text-slate-700">
+            <label className="flex items-center gap-2 text-sm text-content">
               <input type="checkbox" name="removePhoto" value="1" />
               Remove current photo
             </label>
@@ -169,9 +169,9 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={onPhotoChange}
-          className="text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+          className="text-sm text-muted file:mr-3 file:rounded-md file:border-0 file:bg-surface-2 file:px-3 file:py-2 file:text-sm file:font-medium file:text-content hover:file:bg-line"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted">
           {compressing ? 'Compressing…' : 'Compressed in your browser before upload.'}
         </p>
         {photoError && (

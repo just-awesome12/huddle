@@ -17,7 +17,7 @@ export const STATUS_LABELS: Record<IdeaStatus, string> = {
 const statusClasses: Record<IdeaStatus, string> = {
   on_radar: 'bg-sky-100 text-sky-800',
   done: 'bg-green-100 text-green-800',
-  dismissed: 'bg-slate-100 text-slate-500',
+  dismissed: 'bg-surface-2 text-muted',
 };
 
 export function CategoryBadge({ category }: { category: IdeaCategory }) {

@@ -21,7 +21,7 @@ export function FormField({
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-sm font-medium text-slate-700">
+      <label htmlFor={id} className="text-sm font-medium text-content">
         {label}
       </label>
       <input
@@ -33,12 +33,12 @@ export function FormField({
             .filter(Boolean)
             .join(' ') || undefined
         }
-        className={`rounded-md border px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 ${
-          error ? 'border-red-500 bg-red-50' : 'border-slate-300 bg-white'
+        className={`rounded-md border px-3 py-2 text-sm shadow-sm placeholder:text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 ${
+          error ? 'border-red-500 bg-red-50' : 'border-line bg-surface'
         } ${className}`}
       />
       {hint && !error && (
-        <p id={hintId} className="text-xs text-slate-500">
+        <p id={hintId} className="text-xs text-muted">
           {hint}
         </p>
       )}

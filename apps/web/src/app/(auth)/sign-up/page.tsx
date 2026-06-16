@@ -24,7 +24,7 @@ export default async function SignUpPage({
     <div className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-medium">Create your account</h2>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted">
           Pick a username and a display name your group will see.
         </p>
       </div>
@@ -32,18 +32,18 @@ export default async function SignUpPage({
       <OAuthProviderButtons />
 
       <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs uppercase tracking-wide text-slate-400">or</span>
-        <span className="h-px flex-1 bg-slate-200" />
+        <span className="h-px flex-1 bg-line" />
+        <span className="text-xs uppercase tracking-wide text-faint">or</span>
+        <span className="h-px flex-1 bg-line" />
       </div>
 
       <SignUpForm turnstileSiteKey={siteKey} next={next} />
 
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted">
         Already have an account?{' '}
         <Link
           href={next ? `/sign-in?next=${encodeURIComponent(next)}` : '/sign-in'}
-          className="font-medium text-brand-700 underline"
+          className="font-medium text-brand-ink underline"
         >
           Sign in
         </Link>

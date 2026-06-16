@@ -29,7 +29,7 @@ export default async function NewIdeaPage({
     <div className="mx-auto max-w-md">
       <Link
         href={`/groups/${id}`}
-        className="text-sm text-slate-500 hover:text-slate-700"
+        className="text-sm text-muted hover:text-content"
       >
         &larr; Back to {groupName}
       </Link>

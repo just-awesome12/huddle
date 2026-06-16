@@ -47,7 +47,7 @@ function FilterChip({
       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? 'bg-brand-600 text-white'
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          : 'bg-surface-2 text-muted hover:bg-line'
       }`}
     >
       {label}
@@ -97,7 +97,7 @@ export default async function GroupDetailPage({
   return (
     <div className="mx-auto max-w-2xl">
       <GroupRealtime groupId={id} />
-      <Link href="/groups" className="text-sm text-slate-500 hover:text-slate-700">
+      <Link href="/groups" className="text-sm text-muted hover:text-content">
         &larr; Back to groups
       </Link>
 
@@ -109,13 +109,13 @@ export default async function GroupDetailPage({
           <div className="flex items-center gap-4">
             <Link
               href={`/groups/${id}/invite`}
-              className="text-sm font-medium text-slate-600 hover:text-brand-700"
+              className="text-sm font-medium text-muted hover:text-brand-ink"
             >
               Invite
             </Link>
             <Link
               href={`/groups/${id}/settings`}
-              className="text-sm font-medium text-slate-600 hover:text-brand-700"
+              className="text-sm font-medium text-muted hover:text-brand-ink"
             >
               Settings
             </Link>
@@ -125,7 +125,7 @@ export default async function GroupDetailPage({
 
       <section className="mt-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
             Ideas ({ideas.length})
           </h3>
           <Link
@@ -152,7 +152,7 @@ export default async function GroupDetailPage({
               />
             ),
           )}
-          <span className="mx-1 h-4 w-px bg-slate-200" />
+          <span className="mx-1 h-4 w-px bg-line" />
           <FilterChip
             href={filterHref(id, { status: filters.status })}
             active={!filters.category}
@@ -171,11 +171,11 @@ export default async function GroupDetailPage({
         </div>
 
         {ideas.length === 0 ? (
-          <div className="mt-4 rounded-lg border border-dashed border-slate-300 px-6 py-8 text-center">
-            <p className="text-sm font-medium text-slate-700">
+          <div className="mt-4 rounded-lg border border-dashed border-line px-6 py-8 text-center">
+            <p className="text-sm font-medium text-content">
               {hasFilters ? 'Nothing matches these filters' : 'No ideas yet'}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted">
               {hasFilters
                 ? 'Try clearing a filter.'
                 : 'Add the first idea — a place to eat, something to do, anything.'}
@@ -187,13 +187,13 @@ export default async function GroupDetailPage({
               <li key={idea.id}>
                 <Link
                   href={`/groups/${id}/ideas/${idea.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-line hover:bg-surface-2"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium text-slate-900">
+                    <span className="truncate text-sm font-medium text-content">
                       {idea.title}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted">
                       by {idea.proposer?.display_name ?? 'someone'} ·{' '}
                       {new Date(idea.created_at).toLocaleDateString()}
                     </span>
@@ -210,23 +210,23 @@ export default async function GroupDetailPage({
       </section>
 
       <section className="mt-10">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
           Members ({members.length})
         </h3>
         <ul className="mt-3 flex flex-col gap-2" data-testid="member-list">
           {members.map((member) => (
             <li
               key={member.userId}
-              className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3"
+              className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3"
             >
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-slate-900">
+                <span className="text-sm font-medium text-content">
                   {member.profile.display_name}
                   {member.userId === user.id && (
-                    <span className="ml-1 text-slate-400">(you)</span>
+                    <span className="ml-1 text-faint">(you)</span>
                   )}
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted">
                   @{member.profile.username}
                 </span>
               </div>
@@ -248,7 +248,7 @@ export default async function GroupDetailPage({
         </ul>
       </section>
 
-      <section className="mt-10 border-t border-slate-200 pt-6">
+      <section className="mt-10 border-t border-line pt-6">
         <ConfirmActionForm
           action={leaveGroupAction}
           fields={{ groupId: id }}

@@ -11,14 +11,14 @@ import { AcceptInviteForm } from '@/components/AcceptInviteForm';
 function StatusCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="mx-auto max-w-md">
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
+      <div className="rounded-lg border border-line bg-surface p-6">
         <h2 className="text-lg font-medium" data-testid="invite-status">
           {title}
         </h2>
-        <p className="mt-2 text-sm text-slate-600">{body}</p>
+        <p className="mt-2 text-sm text-muted">{body}</p>
         <Link
           href="/groups"
-          className="mt-4 inline-block text-sm font-medium text-brand-700 underline"
+          className="mt-4 inline-block text-sm font-medium text-brand-ink underline"
         >
           Go to your groups
         </Link>
@@ -93,12 +93,12 @@ export default async function AcceptInvitePage({
 
   return (
     <div className="mx-auto max-w-md">
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-500">You&apos;ve been invited</p>
+      <div className="rounded-lg border border-line bg-surface p-6">
+        <p className="text-sm text-muted">You&apos;ve been invited</p>
         <h2 className="mt-1 text-xl font-medium" data-testid="invite-group-name">
           {peek.group_name}
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-muted">
           Invited by {peek.inviter_display_name}
         </p>
         <div className="mt-6">

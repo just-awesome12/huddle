@@ -27,7 +27,7 @@ export default async function GroupsPage() {
     <div className="mx-auto max-w-2xl">
       {invitesForMe.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
             Invites for you ({invitesForMe.length})
           </h2>
           <ul className="mt-3 flex flex-col gap-2" data-testid="pending-invites">
@@ -35,15 +35,15 @@ export default async function GroupsPage() {
               <li key={invite.id}>
                 <Link
                   href={`/invites/${invite.token}`}
-                  className="flex items-center justify-between rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 transition-colors hover:border-slate-400"
+                  className="flex items-center justify-between rounded-lg border border-line bg-surface-2 px-4 py-3 transition-colors hover:border-brand-300"
                 >
                   <span className="flex flex-col">
-                    <span className="text-sm font-medium text-slate-900">{groupName}</span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-sm font-medium text-content">{groupName}</span>
+                    <span className="text-xs text-muted">
                       Invited by {invite.inviter?.display_name ?? 'someone'}
                     </span>
                   </span>
-                  <span className="text-sm font-medium text-slate-700">View invite →</span>
+                  <span className="text-sm font-medium text-content">View invite →</span>
                 </Link>
               </li>
             ))}
@@ -62,9 +62,9 @@ export default async function GroupsPage() {
       </div>
 
       {groups.length === 0 ? (
-        <div className="mt-8 rounded-lg border border-dashed border-slate-300 px-6 py-10 text-center">
-          <p className="text-sm font-medium text-slate-700">No groups yet</p>
-          <p className="mt-1 text-sm text-slate-500">
+        <div className="mt-8 rounded-lg border border-dashed border-line px-6 py-10 text-center">
+          <p className="text-sm font-medium text-content">No groups yet</p>
+          <p className="mt-1 text-sm text-muted">
             Create a group to start collecting ideas with your people.
           </p>
         </div>
@@ -74,9 +74,9 @@ export default async function GroupsPage() {
             <li key={group.id}>
               <Link
                 href={`/groups/${group.id}`}
-                className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-line hover:bg-surface-2"
               >
-                <span className="text-sm font-medium text-slate-900">
+                <span className="text-sm font-medium text-content">
                   {group.name}
                 </span>
                 <RoleBadge role={group.myRole} />

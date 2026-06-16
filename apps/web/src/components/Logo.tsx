@@ -25,7 +25,9 @@ export function Logo({
         <circle cx="17" cy="22" r="7" fill="#7f77dd" />
       </svg>
       {wordmark && (
-        <span className="text-lg font-bold tracking-tight text-brand-900">Huddle</span>
+        <span className="font-display text-lg font-bold tracking-tight text-brand-ink">
+          Huddle
+        </span>
       )}
     </span>
   );
