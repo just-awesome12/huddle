@@ -37,6 +37,9 @@ export const lightColors = {
   faint: '#94a3b8',
   border: '#e6e3f5',
   brandInk: '#473e9f',
+  // Brand-tinted surface (e.g. the picker's chosen/result card). Mirrors
+  // web's bg-brand-50 / dark:bg-brand-900.
+  brandBg: '#eeedfe',
   white: '#ffffff',
   danger: '#dc2626',
   dangerBg: '#fef2f2',
@@ -54,6 +57,7 @@ export const darkColors: typeof lightColors = {
   faint: '#6f6f88',
   border: '#2e2e48',
   brandInk: '#afa9ec',
+  brandBg: '#26215c',
   white: '#ffffff',
   danger: '#ef4444',
   dangerBg: '#3a1d24',

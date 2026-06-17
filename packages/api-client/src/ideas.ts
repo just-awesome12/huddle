@@ -178,10 +178,13 @@ export async function updateIdeaStatus(
  * is best-effort: an orphaned object in a private bucket is a smaller
  * failure than a delete that errors after the row is already gone.
  *
- * NOTE (Phase 7 flag): decisions.chosen_idea_id is ON DELETE CASCADE —
- * once decisions exist, deleting a chosen idea would erase history
- * rows. Revisit the FK (likely RESTRICT + "dismiss instead" UX) when
- * the picker ships.
+ * NOTE (Phase 7): decisions.chosen_idea_id is now ON DELETE NO ACTION
+ * (migration 015). If this idea has ever been a picker outcome, the
+ * delete raises a foreign-key violation (Postgres 23503 → HuddleError
+ * kind 'validation'). The UI catches that and steers the user to
+ * "dismiss instead" (set status = 'dismissed'), preserving history.
+ * (Group deletion still wipes everything — the cascade clears the
+ * decision before the end-of-statement FK check.)
  */
 export async function deleteIdea(
   client: HuddleClient,
