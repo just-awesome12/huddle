@@ -105,22 +105,30 @@ export default async function GroupDetailPage({
         <h2 className="text-xl font-medium" data-testid="group-name">
           {group.name}
         </h2>
-        {isAdmin && (
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/groups/${id}/invite`}
-              className="text-sm font-medium text-muted hover:text-brand-ink"
-            >
-              Invite
-            </Link>
-            <Link
-              href={`/groups/${id}/settings`}
-              className="text-sm font-medium text-muted hover:text-brand-ink"
-            >
-              Settings
-            </Link>
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/groups/${id}/history`}
+            className="text-sm font-medium text-muted hover:text-brand-ink"
+          >
+            History
+          </Link>
+          {isAdmin && (
+            <>
+              <Link
+                href={`/groups/${id}/invite`}
+                className="text-sm font-medium text-muted hover:text-brand-ink"
+              >
+                Invite
+              </Link>
+              <Link
+                href={`/groups/${id}/settings`}
+                className="text-sm font-medium text-muted hover:text-brand-ink"
+              >
+                Settings
+              </Link>
+            </>
+          )}
+        </div>
       </div>
 
       <section className="mt-8">
@@ -128,12 +136,20 @@ export default async function GroupDetailPage({
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
             Ideas ({ideas.length})
           </h3>
-          <Link
-            href={`/groups/${id}/ideas/new`}
-            className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-          >
-            New idea
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/groups/${id}/pick`}
+              className="inline-flex items-center justify-center rounded-md bg-brand-50 px-4 py-2 text-sm font-medium text-brand-800 transition-colors hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-brand-900 dark:text-brand-100 dark:hover:bg-brand-800"
+            >
+              Pick for us
+            </Link>
+            <Link
+              href={`/groups/${id}/ideas/new`}
+              className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            >
+              New idea
+            </Link>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="idea-filters">
