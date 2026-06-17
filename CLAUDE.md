@@ -266,19 +266,20 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 
 ---
 
-## 8. Open questions (not yet resolved)
+## 8. Open questions
 
-- **OQ-1** Final product name (currently "Huddle")
-- **OQ-2** Domain name (revisit in Phase 10)
-- **OQ-3** Real bundle IDs (currently `app.placeholder.huddle`)
-- **OQ-6** Account deletion / GDPR flow
-- **OQ-7** Geographic scope (single-region vs multi-region)
-- **OQ-8** ToS / Privacy policy authorship
-- **OQ-11** License (currently "all rights reserved")
+**Still open:**
+- **OQ-2** Domain name — needs Justin to register one; also unblocks the Phase 9 perimeter (Cloudflare) + universal links.
+- **OQ-6** *(approach chosen, build pending)* Account deletion / GDPR → **in-app self-serve** (Phase 10). Both stores require it; implementation (delete-account flow with last-admin handling) is a Phase 10 feature, not yet built.
+- **OQ-7** Geographic scope (single-region vs multi-region).
+- **OQ-8** ToS / Privacy policy authorship — needs Justin to decide who writes the legal copy (required for store submission).
 
-(OQ-5 image moderation resolved in Phase 5 → report-and-review, D53. OQ-4 visual design resolved → "Pop" direction: violet brand + pink accent, Montserrat/Lato type on web (mobile keeps system font); **light/dark mode with a persisted system/light/dark toggle on both apps** — web via semantic `@theme` tokens + `.dark` class, mobile via `useColors()` theme-aware `makeStyles(c)` factories; brand logo PNG (`apps/web/public/logo.png`, `apps/mobile/assets/images/logo.png`) in the `Logo` component. Shipped on PR #10.)
-
-These shouldn't block current work but should get answered before Phase 10.
+**Resolved:**
+- **OQ-1** → name is **"Huddle"** (Phase 10; verify store/trademark availability before submission).
+- **OQ-3** → bundle ID / package = **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json` (Phase 10).
+- **OQ-4** → "Pop" visual direction: violet brand + pink accent, Montserrat/Lato on web; light/dark mode with a persisted toggle on both apps; brand logo PNG. Shipped PR #10.
+- **OQ-5** → image moderation = report-and-review for v1 (D53).
+- **OQ-11** → **proprietary / all rights reserved** (`LICENSE` at repo root), Phase 10.
 
 ---
 

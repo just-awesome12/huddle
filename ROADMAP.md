@@ -3,7 +3,7 @@
 > **Status:** Phase 0 scaffolding generated; pending local validation by builder
 > **Last updated:** 2026-05-13
 > **Owner:** Solo build
-> **Working title:** Huddle (placeholder bundle ID: `app.placeholder.huddle`)
+> **Name:** Huddle (OQ-1 resolved) · **Bundle ID:** `com.huddleapp.huddle` (OQ-3 resolved)
 
 ---
 
@@ -794,15 +794,15 @@ Every phase enforces these gates before progressing.
 **Open questions (must be answered before they become blockers)**
 - [x] **OQ-1: Project name.** Resolved → **Huddle**.
 - [ ] **OQ-2: Domain name.** Needed by Phase 10 at the latest.
-- [ ] **OQ-3: Bundle identifiers** for iOS (`com.x.y`) and Android (`com.x.y`). Currently placeholder `app.placeholder.huddle`. Must be finalized before Phase 10 store submission.
+- [x] **OQ-3: Bundle identifiers.** Resolved → **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json`.
 - [x] **OQ-4: Visual design direction.** Resolved → "Pop" direction: violet brand (c-purple) + pink accent (c-pink), Montserrat Bold + Lato Regular type on web (mobile keeps the native system font), and the brand logo (figures + lightbulb) wired in both apps. **Light/dark mode** with a persisted system/light/dark toggle: web uses semantic `@theme` tokens + a `.dark` class with a no-flash script; mobile uses a `ThemeContext` + `useColors()` theme-aware `makeStyles(c)` factories. Tokens in `globals.css` (web) / `apps/mobile/src/lib/theme.ts` (mobile). Shipped on PR #10.
 - [ ] **OQ-5: Image moderation policy.** User-uploaded photos can be anything. Options: (a) no moderation (risky); (b) manual report-and-review; (c) automated (Hive, AWS Rekognition — costs money). Need a decision before Phase 5.
-- [ ] **OQ-6: Account deletion & data export.** Many jurisdictions (GDPR, CCPA) require these. Even if we don't market in the EU, app stores increasingly require deletion. Plan a sub-task in Phase 10.
+- [~] **OQ-6: Account deletion & data export.** Approach chosen → **in-app self-serve deletion** (Apple/Google require in-app initiation). Implementation is a Phase 10 feature (delete-account flow with last-admin handling) — not yet built.
 - [ ] **OQ-7: Geographic scope.** US only? Global? Affects compliance posture.
 - [ ] **OQ-8: Terms of Service & Privacy Policy authorship.** Are you writing these, using a template (Termly, iubenda), or hiring? Required by both app stores.
 - [ ] **OQ-9: Username vs display name uniqueness rules.** Username is unique; display name is free-form. Confirm.
 - [x] **OQ-10: Invite link revocation.** Resolved in Phase 4 → yes. Implemented as DELETE (per the Phase 1 RLS design) rather than a flag; a revoked token reads as "not found", indistinguishable from never-existed.
-- [ ] **OQ-11: License.** Currently "all rights reserved" by default. Pick a license (MIT, Apache-2.0, GPL, or proprietary) before public launch. Affects whether outside contributors can engage.
+- [x] **OQ-11: License.** Resolved → **proprietary / all rights reserved** (`LICENSE` at repo root). Source is reference-only; no reuse license granted.
 
 ---
 
