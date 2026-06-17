@@ -178,10 +178,10 @@ export async function updateIdeaStatus(
  * is best-effort: an orphaned object in a private bucket is a smaller
  * failure than a delete that errors after the row is already gone.
  *
- * NOTE (Phase 7 flag): decisions.chosen_idea_id is ON DELETE CASCADE —
- * once decisions exist, deleting a chosen idea would erase history
- * rows. Revisit the FK (likely RESTRICT + "dismiss instead" UX) when
- * the picker ships.
+ * NOTE (Phase 7, D60): decisions.chosen_idea_id is ON DELETE NO ACTION,
+ * so deleting an idea the picker once chose is blocked at the DB with a
+ * 23503 foreign-key violation (history is immutable). Callers should
+ * surface that as "dismiss instead of delete" rather than a raw error.
  */
 export async function deleteIdea(
   client: HuddleClient,

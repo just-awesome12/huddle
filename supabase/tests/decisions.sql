@@ -10,13 +10,16 @@
 --   - RLS: INSERT denied for ALL authenticated callers (service role only)
 --   - RLS: UPDATE denied (no policy)
 --   - RLS: DELETE denied (no policy)
---   - Cascade: group delete removes decisions
+--   - FK: a CHOSEN idea cannot be hard-deleted (NO ACTION, D60)
+--   - FK: a candidate-only idea (array element, no FK) CAN be deleted
+--   - Cascade: group delete removes decisions (and still works under
+--     NO ACTION because the referencing decision goes in the same stmt)
 --
 -- UUID prefixes: idea = eeee...; decision = dec0... (valid hex)
 -- =====================================================================
 
 begin;
-select plan(10);
+select plan(12);
 
 
 -- ---------------------------------------------------------------------
@@ -183,6 +186,30 @@ set local role postgres;
 select isnt_empty(
   $$select 1 from public.decisions where id = 'dec1d111-1111-1111-1111-111111111111'$$,
   'authenticated user CANNOT DELETE a decision'
+);
+
+
+-- ---------------------------------------------------------------------
+-- FK: chosen idea is protected from hard-delete (D60)
+-- ---------------------------------------------------------------------
+-- Role is already postgres (superuser bypasses RLS but NOT FK checks),
+-- so this isolates the foreign-key behavior. The decision row from above
+-- still exists and chooses idea 1dea1111.
+select throws_ok(
+  $$delete from public.ideas
+      where id = '1dea1111-1111-1111-1111-111111111111'$$,
+  '23503',
+  null,
+  'a CHOSEN idea cannot be hard-deleted while a decision references it'
+);
+
+-- A candidate that was NOT chosen lives only in the uuid[] array, which
+-- carries no foreign key, so it can still be deleted (leaving a harmless
+-- dangling id in the historical candidate list).
+select lives_ok(
+  $$delete from public.ideas
+      where id = '1dea2222-2222-2222-2222-222222222222'$$,
+  'a candidate-only idea (no FK from decisions) can still be deleted'
 );
 
 

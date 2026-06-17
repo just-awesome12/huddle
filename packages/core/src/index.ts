@@ -1,7 +1,7 @@
 // Pure business logic for Huddle.
 //
-// Phase 4 will add invite token generation; Phase 7 will add the random
-// picker shuffle. This module is environment-agnostic — no Supabase, no
-// React, no platform APIs — so it can be exhaustively unit-tested.
+// Environment-agnostic — no Supabase, no React, no platform APIs — so it
+// can be exhaustively unit-tested. The run_picker Edge Function (Phase 7)
+// imports the picker from here so the server owns the random outcome.
 
-export {};
+export * from './picker';
