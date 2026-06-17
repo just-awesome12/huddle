@@ -40,6 +40,12 @@ file_size_limit = "10MiB"
 [realtime]
 enabled = true
 
+# Phase 7 — the random picker. verify_jwt rejects anon callers at the
+# gateway; the function additionally re-checks group membership via RLS.
+[functions.run-picker]
+enabled = true
+verify_jwt = true
+
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
