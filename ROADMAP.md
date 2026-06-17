@@ -582,12 +582,20 @@ project-root/
 
 **Objective:** A working "pick for us" feature that selects from on_radar ideas, supports filters and shortlist mode, and records every decision for history.
 
+**Status (implemented, pending local verification — 2026-06-17):** Built across 7.1–7.4 on branch `claude/build-status-question-1321p9`. Sandbox-green: typecheck + lint across 7 packages, 235 unit tests. NOT yet run (no Supabase CLI/Docker/Deno in the authoring env): migration 015 + pgTAP, `supabase functions serve` smoke of `run_picker`, web Playwright, mobile Metro/Expo-web smoke. Design + decision log D60–D61 in `docs/ARCHITECTURE_PHASE7_APPENDIX.md`. Do not mark this phase COMPLETE until the verification checklist (appendix §5) passes.
+
+**What shipped vs. plan:**
+- 🔄 **FK is `NO ACTION`, not `RESTRICT`** (D60) — RESTRICT would have aborted group-deletion cascades; NO ACTION blocks direct chosen-idea deletes while letting cascades through.
+- 🔄 **Edge Function vendors the pick logic** (D61) — `packages/core` stays the tested source of truth, but a verbatim copy sits beside the function so it bundles on any pinned CLI (cli#1303).
+- ➕ Picker is a full page (not a modal) on both platforms; reveal is a drumroll + pop (web) / Animated fade (mobile).
+
 **Tasks**
-- [ ] Edge Function: `run_picker(group_id, options)` — validates membership, queries candidates respecting filters, performs cryptographically random pick (`crypto.getRandomValues`), inserts `decisions` row, returns chosen idea
-- [ ] Picker UI on web: modal with options (category filter checkboxes, optional "shortlist these N" toggle with idea multi-select), animated reveal
-- [ ] Picker UI on mobile: equivalent with native feel
-- [ ] Decisions list view per group ("History" tab) showing past picks
-- [ ] Empty-state copy for when there are no on_radar ideas
+- [x] Edge Function: `run_picker(group_id, options)` — validates membership, queries candidates respecting filters, performs cryptographically random pick (`crypto.getRandomValues`), inserts `decisions` row, returns chosen idea
+- [x] Picker UI on web: options (category filter, optional "shortlist these N" toggle with idea multi-select), animated reveal
+- [x] Picker UI on mobile: equivalent with native feel
+- [x] Decisions list view per group ("History") showing past picks
+- [x] Empty-state copy for when there are no on_radar ideas
+- [x] Picker prerequisite: `decisions.chosen_idea_id` FK revisited (migration 015, D60)
 
 **Files likely affected**
 - `supabase/functions/run-picker/index.ts`

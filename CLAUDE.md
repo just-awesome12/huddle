@@ -91,7 +91,7 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 ## 4. Decision log (D1–D59)
 
-D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. Highlights that affect ongoing work:
+D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D61 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. Highlights that affect ongoing work:
 
 | # | Decision |
 |---|---|
@@ -127,6 +127,8 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D57 | One framework-free realtime helper (`subscribeToGroup`/`subscribeToMyGroups`); platform providers invalidate differently — web throttled `router.refresh()` (no client cache, D43), mobile TanStack Query invalidation. |
 | D58 | Realtime invalidations are throttled (web 500ms leading+trailing) and subscriptions scoped (per-group channel + a my-groups channel) — never "refetch everything on any change". |
 | D59 | `createBrowserSupabaseClient` accepts a resolved env; the web app passes statically-referenced `NEXT_PUBLIC_*` (the env helper's dynamic `process.env[key]` is undefined in client bundles — see lesson 19). |
+| D60 | `decisions.chosen_idea_id` is `ON DELETE NO ACTION` (migration 015), **not** the originally-flagged `RESTRICT`. NO ACTION blocks a *direct* hard-delete of a chosen idea (history is immutable → 23503 → "dismiss instead") but, being deferrable to end-of-statement, still lets a *group/user* delete cascade cleanly (the referencing decision is removed in the same statement). RESTRICT, being non-deferrable, would have aborted that cascade. |
+| D61 | `run_picker` is the first Edge Function (server-side CSPRNG pick; the `decisions` INSERT uses the service role since the table has no INSERT policy). The pure pick logic lives in `packages/core/src/picker.ts` (the unit-tested source of truth) but is **vendored verbatim** into `supabase/functions/run-picker/picker.ts` so the function bundles on any pinned CLI without relying on out-of-`supabase/` monorepo imports (cli#1303). Keep the two in sync. |
 
 ---
 
@@ -262,9 +264,15 @@ These shouldn't block Phase 6 work but should get answered before Phase 10.
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 6 (Realtime), shipped as 6.1 (publication + framework-free helper + R-4 verification), 6.2 (web provider), 6.3 (mobile provider) on branch `phase-6-realtime` / PR #9. Test suite green: typecheck/lint across 7 packages, 206 unit tests, 45 Playwright tests, 144 pgTAP assertions, plus the realtime RLS integration probe. R-4 closed empirically: Postgres Changes enforces RLS per subscriber.
+**In progress:** **Phase 7 — Random Picker & Decision History.** Implemented on branch `claude/build-status-question-1321p9` across 7.1–7.4:
+- **7.1** — pure picker (`packages/core/src/picker.ts`: `pickOne`/`cryptoRandomInt`, rejection-sampled, 13 tests) + migration 015 fixing the `decisions.chosen_idea_id` FK (`CASCADE` → `NO ACTION`, D60; pgTAP extended 10→12).
+- **7.2** — `run_picker` Edge Function (first one; server CSPRNG pick + service-role decision INSERT; vendored picker copy, D61) registered in `config.toml` with `verify_jwt`; data layer `@huddle/api-client/decisions` + `/decisions-hooks` + `pickerOptionsSchema`.
+- **7.3** — web picker UI (`PickerPanel` + `/groups/[id]/pick`) with drumroll/reveal + `/history` (live via `GroupRealtime`), entry points on group detail.
+- **7.4** — mobile picker + history screens (drumroll + Animated reveal), entry points.
 
-**Up next:** **Phase 7 — Random Picker & Decision History.** See `ROADMAP.md`: this is the **first Edge Function** (`run_picker` — server-side crypto-random pick so a tampering client can't re-roll; `decisions` INSERT is service-role only). Pure shuffle logic in `packages/core/src/picker.ts` (unit-testable), picker UI (category filter + optional shortlist + animated reveal) on web/mobile, and a Decisions/History view. **Before this phase, revisit the `decisions.chosen_idea_id` FK** — it's currently `ON DELETE CASCADE`, so hard-deleting a chosen idea would erase history (flagged in `deleteIdea` + the Phase 5 appendix); likely change to `RESTRICT` + "dismiss instead". The `decisions` table is already in the realtime publication, so history will go live for free.
+**Sandbox-green:** typecheck + lint across all 7 packages; **235 unit tests** (core 13, validation 84, api-client 138). **Still to verify locally (the container has no Supabase CLI/Docker/Deno):** run `supabase db reset` (migration 015 + pgTAP 144→146), `supabase functions serve` to smoke `run_picker` end-to-end, the web picker Playwright E2E (run → history entry → open idea), and the mobile Expo-web/Metro smoke. Do **not** mark Phase 7 ✅ COMPLETE in `ROADMAP.md` until those pass. Then merge via PR and tag.
+
+**Watch on local verify:** (a) confirm the web server client forwards the user JWT to `functions.invoke` (verify_jwt gateway needs it, not the anon key); (b) confirm Justin's pinned CLI serves the function (vendored picker should make out-of-tree imports a non-issue — D61).
 
 **Not yet verified on a real device** (carried over): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); native runtime behaviors (SecureStore, native navigation, real share sheet / QR scanning, the photo picker, **realtime reconnect-on-resume across a real background/foreground cycle**). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 
