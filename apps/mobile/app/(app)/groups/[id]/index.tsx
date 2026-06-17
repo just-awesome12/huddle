@@ -139,6 +139,18 @@ export default function GroupDetailScreen() {
             <View style={styles.ideasBlock}>
               <Text style={styles.groupName}>{group.data.name}</Text>
 
+              <View style={styles.actionRow}>
+                <Button
+                  label="🎲 Pick for us"
+                  onPress={() => router.push(`/groups/${id}/picker`)}
+                />
+                <Button
+                  label="History"
+                  variant="ghost"
+                  onPress={() => router.push(`/groups/${id}/history`)}
+                />
+              </View>
+
               <View style={styles.ideasHeader}>
                 <Text style={styles.sectionTitle}>
                   Ideas{ideas.isSuccess ? ` (${ideas.data.length})` : ''}
@@ -342,6 +354,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     borderTopColor: c.border,
   },
   ideasBlock: { gap: 10 },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   ideasHeader: {
     flexDirection: 'row',
     alignItems: 'center',

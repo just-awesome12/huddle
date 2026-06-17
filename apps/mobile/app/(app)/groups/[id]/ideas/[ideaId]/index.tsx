@@ -17,6 +17,7 @@ import {
   useDeleteIdea,
   useIdeaPhotoUrl,
 } from '@huddle/api-client/ideas-hooks';
+import { isHuddleError } from '@huddle/api-client/errors';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
@@ -40,6 +41,20 @@ export default function IdeaDetailScreen() {
   const deleteIdea = useDeleteIdea(supabase, id);
   const photoUrl = useIdeaPhotoUrl(supabase, idea.data?.photo_path ?? null);
   const [statusError, setStatusError] = useState<string | null>(null);
+
+  // Map a delete failure to friendly copy. The NO ACTION FK (migration
+  // 015) rejects deleting an idea chosen in a past pick (Postgres 23503).
+  const deleteErrorMessage = (e: unknown): string => {
+    if (isHuddleError(e)) {
+      if (e.huddle.kind === 'unauthorized') {
+        return 'Only the proposer or an admin can delete an idea.';
+      }
+      if (e.huddle.code === '23503') {
+        return 'This idea was chosen in a past pick. Dismiss it instead to keep your history.';
+      }
+    }
+    return 'Could not delete the idea.';
+  };
 
   if (idea.isPending || members.isPending) {
     return (
@@ -168,7 +183,7 @@ export default function IdeaDetailScreen() {
               confirmLabel="Delete idea"
               variant="secondary"
               pending={deleteIdea.isPending}
-              error={deleteIdea.isError ? 'Could not delete the idea.' : null}
+              error={deleteIdea.isError ? deleteErrorMessage(deleteIdea.error) : null}
               onConfirm={() =>
                 deleteIdea.mutate(
                   { ideaId, photoPath: idea.data.photo_path },
