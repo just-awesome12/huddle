@@ -56,7 +56,8 @@ docs/
   ARCHITECTURE_PHASE5_APPENDIX.md   ← full Phase 5 design + decision log D52–D55
   ARCHITECTURE_PHASE6_APPENDIX.md   ← full Phase 6 design + decision log D56–D59
   ARCHITECTURE_PHASE7_APPENDIX.md   ← full Phase 7 design + decision log D60–D64
-ROADMAP.md     ← phase plan (Phases 0–7 = ✅ COMPLETE)
+  ARCHITECTURE_PHASE8_APPENDIX.md   ← full Phase 8 design + decision log D65–D69
+ROADMAP.md     ← phase plan (Phases 0–8 = ✅ COMPLETE)
 SETUP.md       ← env setup
 ```
 
@@ -64,13 +65,13 @@ SETUP.md       ← env setup
 
 - Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles,ideas,decisions,realtime}`
 - Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks,ideas-hooks,decisions-hooks,realtime}`
-- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites`, `/profiles`, `/ideas`, `/decisions` (Phase 7: `runPicker` + `fetchGroupDecisions`).
+- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites`, `/profiles`, `/ideas`, `/decisions` (Phase 7: `runPicker` + `fetchGroupDecisions`), `/push` (Phase 8: token register/remove + notification prefs; mobile-only via `/push-hooks`).
 - `/realtime` is framework-free (channel helpers); platform providers add the react bindings (web `router.refresh()`, mobile query invalidation).
 - Apps **never** import from `@supabase/*` directly — types like `Session`, `User`, `SupabaseClient` are re-exported through the api-client `/native` and `/server` subpaths
 
 ---
 
-## 3. What's shipped (Phases 0–7)
+## 3. What's shipped (Phases 0–8)
 
 **Phase 0** — Monorepo scaffold, Next.js 16 + Expo SDK 55 apps, 5 shared packages, Supabase config, GitHub Actions CI. Repo: `github.com/just-awesome12/huddle`.
 
@@ -88,13 +89,15 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 **Phase 6** — Realtime. Live updates for groups/ideas/members. Migration 014 adds the four tables to `supabase_realtime` (`REPLICA IDENTITY FULL`). Framework-free `@huddle/api-client/realtime` (`subscribeToGroup` / `subscribeToMyGroups`); web provider runs throttled `router.refresh()` (no client cache, D43/D57), mobile provider invalidates TanStack Query + reconnects on resume. **R-4 verified empirically** — Postgres Changes enforces RLS per subscriber, so plain channels are safe (D56). Connection-state dot on both apps. Fixed a browser env-inlining bug (D59). **Full architecture in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.** Shipped via PR #9 (branch `phase-6-realtime`).
 
+**Phase 8** — Push Notifications (mobile). **Huddle's second Edge Function** (`send-push`) + first use of Postgres Database Webhooks. pg_net AFTER INSERT triggers on `ideas`/`decisions`/`group_invites` (migration 017) POST the row to `send-push` (one fan-out seam covering all write paths, D65); `send-push` is webhook-authed (`verify_jwt` off, shared secret), reads recipients as service_role, filters by `notification_prefs`, and dispatches to the Expo Push API (pruning dead tokens). Migration 016 adds `notification_prefs` (absent row = all enabled, D66). Pure selection/payload logic in `@huddle/core/notifications` with a drift-guarded Deno mirror (D68); a dry-run header makes `send-push` testable without Expo (D67). Mobile: `expo-notifications` registration on session + removal on sign-out, a preferences screen, and tap→deep-link — all web-guarded (no v1 web push, D69). **Real-device delivery is the one deferred manual step.** **Full architecture in `docs/ARCHITECTURE_PHASE8_APPENDIX.md`.** Shipped on branch `phase-8-push`.
+
 **Phase 7** — Random Picker & Decision History. **Huddle's first Edge Function** (`run_picker`): server-side CSPRNG pick over a group's `on_radar` ideas (category + optional shortlist filters), recorded as a tamper-proof `decisions` row via service_role (`decisions` has no INSERT policy). Pure unbiased pick/shuffle in `@huddle/core` with a drift-guarded Deno mirror (D62). Migration 015 changes `decisions.chosen_idea_id` CASCADE → **NO ACTION** so a chosen idea can't be hard-deleted directly (dismiss instead) while group-delete still cascades (D61). Data layer `/decisions` + `/decisions-hooks`; web picker via a Server Action (D64), mobile via `useRunPicker`; both have an animated reveal + live decision history (the `decisions` table was already in the realtime publication). Requires ≥2 candidates (D63, diverges from the roadmap's 1-candidate note). **Full architecture in `docs/ARCHITECTURE_PHASE7_APPENDIX.md`.** Shipped on branch `phase-7-picker`.
 
 ---
 
-## 4. Decision log (D1–D64)
+## 4. Decision log (D1–D69)
 
-D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D64 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. Highlights that affect ongoing work:
+D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D64 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. D65–D69 are in `ARCHITECTURE_PHASE8_APPENDIX.md`. Highlights that affect ongoing work:
 
 | # | Decision |
 |---|---|
@@ -135,6 +138,11 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D62 | Pure pick/shuffle in `@huddle/core` (injectable RNG, **rejection sampling** = unbiased); Deno can't import the workspace pkg, so `supabase/functions/_shared/picker.ts` is a copy guarded by a behavioural drift test. |
 | D63 | Picker requires **≥2 candidates** after filtering (else 422 `too_few_candidates`); clients mirror the count to disable the run. Diverges from the roadmap's "1 candidate → picked" — a 1-option pick is meaningless. |
 | D64 | Web invokes `run_picker` via a Server Action (`getUser()` first so the ssr client forwards the JWT); mobile via `useRunPicker` on the native client. Upholds D26/D43 (no browser Supabase calls). |
+| D65 | Push fan-out is pg_net AFTER INSERT triggers → `send-push` (one seam, all write paths). `send-push` is webhook-authed (`verify_jwt` off + shared secret), not user-facing. Dev secret/URL committed; prod must override (Phase 9 boot assertion, cf. D38). |
+| D66 | `notification_prefs`: no row until the user changes a setting; absent row = every event enabled (`DEFAULT_PREFS` in `@huddle/core` + `send-push`). RLS own-row; `send-push` reads as service_role. |
+| D67 | `send-push` honours an `x-huddle-dry-run` header (with a valid secret) that returns the selected tokens + sample message WITHOUT dispatching — lets the integration probe assert selection/payload with no Expo call. |
+| D68 | Pure notification selection/payload logic in `@huddle/core/notifications`; Deno mirror in `supabase/functions/_shared/notifications.ts` with a behavioural drift-guard test (same pattern as D62). |
+| D69 | Mobile push is web-guarded (no v1 web push): token registered on session, removed on sign-out; `DeviceNotRegistered` pruned; taps route to `data.path`. Real-device delivery is deferred/manual. |
 
 ---
 
@@ -180,6 +188,8 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 
 19. **Next inlines only STATIC `process.env.NEXT_PUBLIC_*`.** A dynamic `process.env[key]` lookup (e.g. a shared env helper) returns undefined in the browser bundle — fine server-side where Node has the full env, but client components get nothing. Reference the vars statically in app code, or hand resolved values to the library (we did the latter: `createBrowserSupabaseClient(env)` fed by `apps/web/src/lib/supabase-browser.ts`). Expo/Metro inlines `EXPO_PUBLIC_*` more permissively, so mobile didn't hit this.
 
+20. **`supabase gen types` (CLI 2.106) demands a platform token even for local, and `>` clobbers `database.ts` on failure.** `pnpm types:generate` (`--local`) fails with `LegacyPlatformAuthRequiredError` and, because the script redirects stdout to the file, leaves `packages/types/src/database.ts` truncated. Workaround: `SUPABASE_ACCESS_TOKEN=sbp_dummy_local supabase gen types typescript --db-url "postgresql://postgres:postgres@127.0.0.1:54322/postgres" --schema public,graphql_public` (any non-empty token satisfies the gate; the dummy isn't used for a direct `--db-url` connection). Generate to a `.new` file, diff it (expect only your new table), then `mv` it in. Include `graphql_public` or you'll drop that schema from the committed file. Don't update the CLI mid-phase (lesson 7).
+
 ---
 
 ## 6. Working norms
@@ -187,7 +197,7 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 - **Small slices.** Even small features ship in sub-phases (e.g., Phase 2 became 2.1 through 2.7). Each sub-phase has an explicit test gate.
 - **Tests before "done."** Unit/integration tests for shared packages. Playwright for web flows. pgTAP for RLS regressions. Manual smoke for mobile (Maestro deferred to Phase 9).
 - **Honest documentation of deferrals.** When something can't be done now (Apple OAuth, native mobile OAuth verification, Maestro), capture WHY in the roadmap rather than pretending it's complete.
-- **Architecture decisions get a log entry.** Numbered (continue from D64), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
+- **Architecture decisions get a log entry.** Numbered (continue from D69), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
 - **Justin debugs by sharing exact error output.** Encourage this — it's the most efficient diagnostic path. The Phase 2 work showed it consistently saved iteration cycles.
 
 ---
@@ -270,11 +280,13 @@ These shouldn't block current work but should get answered before Phase 10.
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 7 (Random Picker & Decision History), shipped as 7.1 (FK migration + pure picker + `run_picker` Edge Function + decisions data layer), 7.2 (web picker UI + history), 7.3 (mobile picker UI + history) on branch `phase-7-picker` (commits `dda05a4`, `7f501b0`, `6aebc34`; not yet PR'd). Test suite green: typecheck/lint across 7 packages, **225 unit tests** (77 validation + 138 api-client + 10 core), **48 Playwright tests**, **145 pgTAP assertions**, plus the realtime RLS probe and the new **`run_picker` live integration probe (9/9)**. First Edge Function stood up (`[edge_runtime]`/`[functions]` in `config.toml`; after editing those, restart the stack). `decisions.chosen_idea_id` FK resolved → `ON DELETE NO ACTION` (D61, not RESTRICT — see appendix for why).
+**Just closed:** Phase 8 (Push Notifications, mobile), shipped as 8.1 (`notification_prefs` + pure logic + `send-push` Edge Function + data layer), 8.2 (pg_net Database Webhook triggers), 8.3 (mobile registration + prefs screen + deep links) on branch `phase-8-push` (commits `88589c9`, `f73d979`, `f6e2346`; not yet PR'd). Branched off `phase-7-picker` because it reuses Phase 7's Edge Function infra — so its eventual PR stacks on PR #11 (Phase 7) until that merges. Test suite green: typecheck/lint across 7 packages, **~241 unit tests** (77 validation + 144 api-client + 20 core; numbers approximate as suites grow), **48 Playwright**, **157 pgTAP**, plus the realtime RLS probe, the `run_picker` probe (9/9), and the new **`send-push` dry-run probe (9/9)**. Second Edge Function stood up (`send-push`, `verify_jwt` off); fan-out verified live via `net._http_response`.
 
-**Up next:** **Phase 8 — Push Notifications (Mobile).** See `ROADMAP.md`. Reuses the Edge Function infra from Phase 7 (`run_picker` is the template; `supabase/functions/_shared/` convention is in place). `push_tokens` table already exists from Phase 1.
+**Up next:** **Phase 9 — Anti-Scraping & Security Hardening.** See `ROADMAP.md`. Note the deferrals this phase leaves for Phase 9: the **production webhook secret + URL** for `send-push` (currently a committed dev fallback, D65) and a **boot assertion** that refuses the dev fallback / Turnstile test mode outside local (D38/D65).
 
-**Open decision to confirm with Justin:** the picker requires **≥2 candidates** (D63), which diverges from the roadmap's "1 candidate → that one is picked" validation step. Flagged in the Phase 7 close-out; revert to ≥1 if he prefers the roadmap behavior.
+**Two prior decisions still flagged for Justin:** (1) the picker requires **≥2 candidates** (D63, diverges from the roadmap's "1 candidate → picked"); (2) **real-device push delivery is unverified** — it can't be automated and needs a dev build with an EAS `projectId` (Phase 8 appendix §4).
+
+**PRs open:** #11 (Phase 7, `phase-7-picker`). Phase 8 (`phase-8-push`) pushed but not yet PR'd at last update.
 
 **Not yet verified on a real device** (carried over): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); native runtime behaviors (SecureStore, native navigation, real share sheet / QR scanning, the photo picker, **realtime reconnect-on-resume across a real background/foreground cycle**). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 
