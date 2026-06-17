@@ -578,16 +578,26 @@ project-root/
 
 ---
 
-### Phase 7 — Random Picker & Decision History
+### Phase 7 — Random Picker & Decision History ✅ COMPLETE (pending PR)
 
 **Objective:** A working "pick for us" feature that selects from on_radar ideas, supports filters and shortlist mode, and records every decision for history.
 
+**Status (closed 2026-06-17):** Shipped in sub-phases 7.1 (FK migration + pure picker + `run_picker` Edge Function + decisions data layer), 7.2 (web picker UI + history), 7.3 (mobile picker UI + history) on branch `phase-7-picker`. Full design + decision log D60–D64 in `docs/ARCHITECTURE_PHASE7_APPENDIX.md`.
+
+**What shipped vs. plan:**
+- ➕ **First Edge Function** stood up: `run_picker` (Deno), with `[edge_runtime]` + `[functions.run_picker]` in `config.toml` and a `supabase/functions/_shared/` convention for shared code. Verified by a live integration probe (`run_picker.integration.mjs`, 9/9).
+- 🔄 **FK is `ON DELETE NO ACTION`, not `RESTRICT`** (D61). NO ACTION blocks a direct chosen-idea delete (→ "dismiss instead") while still letting a group-delete cascade — RESTRICT would have aborted the cascade.
+- 🔄 **Requires ≥2 candidates** (D63), diverging from the "1 candidate → that one is picked" validation step below — a one-option pick is meaningless. Returns `422 too_few_candidates`; clients disable the run button below the threshold.
+- 🔄 **Web invokes via a Server Action** (not a client-side function call) to uphold the no-browser-Supabase rule (D64).
+- ➕ Pure picker uses **rejection sampling** (unbiased) and a drift-guarded Deno mirror of `@huddle/core` (D62).
+- 🔄 Routes are `/groups/[id]/picker` + `/groups/[id]/history` (dedicated pages, mirrored on mobile), not a `/pick` modal.
+
 **Tasks**
-- [ ] Edge Function: `run_picker(group_id, options)` — validates membership, queries candidates respecting filters, performs cryptographically random pick (`crypto.getRandomValues`), inserts `decisions` row, returns chosen idea
-- [ ] Picker UI on web: modal with options (category filter checkboxes, optional "shortlist these N" toggle with idea multi-select), animated reveal
-- [ ] Picker UI on mobile: equivalent with native feel
-- [ ] Decisions list view per group ("History" tab) showing past picks
-- [ ] Empty-state copy for when there are no on_radar ideas
+- [x] Edge Function: `run_picker(group_id, options)` — validates membership, queries candidates respecting filters, performs cryptographically random pick (`crypto.getRandomValues`), inserts `decisions` row, returns chosen idea
+- [x] Picker UI on web: options (category filter, optional "shortlist" toggle with idea multi-select), animated reveal
+- [x] Picker UI on mobile: equivalent with native feel
+- [x] Decisions list view per group ("History") showing past picks
+- [x] Empty-state copy for when there are too few on_radar ideas
 
 **Files likely affected**
 - `supabase/functions/run-picker/index.ts`
@@ -597,22 +607,22 @@ project-root/
 
 **Implementation notes**
 - The picker runs **server-side only** (Edge Function) so the result can't be re-rolled by a tampering client. The `decisions` table has RLS allowing INSERT only by `service_role`, enforced by the Edge Function using its secret key.
-- Pure shuffle/pick logic lives in `packages/core/src/picker.ts` so it can be unit-tested without infrastructure. The Edge Function imports it.
-- Animation: a 1–2s "drumroll" CSS/Reanimated transition before reveal. Keep tasteful.
+- Pure shuffle/pick logic lives in `packages/core/src/picker.ts` so it can be unit-tested without infrastructure. The Edge Function uses a drift-guarded Deno mirror (it can't import the pnpm workspace pkg) (D62).
+- Animation: a ~1.4s JS-timer "spin" before reveal (no Reanimated dependency). Keep tasteful.
 
 **Validation steps**
-- [ ] Picker with no candidates → friendly empty state, no decision recorded
-- [ ] Picker with 1 candidate → that one is picked
-- [ ] Picker with N candidates → distribution looks uniform over 100 runs (manual or scripted check)
-- [ ] Picker with shortlist of 3 → only those 3 are candidates
-- [ ] Decision appears in history with timestamp, run_by, candidates, chosen
-- [ ] Non-member cannot invoke the Edge Function for that group
+- [x] Picker with too few candidates → friendly empty state / disabled run, no decision recorded
+- [~] ~~Picker with 1 candidate → that one is picked~~ → **changed to require ≥2** (D63): 1 candidate returns `too_few_candidates`; a one-option pick is meaningless
+- [x] Picker pick is unbiased — `@huddle/core` uses rejection sampling; unit-tested (no modulo bias)
+- [x] Picker with a shortlist → only those ideas are candidates (verified in the live probe + web E2E)
+- [x] Decision appears in history with timestamp, run_by, candidates, chosen
+- [x] Non-member cannot invoke the Edge Function for that group (→ 403, live probe)
 
 **Tests that must pass before Phase 8**
-- [ ] **Unit:** picker logic (uniformity over large N, edge cases: empty, single, duplicates)
-- [ ] **Integration:** Edge Function with mocked Supabase client
-- [ ] **E2E (web):** run picker, see history entry, click into chosen idea
-- [ ] **Regression:** prior phases green
+- [x] **Unit:** picker logic (unbiased index, edge cases: empty, single, permutation; + Deno-mirror drift guard) — 10 in `@huddle/core`
+- [x] **Integration:** live `run_picker` probe (`run_picker.integration.mjs`, 9/9) + api-client decisions unit tests (9)
+- [x] **E2E (web):** run picker, see history entry; sub-2 filter disables run; chosen idea refuses hard-delete — `picker.spec.ts` (3)
+- [x] **Regression:** prior phases green (typecheck 7, lint 6, Playwright 48, pgTAP 145)
 
 ---
 
