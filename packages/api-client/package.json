@@ -25,6 +25,8 @@
     "./decisions-hooks": "./src/decisions-hooks.ts",
     "./push": "./src/push.ts",
     "./push-hooks": "./src/push-hooks.ts",
+    "./account": "./src/account.ts",
+    "./account-hooks": "./src/account-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

@@ -60,6 +60,12 @@ verify_jwt = true
 enabled = true
 verify_jwt = false
 
+# delete-account (Phase 10): user-initiated self-serve account deletion.
+# verify_jwt on — it acts only on the authenticated caller's own account.
+[functions.delete-account]
+enabled = true
+verify_jwt = true
+
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
