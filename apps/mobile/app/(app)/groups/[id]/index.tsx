@@ -114,20 +114,27 @@ export default function GroupDetailScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Button label="← Groups" variant="ghost" onPress={() => router.replace('/groups')} />
-        {isAdmin ? (
-          <View style={styles.headerActions}>
-            <Button
-              label="Invite"
-              variant="ghost"
-              onPress={() => router.push(`/groups/${id}/invite`)}
-            />
-            <Button
-              label="Settings"
-              variant="ghost"
-              onPress={() => router.push(`/groups/${id}/settings`)}
-            />
-          </View>
-        ) : null}
+        <View style={styles.headerActions}>
+          <Button
+            label="History"
+            variant="ghost"
+            onPress={() => router.push(`/groups/${id}/history`)}
+          />
+          {isAdmin ? (
+            <>
+              <Button
+                label="Invite"
+                variant="ghost"
+                onPress={() => router.push(`/groups/${id}/invite`)}
+              />
+              <Button
+                label="Settings"
+                variant="ghost"
+                onPress={() => router.push(`/groups/${id}/settings`)}
+              />
+            </>
+          ) : null}
+        </View>
       </View>
 
       <View style={styles.body}>
@@ -143,10 +150,17 @@ export default function GroupDetailScreen() {
                 <Text style={styles.sectionTitle}>
                   Ideas{ideas.isSuccess ? ` (${ideas.data.length})` : ''}
                 </Text>
-                <Button
-                  label="New idea"
-                  onPress={() => router.push(`/groups/${id}/ideas/new`)}
-                />
+                <View style={styles.ideasActions}>
+                  <Button
+                    label="Pick for us"
+                    variant="secondary"
+                    onPress={() => router.push(`/groups/${id}/pick`)}
+                  />
+                  <Button
+                    label="New idea"
+                    onPress={() => router.push(`/groups/${id}/ideas/new`)}
+                  />
+                </View>
               </View>
 
               <View style={styles.chipsRow}>
@@ -347,6 +361,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  ideasActions: { flexDirection: 'row', gap: 8, flexShrink: 0 },
   chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   mutedText: { fontSize: 13, color: c.muted },
   ideaRow: {
