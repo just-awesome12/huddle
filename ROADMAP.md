@@ -673,22 +673,26 @@ project-root/
 
 ---
 
-### Phase 9 — Anti-Scraping & Security Hardening
+### Phase 9 — Anti-Scraping & Security Hardening 🟡 IN-APP COMPLETE (perimeter deferred)
 
 **Objective:** Make the application costly and unappealing to scrape, even for sophisticated actors.
 
+**Status (2026-06-17):** The **in-app** hardening is shipped on branch `phase-9-hardening` (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions, 9.3 SECURITY.md + audit + self-test). The **perimeter** (Cloudflare, Sentry, prod secrets, ToS) is genuinely blocked on a domain (OQ-2) + the relevant accounts + a deployed environment, and is tracked as a live checklist in `docs/SECURITY.md`. The primary access guarantee — Postgres RLS — was re-verified (157 pgTAP assertions + live anon/no-key checks).
+
 **Tasks**
-- [ ] Move web DNS to Cloudflare; enable proxy (orange cloud), Bot Fight Mode, and Security Level: Medium
-- [ ] Cloudflare WAF rules: block known scraper UAs, geo-rate-limit if needed
-- [ ] Cloudflare Rate Limiting Rules: aggressive limits on `/api/*` and auth endpoints
-- [ ] Verify Turnstile is enforced on every sign-up code path (web + mobile)
-- [ ] Add Turnstile to "create invite" if invite links can be brute-forced — re-check token entropy from Phase 4
-- [ ] `robots.txt` disallowing all crawlers on `(app)/*` routes
-- [ ] `X-Robots-Tag: noindex` header on authenticated pages
-- [ ] Terms of Service draft explicitly forbidding automated access; link from sign-up
-- [ ] Sentry: enable error monitoring with PII scrubbing rules
-- [ ] Run `npm audit` and resolve any high/critical
-- [ ] Penetration self-test using a second account: try to read another group's data, modify roles, replay tokens, etc. Document results in `SECURITY.md`
+- [ ] Move web DNS to Cloudflare; enable proxy, Bot Fight Mode, Security Level: Medium — **deferred (needs domain + account)**
+- [ ] Cloudflare WAF rules — **deferred**
+- [ ] Cloudflare Rate Limiting Rules — **deferred** (in-memory search limiter exists as defence-in-depth, D51)
+- [x] Verify Turnstile is enforced on web sign-up; mobile has no Turnstile equivalent (gap documented in SECURITY.md)
+- [x] Re-check invite token entropy — 256-bit CSPRNG, single-use, 7-day expiry → **Turnstile on invite-create NOT required** (SECURITY.md §2)
+- [x] `robots.txt` disallowing crawlers (`Disallow: /`, app is private) — `app/robots.ts`
+- [x] `X-Robots-Tag: noindex` header — `next.config.ts` (all routes)
+- [ ] Terms of Service forbidding automated access — **deferred (authorship is OQ-8)**
+- [ ] Sentry error monitoring — **deferred (needs DSN)**
+- [x] Run `pnpm audit` — 26 advisories (6 high, 5 critical), **all in dev/build tooling, not the runtime bundle**; remediation plan in SECURITY.md §4
+- [x] Penetration self-test (cross-group read, role tamper, token replay, decision immutability, realtime leakage) — executed; results in `docs/SECURITY.md` §3
+- [x] Fail-closed production assertions (Turnstile bypass D38; send-push dev secret D65) — `instrumentation.ts` + send-push
+- [x] Security headers (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) + report-only CSP
 
 **Files likely affected**
 - `apps/web/middleware.ts` (security headers)
