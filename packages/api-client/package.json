@@ -21,6 +21,8 @@
     "./profiles-hooks": "./src/profiles-hooks.ts",
     "./ideas": "./src/ideas.ts",
     "./ideas-hooks": "./src/ideas-hooks.ts",
+    "./decisions": "./src/decisions.ts",
+    "./decisions-hooks": "./src/decisions-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

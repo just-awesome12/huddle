@@ -16,7 +16,7 @@
 -- =====================================================================
 
 begin;
-select plan(10);
+select plan(11);
 
 
 -- ---------------------------------------------------------------------
@@ -183,6 +183,22 @@ set local role postgres;
 select isnt_empty(
   $$select 1 from public.decisions where id = 'dec1d111-1111-1111-1111-111111111111'$$,
   'authenticated user CANNOT DELETE a decision'
+);
+
+
+-- ---------------------------------------------------------------------
+-- FK: chosen idea is protected from direct hard-delete (migration 015)
+-- ---------------------------------------------------------------------
+-- '1dea1111…' is the chosen idea of the decision seeded above, so the
+-- ON DELETE NO ACTION FK must block deleting it directly (Postgres
+-- 23503). This is what preserves history; the app dismisses ideas
+-- instead. (Group deletion still cascades everything — see below.)
+select throws_ok(
+  $$delete from public.ideas
+      where id = '1dea1111-1111-1111-1111-111111111111'$$,
+  '23503',
+  null,
+  'cannot hard-delete an idea a decision has chosen (ON DELETE NO ACTION)'
 );
 
 

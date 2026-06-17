@@ -40,6 +40,19 @@ file_size_limit = "10MiB"
 [realtime]
 enabled = true
 
+[edge_runtime]
+enabled = true
+# "oneshot" recreates the worker on each request — best for local dev so
+# edited functions are picked up without a manual restart.
+policy = "oneshot"
+
+# run_picker (Phase 7): server-side random pick + decisions insert.
+# verify_jwt rejects unauthenticated calls at the gateway; the function
+# still re-derives the user from the forwarded Authorization header.
+[functions.run_picker]
+enabled = true
+verify_jwt = true
+
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
