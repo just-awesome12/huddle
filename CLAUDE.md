@@ -286,7 +286,7 @@ These shouldn't block current work but should get answered before Phase 10.
 
 **Just closed:** Phase 9 **in-app** hardening (Anti-Scraping & Security), shipped as 9.1 (headers/noindex/robots), 9.2 (fail-closed prod assertions), 9.3 (`docs/SECURITY.md` + audit + pen-test self-test) on branch `phase-9-hardening` (off `phase-8-push`; commits `5bdd114`, `803fdc0`, + the docs commit). Test suite green: typecheck (7) + lint (6), **152 api-client/validation/core unit** (incl. +4 Turnstile prod-assertion tests), **pgTAP 157**, **Playwright 50** (+2 security headers), plus all live probes. RLS re-verified as the real boundary. The **perimeter is deferred** (blocked on domain/accounts/deploy) — see `docs/SECURITY.md`.
 
-PRs #11 (Phase 7) and #12 (Phase 8) are both **merged to main**. Phase 8 was rebased clean before PR #12. `phase-9-hardening` is stacked on the now-merged Phase 8 — rebase it onto `main` before its PR (same `git rebase --onto` dance as Phase 8).
+PR #11 (Phase 7) is **merged to main**. PR #12 (Phase 8, `phase-8-push`) is **open, not yet merged**. `phase-9-hardening` is branched off `phase-8-push`, so: merge #12 first, then `git rebase --onto main phase-8-push phase-9-hardening` and open the Phase 9 PR (same dance as Phase 8 → clean diff).
 
 **Up next:** **Phase 10 — Store Prep & Launch.** See `ROADMAP.md`. Several OQs come due here: **OQ-1** (final name), **OQ-2** (domain — also unblocks the Phase 9 perimeter), **OQ-3** (real bundle IDs), **OQ-6** (account deletion/GDPR), **OQ-8** (ToS/Privacy authorship), **OQ-11** (license). The Phase 9 perimeter checklist (`docs/SECURITY.md` §5) should be worked alongside Phase 10 once the domain exists.
 
