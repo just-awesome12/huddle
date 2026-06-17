@@ -279,6 +279,38 @@ export type Database = {
           },
         ]
       }
+      notification_prefs: {
+        Row: {
+          group_invite: boolean
+          new_idea: boolean
+          picker_ran: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          group_invite?: boolean
+          new_idea?: boolean
+          picker_ran?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          group_invite?: boolean
+          new_idea?: boolean
+          picker_ran?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

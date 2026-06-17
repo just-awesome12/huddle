@@ -53,6 +53,13 @@ policy = "oneshot"
 enabled = true
 verify_jwt = true
 
+# send-push (Phase 8): invoked by Database Webhooks (pg_net), not users.
+# verify_jwt is off; it authenticates via the x-huddle-webhook-secret
+# header instead (dev fallback locally; HUDDLE_WEBHOOK_SECRET in prod).
+[functions.send-push]
+enabled = true
+verify_jwt = false
+
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"

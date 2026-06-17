@@ -16,6 +16,7 @@ import {
   type PendingInvite,
 } from '@huddle/api-client/invites-hooks';
 import { supabase } from '@/lib/supabase';
+import { unregisterPush } from '@/lib/notifications';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConnectionDot } from '@/components/ConnectionDot';
@@ -66,7 +67,21 @@ export default function GroupListScreen() {
         </View>
         <View style={styles.titleRow}>
           <ThemeToggle />
-          <Button label="Sign out" variant="ghost" onPress={() => supabase.auth.signOut()} />
+          <Button
+            label="🔔"
+            variant="ghost"
+            accessibilityLabel="Notification settings"
+            onPress={() => router.push('/settings/notifications')}
+          />
+          <Button
+            label="Sign out"
+            variant="ghost"
+            onPress={async () => {
+              // Remove this device's push token before the session goes.
+              await unregisterPush();
+              await supabase.auth.signOut();
+            }}
+          />
         </View>
       </View>
 

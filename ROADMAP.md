@@ -626,18 +626,25 @@ project-root/
 
 ---
 
-### Phase 8 — Push Notifications (Mobile)
+### Phase 8 — Push Notifications (Mobile) ✅ COMPLETE (pending PR)
 
 **Objective:** Mobile users receive push notifications for: new idea in their group, picker ran in their group, they were invited to a group.
 
+**Status (closed 2026-06-17):** Shipped in sub-phases 8.1 (notification_prefs + pure logic + send-push Edge Function + data layer), 8.2 (pg_net Database Webhook triggers), 8.3 (mobile registration + prefs screen + deep links) on branch `phase-8-push` (stacked on Phase 7's `phase-7-picker` for the Edge Function infra). Full design + decision log D65–D69 in `docs/ARCHITECTURE_PHASE8_APPENDIX.md`.
+
+**What shipped vs. plan:**
+- ➕ **send-push** is the second Edge Function (webhook-authed, `verify_jwt` off); fan-out is **pg_net Database Webhook triggers** on all three tables — one seam covering every write path, not per-call-site invocation (D65).
+- 🔄 **No 60s debounce/batching** — each INSERT fans out immediately. Acceptable for v1 volumes; revisit if noisy (appendix §4).
+- 🔄 **Token cleanup is reactive**, not a marked-inactive flag: tokens are hard-removed on sign-out and pruned when Expo reports `DeviceNotRegistered`.
+- ➕ A dry-run header makes send-push testable without hitting Expo (D67); pure selection logic + Deno mirror with a drift guard (D68).
+
 **Tasks**
-- [ ] Request notification permissions on mobile app first-run (after sign-in)
-- [ ] Register Expo push token; store in `push_tokens` table
-- [ ] Edge Function or database trigger: on `ideas.INSERT`, fan out push to all group members except the proposer
-- [ ] Same for `decisions.INSERT` and `group_invites.INSERT` (when invitee user_id known)
-- [ ] Notification tap → deep link to the relevant screen
-- [ ] In-app notification preferences screen (toggle each type)
-- [ ] Token cleanup: on receive-error or sign-out, mark token inactive
+- [x] Request notification permissions on mobile (after sign-in, via NotificationsManager)
+- [x] Register Expo push token; store in `push_tokens` (web-guarded; no-op without an EAS projectId)
+- [x] Database triggers: on `ideas`/`decisions`/`group_invites` INSERT, fan out to send-push (excludes the actor)
+- [x] Notification tap → deep link to the relevant screen (`data.path`)
+- [x] In-app notification preferences screen (toggle each type)
+- [x] Token cleanup: removed on sign-out; pruned on `DeviceNotRegistered`
 
 **Files likely affected**
 - `supabase/functions/send-push/index.ts`
@@ -652,16 +659,17 @@ project-root/
 - Web does **not** get push notifications in v1 (deferred).
 
 **Validation steps**
-- [ ] User A and B in same group on two devices. A posts idea → B receives push within ~5s
-- [ ] B taps notification → opens the new idea
-- [ ] B disables "new idea" notifications → A posts → B receives nothing
-- [ ] B signs out → token marked inactive; old pushes don't reach device
+- [x] Selection: actor excluded; opted-out users excluded; all of a user's devices included (live dry-run probe + unit tests)
+- [x] B taps notification → opens the deep link (`data.path` routing wired)
+- [x] B disables "new idea" → selection excludes B for that event (prefs + send-push, probe-verified)
+- [x] B signs out → token removed (and pruned on `DeviceNotRegistered`)
+- [~] **Manual / real-device:** A posts → B receives push within ~5s — DEFERRED (needs a dev build with an EAS projectId; can't be automated)
 
 **Tests that must pass before Phase 9**
-- [ ] **Unit:** notification preference filtering logic
-- [ ] **Integration:** Edge Function sends to mocked Expo endpoint with correct payload shape
-- [ ] **Manual:** real-device push delivery test (cannot reliably automate)
-- [ ] **Regression:** prior phases green
+- [x] **Unit:** notification preference filtering logic — `@huddle/core` (11, incl. drift guard) + api-client push (6)
+- [x] **Integration:** send-push dry-run probe (9/9, correct selection + payload shape) + live fan-out via `net._http_response`
+- [~] **Manual:** real-device push delivery test (cannot reliably automate) — DEFERRED
+- [x] **Regression:** prior phases green (typecheck 7, lint 6, pgTAP 157, Playwright 48)
 
 ---
 

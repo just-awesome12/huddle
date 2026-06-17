@@ -4,3 +4,4 @@
 // can be exhaustively unit-tested.
 
 export * from './picker';
+export * from './notifications';
