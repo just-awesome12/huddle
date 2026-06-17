@@ -182,7 +182,20 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
   // --- Authenticate the webhook ---
-  const expected = Deno.env.get('HUDDLE_WEBHOOK_SECRET') ?? DEV_WEBHOOK_SECRET;
+  // Fail closed (Phase 9, D65): outside local the dev fallback secret is
+  // NOT allowed — production must set HUDDLE_WEBHOOK_SECRET explicitly.
+  // Local Supabase serves over http (kong/127.0.0.1); hosted is https.
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const isLocal =
+    !supabaseUrl.startsWith('https://') ||
+    supabaseUrl.includes('127.0.0.1') ||
+    supabaseUrl.includes('localhost');
+  const configuredSecret = Deno.env.get('HUDDLE_WEBHOOK_SECRET');
+  if (!configuredSecret && !isLocal) {
+    console.error('send-push: HUDDLE_WEBHOOK_SECRET is required in production');
+    return json({ error: 'misconfigured' }, 500);
+  }
+  const expected = configuredSecret ?? DEV_WEBHOOK_SECRET;
   if (req.headers.get('x-huddle-webhook-secret') !== expected) {
     return json({ error: 'unauthorized' }, 401);
   }

@@ -5,21 +5,20 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { signUpSchema, signInSchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
-import { verifyTurnstileToken } from '@huddle/api-client/turnstile';
+import {
+  verifyTurnstileToken,
+  TURNSTILE_TEST_SECRET,
+} from '@huddle/api-client/turnstile';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import type { AuthActionState } from './auth-state';
 
 /**
- * Cloudflare publishes always-pass test keys for dev/CI:
- *   https://developers.cloudflare.com/turnstile/troubleshooting/testing/
- *
- * When the configured secret matches the always-passes test secret AND
- * NEXT_PUBLIC_TURNSTILE_TEST_MODE=true, we skip the verify round-trip
- * entirely. The pair must both be true to activate the bypass — that
- * way a misconfigured production with only the test secret set still
- * fails closed.
+ * Turnstile test-mode bypass: when the configured secret matches
+ * Cloudflare's always-pass test secret AND NEXT_PUBLIC_TURNSTILE_TEST_MODE
+ * =true, we skip the verify round-trip. Both must hold, so a production
+ * with only the test secret still fails closed — and instrumentation.ts
+ * refuses to boot production if either is set (D38).
  */
-const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA';
 
 
 // =====================================================================

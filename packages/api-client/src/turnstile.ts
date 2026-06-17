@@ -33,6 +33,39 @@ export interface TurnstileVerifyResult {
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 /**
+ * Cloudflare's always-pass test secret (dev/CI only):
+ *   https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+ * Exported so callers don't redefine it.
+ */
+export const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA';
+
+/**
+ * Fail-closed production guard (Phase 9, resolves D38). Throws if the
+ * app is running in production with the Turnstile bypass reachable — the
+ * test-mode flag on, or the always-pass test secret configured. Call at
+ * boot (web instrumentation) so a misconfigured production refuses to
+ * start instead of silently accepting every sign-up.
+ *
+ * Pure + injectable for unit testing; production passes process.env.
+ */
+export function assertTurnstileProductionSafe(opts: {
+  nodeEnv: string | undefined;
+  testModeFlag: string | undefined;
+  secret: string | undefined;
+}): void {
+  if (opts.nodeEnv !== 'production') return;
+  const reasons: string[] = [];
+  if (opts.testModeFlag === 'true') reasons.push('NEXT_PUBLIC_TURNSTILE_TEST_MODE=true');
+  if (opts.secret === TURNSTILE_TEST_SECRET) reasons.push('TURNSTILE_SECRET_KEY is the test secret');
+  if (reasons.length > 0) {
+    throw new Error(
+      `Refusing to boot: Turnstile bypass is active in production (${reasons.join('; ')}). ` +
+        'Set a real TURNSTILE_SECRET_KEY and unset NEXT_PUBLIC_TURNSTILE_TEST_MODE.',
+    );
+  }
+}
+
+/**
  * Verify a Turnstile token by calling Cloudflare's siteverify API.
  *
  * Returns a TurnstileVerifyResult. NEVER throws on verification
