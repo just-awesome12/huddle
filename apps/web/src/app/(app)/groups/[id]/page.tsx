@@ -123,6 +123,23 @@ export default async function GroupDetailPage({
         )}
       </div>
 
+      <div className="mt-4 flex items-center gap-3">
+        <Link
+          href={`/groups/${id}/picker`}
+          className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          data-testid="picker-link"
+        >
+          🎲 Pick for us
+        </Link>
+        <Link
+          href={`/groups/${id}/history`}
+          className="text-sm font-medium text-muted hover:text-brand-ink"
+          data-testid="history-link"
+        >
+          History
+        </Link>
+      </div>
+
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">

@@ -241,8 +241,17 @@ export async function deleteIdeaAction(
   try {
     await deleteIdea(supabase, ideaId, photoPath);
   } catch (e) {
-    if (isHuddleError(e) && e.huddle.kind === 'unauthorized') {
-      return { formError: 'Only the proposer or an admin can delete an idea.' };
+    if (isHuddleError(e)) {
+      if (e.huddle.kind === 'unauthorized') {
+        return { formError: 'Only the proposer or an admin can delete an idea.' };
+      }
+      // NO ACTION FK (migration 015): a chosen idea can't be hard-deleted.
+      if (e.huddle.code === '23503') {
+        return {
+          formError:
+            'This idea was chosen in a past pick, so deleting it would erase that history. Dismiss it instead to keep it out of future picks.',
+        };
+      }
     }
     return { formError: 'Could not delete the idea. Please try again.' };
   }
