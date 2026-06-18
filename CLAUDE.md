@@ -66,7 +66,7 @@ SETUP.md       ← env setup
 
 - Web imports Supabase only via `@huddle/api-client/{browser,server,service-role,errors,turnstile,groups,invites,profiles,ideas,decisions,realtime}`
 - Mobile imports Supabase only via `@huddle/api-client/{native,errors,groups-hooks,invites-hooks,profiles-hooks,ideas-hooks,decisions-hooks,realtime}`
-- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites`, `/profiles`, `/ideas`, `/decisions` (Phase 7: `runPicker` + `fetchGroupDecisions`), `/push` (Phase 8: token register/remove + notification prefs), `/account` (Phase 10: `deleteAccount`), `/moderation` (Phase 10: report + block/unblock) — each with a `*-hooks` sibling for mobile.
+- Feature data lives in paired subpaths: `/groups` (framework-free raw functions, server-safe) and `/groups-hooks` (TanStack Query wrappers, client-only). Same for `/invites`, `/profiles`, `/ideas`, `/decisions` (Phase 7: `runPicker` + `fetchGroupDecisions`), `/push` (Phase 8: token register/remove + notification prefs), `/account` (Phase 10: `deleteAccount`), `/moderation` (Phase 10: report + block/unblock), `/votes` (Phase 11: upvotes) — each with a `*-hooks` sibling for mobile.
 - `/realtime` is framework-free (channel helpers); platform providers add the react bindings (web `router.refresh()`, mobile query invalidation).
 - Apps **never** import from `@supabase/*` directly — types like `Session`, `User`, `SupabaseClient` are re-exported through the api-client `/native` and `/server` subpaths
 
@@ -98,7 +98,7 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 ---
 
-## 4. Decision log (D1–D72)
+## 4. Decision log (D1–D73)
 
 D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D64 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. D65–D69 are in `ARCHITECTURE_PHASE8_APPENDIX.md`. Highlights that affect ongoing work:
 
@@ -149,6 +149,7 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D70 | Phase 9 in-app posture: RLS is the access boundary (re-verified); headers + noindex + report-only CSP in `next.config.ts`; fail-closed prod assertions (D38/D65). The perimeter (Cloudflare/Sentry/prod secrets/ToS) is deferred — blocked on domain (OQ-2) + accounts — and tracked in `docs/SECURITY.md`, which is the Phase 9 record (no appendix).                                                                                    |
 | D71 | Account deletion (OQ-6) = `delete-account` Edge Function (3rd; verify_jwt on, caller-only). Migration 018 makes `ideas.proposed_by`/`decisions.run_by` SET NULL so deletion **de-attributes** content/history (not delete) — preserves group continuity + avoids the chosen-idea NO ACTION FK. Refuses (409) sole-admin-of-a-shared-group; deletes solo groups first so the last-admin trigger skips. Data export deferred.               |
 | D72 | Moderation (OQ-5/D53) built: `reports` table (member-only insert RLS, reporter reads own, immutable) + `blocked_users`. Blocking hides the blocked user's ideas via the **ideas SELECT policy** (so it applies to Realtime too), not client filtering. `@huddle/api-client/moderation(-hooks)`; report+block on idea detail, unblock under account/settings. Review is manual (service role) for v1 — no automated scanning, no admin UI. |
+| D73 | Idea upvotes (mock user-panel, Phase 11): `idea_votes` (PK idea+user) + RLS; `@huddle/api-client/votes(-hooks)` (`fetchGroupVoteState` = counts + my votes in one query). Vote toggle on idea detail, ❤ count on lists. The **picker stays purely random** (D60) — voting is the "agree first" path, NOT a weighting input (weighted picker declined). Comments + idea date/location queued.                                             |
 
 ---
 
@@ -205,7 +206,7 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 - **Small slices.** Even small features ship in sub-phases (e.g., Phase 2 became 2.1 through 2.7). Each sub-phase has an explicit test gate.
 - **Tests before "done."** Unit/integration tests for shared packages. Playwright for web flows. pgTAP for RLS regressions. Manual smoke for mobile (Maestro deferred to Phase 9).
 - **Honest documentation of deferrals.** When something can't be done now (Apple OAuth, native mobile OAuth verification, Maestro), capture WHY in the roadmap rather than pretending it's complete.
-- **Architecture decisions get a log entry.** Numbered (continue from D72), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
+- **Architecture decisions get a log entry.** Numbered (continue from D73), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
 - **Justin debugs by sharing exact error output.** Encourage this — it's the most efficient diagnostic path. The Phase 2 work showed it consistently saved iteration cycles.
 
 ---
@@ -300,6 +301,8 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 - **Phase 9** (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions D38/D65, 9.3 `docs/SECURITY.md`). Perimeter (Cloudflare/Sentry/prod secrets/ToS) deferred — blocked on domain/accounts/deploy (`docs/SECURITY.md` §5).
 - **Phase 10** (10.1 name/bundle/license config; 10.2/10.3 account deletion; 10.4 web a11y axe sweep; 10.5 error/404 boundaries; **10.6–10.8 moderation** — reports + block/unblock, web + mobile). OQ-1/3/5/6/11 resolved.
 - **Repo hygiene** (audit follow-up): `prettier --write` whole repo (CI's `format:check` had been failing on ~144 files); **CI rewritten to run the full gate** (unit + pgTAP + probes + Playwright) — previously only format/lint/typecheck; removed stray `PHASE1_1_INSTRUCTIONS.md`.
+- **Security prep** (deferred-perimeter follow-up): send-push trigger now Vault-configurable (migration 020); public `/terms` + `/privacy` + sign-up link; DSN-gated Sentry on web (`next build` verified). Remaining perimeter is dashboard/account work (`docs/SECURITY.md` §5).
+- **Phase 11 — idea upvotes** (D73), from a mock user-panel exercise. Panel backlog also queued: **comments/discussion** (next) + **idea date/location**; weighted picker declined.
 
 Test suite green at last local run: typecheck (7) + lint (6) + format; unit (validation 77 / api-client 159 / core 32); **pgTAP 173**; **Playwright 55**; live probes run_picker 9/9, send-push 9/9, delete-account 10/10.
 
