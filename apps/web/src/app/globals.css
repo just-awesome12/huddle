@@ -41,7 +41,9 @@
   --color-surface-2: #f1f0fb;
   --color-content: #0f172a;
   --color-muted: #5b5b73;
-  --color-faint: #94a3b8;
+  /* faint must still meet WCAG AA 4.5:1 on white/surface-2 (a11y sweep,
+     Phase 10.4): #94a3b8 was only 2.56:1. #64748b is ~4.76:1 on white. */
+  --color-faint: #64748b;
   --color-line: #e6e3f5;
   /* Brand text (links/wordmark) — readable stop per mode. */
   --color-brand-ink: #473e9f;

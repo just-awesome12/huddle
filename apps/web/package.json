@@ -23,6 +23,7 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@huddle/config": "workspace:*",
     "@playwright/test": "1.49.1",
     "@tailwindcss/postcss": "^4.3.0",
