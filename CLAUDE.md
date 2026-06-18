@@ -98,7 +98,7 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 ---
 
-## 4. Decision log (D1–D70)
+## 4. Decision log (D1–D71)
 
 D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D64 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. D65–D69 are in `ARCHITECTURE_PHASE8_APPENDIX.md`. Highlights that affect ongoing work:
 
@@ -147,6 +147,7 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D68 | Pure notification selection/payload logic in `@huddle/core/notifications`; Deno mirror in `supabase/functions/_shared/notifications.ts` with a behavioural drift-guard test (same pattern as D62). |
 | D69 | Mobile push is web-guarded (no v1 web push): token registered on session, removed on sign-out; `DeviceNotRegistered` pruned; taps route to `data.path`. Real-device delivery is deferred/manual. |
 | D70 | Phase 9 in-app posture: RLS is the access boundary (re-verified); headers + noindex + report-only CSP in `next.config.ts`; fail-closed prod assertions (D38/D65). The perimeter (Cloudflare/Sentry/prod secrets/ToS) is deferred — blocked on domain (OQ-2) + accounts — and tracked in `docs/SECURITY.md`, which is the Phase 9 record (no appendix). |
+| D71 | Account deletion (OQ-6) = `delete-account` Edge Function (3rd; verify_jwt on, caller-only). Migration 018 makes `ideas.proposed_by`/`decisions.run_by` SET NULL so deletion **de-attributes** content/history (not delete) — preserves group continuity + avoids the chosen-idea NO ACTION FK. Refuses (409) sole-admin-of-a-shared-group; deletes solo groups first so the last-admin trigger skips. Data export deferred. |
 
 ---
 
@@ -270,7 +271,6 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 
 **Still open:**
 - **OQ-2** Domain name — needs Justin to register one; also unblocks the Phase 9 perimeter (Cloudflare) + universal links.
-- **OQ-6** *(approach chosen, build pending)* Account deletion / GDPR → **in-app self-serve** (Phase 10). Both stores require it; implementation (delete-account flow with last-admin handling) is a Phase 10 feature, not yet built.
 - **OQ-7** Geographic scope (single-region vs multi-region).
 - **OQ-8** ToS / Privacy policy authorship — needs Justin to decide who writes the legal copy (required for store submission).
 
@@ -279,6 +279,7 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 - **OQ-3** → bundle ID / package = **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json` (Phase 10).
 - **OQ-4** → "Pop" visual direction: violet brand + pink accent, Montserrat/Lato on web; light/dark mode with a persisted toggle on both apps; brand logo PNG. Shipped PR #10.
 - **OQ-5** → image moderation = report-and-review for v1 (D53).
+- **OQ-6** → **in-app self-serve account deletion**, built in Phase 10 (`delete-account` Edge Function + web/mobile UI, D71). Data export deferred (not store-required for v1).
 - **OQ-11** → **proprietary / all rights reserved** (`LICENSE` at repo root), Phase 10.
 
 ---
