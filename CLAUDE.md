@@ -286,11 +286,15 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 9 **in-app** hardening (Anti-Scraping & Security), shipped as 9.1 (headers/noindex/robots), 9.2 (fail-closed prod assertions), 9.3 (`docs/SECURITY.md` + audit + pen-test self-test) on branch `phase-9-hardening` (off `phase-8-push`; commits `5bdd114`, `803fdc0`, + the docs commit). Test suite green: typecheck (7) + lint (6), **152 api-client/validation/core unit** (incl. +4 Turnstile prod-assertion tests), **pgTAP 157**, **Playwright 50** (+2 security headers), plus all live probes. RLS re-verified as the real boundary. The **perimeter is deferred** (blocked on domain/accounts/deploy) — see `docs/SECURITY.md`.
+**Merged to main:** Phases 0–8 (PRs #11 Phase 7, #12 Phase 8, and earlier). 
 
-PR #11 (Phase 7) is **merged to main**. PR #12 (Phase 8, `phase-8-push`) is **open, not yet merged**. `phase-9-hardening` is branched off `phase-8-push`, so: merge #12 first, then `git rebase --onto main phase-8-push phase-9-hardening` and open the Phase 9 PR (same dance as Phase 8 → clean diff).
+**In flight (branch `phase-10-launch`, rebased on main):** Phase 9 **in-app** hardening + Phase 10 launch prep — opened as one PR covering both:
+- **Phase 9** (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions D38/D65, 9.3 `docs/SECURITY.md`). Perimeter (Cloudflare/Sentry/prod secrets/ToS) deferred — blocked on domain/accounts/deploy (`docs/SECURITY.md` §5).
+- **Phase 10 so far** (10.1 name/bundle/license config, 10.2 account-deletion backend, 10.3 account-deletion UI). OQ-1/3/6/11 resolved.
 
-**Up next:** **Phase 10 — Store Prep & Launch.** See `ROADMAP.md`. Several OQs come due here: **OQ-1** (final name), **OQ-2** (domain — also unblocks the Phase 9 perimeter), **OQ-3** (real bundle IDs), **OQ-6** (account deletion/GDPR), **OQ-8** (ToS/Privacy authorship), **OQ-11** (license). The Phase 9 perimeter checklist (`docs/SECURITY.md` §5) should be worked alongside Phase 10 once the domain exists.
+Test suite green at last run: typecheck (7) + lint (6); unit **156** (validation 77 / api-client 156 incl. account + Turnstile-assertion tests / core 32 — counts grow); **pgTAP 163**; **Playwright 52**; live probes for run_picker (9/9), send-push (9/9), delete-account (10/10).
+
+**Remaining Phase 10 (mostly Justin-gated):** accessibility/axe sweep, loading/error states, app icon/splash, **OQ-2 domain** + Vercel deploy (also unblocks the Phase 9 perimeter), Apple/Google accounts + EAS builds + store submission, **OQ-8 ToS/Privacy authorship**, status page. **OQ-7** (geographic scope) still open.
 
 **Prior decisions still flagged for Justin:** (1) the picker requires **≥2 candidates** (D63, diverges from the roadmap's "1 candidate → picked"); (2) **real-device push delivery is unverified** — needs a dev build with an EAS `projectId` (Phase 8 appendix §4).
 
