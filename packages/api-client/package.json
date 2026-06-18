@@ -27,6 +27,8 @@
     "./push-hooks": "./src/push-hooks.ts",
     "./account": "./src/account.ts",
     "./account-hooks": "./src/account-hooks.ts",
+    "./moderation": "./src/moderation.ts",
+    "./moderation-hooks": "./src/moderation-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {
