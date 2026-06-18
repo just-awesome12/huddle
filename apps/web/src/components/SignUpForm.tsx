@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import Link from 'next/link';
 import { signUpAction } from '@/actions/auth';
 import { EMPTY_AUTH_STATE } from '@/actions/auth-state';
 import { Button } from './Button';
@@ -68,6 +69,17 @@ export function SignUpForm({ turnstileSiteKey, next }: SignUpFormProps) {
       <Button type="submit" loading={pending}>
         Create account
       </Button>
+      <p className="text-xs text-muted">
+        By creating an account you agree to our{' '}
+        <Link href="/terms" className="font-medium text-brand-ink underline">
+          Terms of Service
+        </Link>{' '}
+        and{' '}
+        <Link href="/privacy" className="font-medium text-brand-ink underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </form>
   );
 }
