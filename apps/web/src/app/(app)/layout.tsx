@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { SignOutButton } from '@/components/SignOutButton';
@@ -27,9 +28,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <Logo />
           <div className="flex items-center gap-3 text-sm text-muted">
             <ConnectionDot />
-            <span data-testid="signed-in-email" className="hidden sm:inline">
+            <Link
+              href="/account"
+              data-testid="signed-in-email"
+              className="hidden font-medium hover:text-brand-ink sm:inline"
+            >
               {user.email}
-            </span>
+            </Link>
             <ThemeToggle />
             <SignOutButton />
           </div>

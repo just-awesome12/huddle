@@ -57,7 +57,8 @@ docs/
   ARCHITECTURE_PHASE6_APPENDIX.md   ← full Phase 6 design + decision log D56–D59
   ARCHITECTURE_PHASE7_APPENDIX.md   ← full Phase 7 design + decision log D60–D64
   ARCHITECTURE_PHASE8_APPENDIX.md   ← full Phase 8 design + decision log D65–D69
-ROADMAP.md     ← phase plan (Phases 0–8 = ✅ COMPLETE)
+  SECURITY.md                        ← Phase 9 security posture, self-test, deferred perimeter checklist
+ROADMAP.md     ← phase plan (Phases 0–8 = ✅ COMPLETE; Phase 9 = in-app done, perimeter deferred)
 SETUP.md       ← env setup
 ```
 
@@ -71,7 +72,7 @@ SETUP.md       ← env setup
 
 ---
 
-## 3. What's shipped (Phases 0–8)
+## 3. What's shipped (Phases 0–8, + Phase 9 in-app)
 
 **Phase 0** — Monorepo scaffold, Next.js 16 + Expo SDK 55 apps, 5 shared packages, Supabase config, GitHub Actions CI. Repo: `github.com/just-awesome12/huddle`.
 
@@ -89,13 +90,15 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 **Phase 6** — Realtime. Live updates for groups/ideas/members. Migration 014 adds the four tables to `supabase_realtime` (`REPLICA IDENTITY FULL`). Framework-free `@huddle/api-client/realtime` (`subscribeToGroup` / `subscribeToMyGroups`); web provider runs throttled `router.refresh()` (no client cache, D43/D57), mobile provider invalidates TanStack Query + reconnects on resume. **R-4 verified empirically** — Postgres Changes enforces RLS per subscriber, so plain channels are safe (D56). Connection-state dot on both apps. Fixed a browser env-inlining bug (D59). **Full architecture in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.** Shipped via PR #9 (branch `phase-6-realtime`).
 
+**Phase 9 (in-app)** — Anti-Scraping & Security Hardening. In-app hardening shipped on `phase-9-hardening`: security headers (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, X-Robots-Tag noindex) + report-only CSP in `next.config.ts`; `app/robots.ts` (`Disallow: /`); proxy excludes robots/sitemap; **fail-closed prod assertions** resolving D38 (Turnstile bypass → `instrumentation.ts` refuses boot) and D65 (`send-push` refuses the dev webhook secret outside local). `docs/SECURITY.md` records the executed pen-test self-test (RLS isolation re-verified — anon/no-key → empty), the invite-token entropy review (256-bit CSPRNG → no Turnstile on invite-create), and the `pnpm audit` result (26 advisories; **all high/critical are in dev/build tooling, not the runtime bundle**). The **perimeter** (Cloudflare WAF/Bot Fight/rate-limiting, Sentry, prod secrets, ToS) is deferred — blocked on a domain (OQ-2) + accounts + deploy — and tracked as a live checklist in `docs/SECURITY.md`. **No separate architecture appendix; `docs/SECURITY.md` is the Phase 9 record.**
+
 **Phase 8** — Push Notifications (mobile). **Huddle's second Edge Function** (`send-push`) + first use of Postgres Database Webhooks. pg_net AFTER INSERT triggers on `ideas`/`decisions`/`group_invites` (migration 017) POST the row to `send-push` (one fan-out seam covering all write paths, D65); `send-push` is webhook-authed (`verify_jwt` off, shared secret), reads recipients as service_role, filters by `notification_prefs`, and dispatches to the Expo Push API (pruning dead tokens). Migration 016 adds `notification_prefs` (absent row = all enabled, D66). Pure selection/payload logic in `@huddle/core/notifications` with a drift-guarded Deno mirror (D68); a dry-run header makes `send-push` testable without Expo (D67). Mobile: `expo-notifications` registration on session + removal on sign-out, a preferences screen, and tap→deep-link — all web-guarded (no v1 web push, D69). **Real-device delivery is the one deferred manual step.** **Full architecture in `docs/ARCHITECTURE_PHASE8_APPENDIX.md`.** Shipped on branch `phase-8-push`.
 
 **Phase 7** — Random Picker & Decision History. **Huddle's first Edge Function** (`run_picker`): server-side CSPRNG pick over a group's `on_radar` ideas (category + optional shortlist filters), recorded as a tamper-proof `decisions` row via service_role (`decisions` has no INSERT policy). Pure unbiased pick/shuffle in `@huddle/core` with a drift-guarded Deno mirror (D62). Migration 015 changes `decisions.chosen_idea_id` CASCADE → **NO ACTION** so a chosen idea can't be hard-deleted directly (dismiss instead) while group-delete still cascades (D61). Data layer `/decisions` + `/decisions-hooks`; web picker via a Server Action (D64), mobile via `useRunPicker`; both have an animated reveal + live decision history (the `decisions` table was already in the realtime publication). Requires ≥2 candidates (D63, diverges from the roadmap's 1-candidate note). **Full architecture in `docs/ARCHITECTURE_PHASE7_APPENDIX.md`.** Shipped on branch `phase-7-picker`.
 
 ---
 
-## 4. Decision log (D1–D69)
+## 4. Decision log (D1–D71)
 
 D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D64 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. D65–D69 are in `ARCHITECTURE_PHASE8_APPENDIX.md`. Highlights that affect ongoing work:
 
@@ -143,6 +146,8 @@ D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D
 | D67 | `send-push` honours an `x-huddle-dry-run` header (with a valid secret) that returns the selected tokens + sample message WITHOUT dispatching — lets the integration probe assert selection/payload with no Expo call. |
 | D68 | Pure notification selection/payload logic in `@huddle/core/notifications`; Deno mirror in `supabase/functions/_shared/notifications.ts` with a behavioural drift-guard test (same pattern as D62). |
 | D69 | Mobile push is web-guarded (no v1 web push): token registered on session, removed on sign-out; `DeviceNotRegistered` pruned; taps route to `data.path`. Real-device delivery is deferred/manual. |
+| D70 | Phase 9 in-app posture: RLS is the access boundary (re-verified); headers + noindex + report-only CSP in `next.config.ts`; fail-closed prod assertions (D38/D65). The perimeter (Cloudflare/Sentry/prod secrets/ToS) is deferred — blocked on domain (OQ-2) + accounts — and tracked in `docs/SECURITY.md`, which is the Phase 9 record (no appendix). |
+| D71 | Account deletion (OQ-6) = `delete-account` Edge Function (3rd; verify_jwt on, caller-only). Migration 018 makes `ideas.proposed_by`/`decisions.run_by` SET NULL so deletion **de-attributes** content/history (not delete) — preserves group continuity + avoids the chosen-idea NO ACTION FK. Refuses (409) sole-admin-of-a-shared-group; deletes solo groups first so the last-admin trigger skips. Data export deferred. |
 
 ---
 
@@ -197,7 +202,7 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 - **Small slices.** Even small features ship in sub-phases (e.g., Phase 2 became 2.1 through 2.7). Each sub-phase has an explicit test gate.
 - **Tests before "done."** Unit/integration tests for shared packages. Playwright for web flows. pgTAP for RLS regressions. Manual smoke for mobile (Maestro deferred to Phase 9).
 - **Honest documentation of deferrals.** When something can't be done now (Apple OAuth, native mobile OAuth verification, Maestro), capture WHY in the roadmap rather than pretending it's complete.
-- **Architecture decisions get a log entry.** Numbered (continue from D69), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
+- **Architecture decisions get a log entry.** Numbered (continue from D70), one-line summary, with rationale captured wherever it's relevant (often in the architecture appendix).
 - **Justin debugs by sharing exact error output.** Encourage this — it's the most efficient diagnostic path. The Phase 2 work showed it consistently saved iteration cycles.
 
 ---
@@ -262,31 +267,36 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 
 ---
 
-## 8. Open questions (not yet resolved)
+## 8. Open questions
 
-- **OQ-1** Final product name (currently "Huddle")
-- **OQ-2** Domain name (revisit in Phase 10)
-- **OQ-3** Real bundle IDs (currently `app.placeholder.huddle`)
-- **OQ-6** Account deletion / GDPR flow
-- **OQ-7** Geographic scope (single-region vs multi-region)
-- **OQ-8** ToS / Privacy policy authorship
-- **OQ-11** License (currently "all rights reserved")
+**Still open:**
+- **OQ-2** Domain name — needs Justin to register one; also unblocks the Phase 9 perimeter (Cloudflare) + universal links.
+- **OQ-7** Geographic scope (single-region vs multi-region).
+- **OQ-8** ToS / Privacy policy authorship — needs Justin to decide who writes the legal copy (required for store submission).
 
-(OQ-5 image moderation resolved in Phase 5 → report-and-review, D53. OQ-4 visual design resolved → "Pop" direction: violet brand + pink accent, Montserrat/Lato type on web (mobile keeps system font); **light/dark mode with a persisted system/light/dark toggle on both apps** — web via semantic `@theme` tokens + `.dark` class, mobile via `useColors()` theme-aware `makeStyles(c)` factories; brand logo PNG (`apps/web/public/logo.png`, `apps/mobile/assets/images/logo.png`) in the `Logo` component. Shipped on PR #10.)
-
-These shouldn't block current work but should get answered before Phase 10.
+**Resolved:**
+- **OQ-1** → name is **"Huddle"** (Phase 10; verify store/trademark availability before submission).
+- **OQ-3** → bundle ID / package = **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json` (Phase 10).
+- **OQ-4** → "Pop" visual direction: violet brand + pink accent, Montserrat/Lato on web; light/dark mode with a persisted toggle on both apps; brand logo PNG. Shipped PR #10.
+- **OQ-5** → image moderation = report-and-review for v1 (D53).
+- **OQ-6** → **in-app self-serve account deletion**, built in Phase 10 (`delete-account` Edge Function + web/mobile UI, D71). Data export deferred (not store-required for v1).
+- **OQ-11** → **proprietary / all rights reserved** (`LICENSE` at repo root), Phase 10.
 
 ---
 
 ## 9. Status: where you're starting
 
-**Just closed:** Phase 8 (Push Notifications, mobile), shipped as 8.1 (`notification_prefs` + pure logic + `send-push` Edge Function + data layer), 8.2 (pg_net Database Webhook triggers), 8.3 (mobile registration + prefs screen + deep links) on branch `phase-8-push` (commits `88589c9`, `f73d979`, `f6e2346`; not yet PR'd). Branched off `phase-7-picker` because it reuses Phase 7's Edge Function infra — so its eventual PR stacks on PR #11 (Phase 7) until that merges. Test suite green: typecheck/lint across 7 packages, **~241 unit tests** (77 validation + 144 api-client + 20 core; numbers approximate as suites grow), **48 Playwright**, **157 pgTAP**, plus the realtime RLS probe, the `run_picker` probe (9/9), and the new **`send-push` dry-run probe (9/9)**. Second Edge Function stood up (`send-push`, `verify_jwt` off); fan-out verified live via `net._http_response`.
+**Merged to main:** Phases 0–8 (PRs #11 Phase 7, #12 Phase 8, and earlier). 
 
-**Up next:** **Phase 9 — Anti-Scraping & Security Hardening.** See `ROADMAP.md`. Note the deferrals this phase leaves for Phase 9: the **production webhook secret + URL** for `send-push` (currently a committed dev fallback, D65) and a **boot assertion** that refuses the dev fallback / Turnstile test mode outside local (D38/D65).
+**In flight (branch `phase-10-launch`, rebased on main):** Phase 9 **in-app** hardening + Phase 10 launch prep — opened as one PR covering both:
+- **Phase 9** (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions D38/D65, 9.3 `docs/SECURITY.md`). Perimeter (Cloudflare/Sentry/prod secrets/ToS) deferred — blocked on domain/accounts/deploy (`docs/SECURITY.md` §5).
+- **Phase 10 so far** (10.1 name/bundle/license config, 10.2 account-deletion backend, 10.3 account-deletion UI). OQ-1/3/6/11 resolved.
 
-**Two prior decisions still flagged for Justin:** (1) the picker requires **≥2 candidates** (D63, diverges from the roadmap's "1 candidate → picked"); (2) **real-device push delivery is unverified** — it can't be automated and needs a dev build with an EAS `projectId` (Phase 8 appendix §4).
+Test suite green at last run: typecheck (7) + lint (6); unit **156** (validation 77 / api-client 156 incl. account + Turnstile-assertion tests / core 32 — counts grow); **pgTAP 163**; **Playwright 52**; live probes for run_picker (9/9), send-push (9/9), delete-account (10/10).
 
-**PRs open:** #11 (Phase 7, `phase-7-picker`). Phase 8 (`phase-8-push`) pushed but not yet PR'd at last update.
+**Remaining Phase 10 (mostly Justin-gated):** accessibility/axe sweep, loading/error states, app icon/splash, **OQ-2 domain** + Vercel deploy (also unblocks the Phase 9 perimeter), Apple/Google accounts + EAS builds + store submission, **OQ-8 ToS/Privacy authorship**, status page. **OQ-7** (geographic scope) still open.
+
+**Prior decisions still flagged for Justin:** (1) the picker requires **≥2 candidates** (D63, diverges from the roadmap's "1 candidate → picked"); (2) **real-device push delivery is unverified** — needs a dev build with an EAS `projectId` (Phase 8 appendix §4).
 
 **Not yet verified on a real device** (carried over): native mobile Google OAuth + `huddle://` deep-link round-trip (incl. scheme-based invite links); native runtime behaviors (SecureStore, native navigation, real share sheet / QR scanning, the photo picker, **realtime reconnect-on-resume across a real background/foreground cycle**). Deferred until an emulator or custom dev build is set up (reasonable Phase 10 item).
 

@@ -42,7 +42,7 @@ export type Database = {
           filters: Json
           group_id: string
           id: string
-          run_by: string
+          run_by: string | null
         }
         Insert: {
           candidate_idea_ids: string[]
@@ -51,7 +51,7 @@ export type Database = {
           filters?: Json
           group_id: string
           id?: string
-          run_by: string
+          run_by?: string | null
         }
         Update: {
           candidate_idea_ids?: string[]
@@ -60,7 +60,7 @@ export type Database = {
           filters?: Json
           group_id?: string
           id?: string
-          run_by?: string
+          run_by?: string | null
         }
         Relationships: [
           {
@@ -231,7 +231,7 @@ export type Database = {
           id: string
           link: string | null
           photo_path: string | null
-          proposed_by: string
+          proposed_by: string | null
           status: Database["public"]["Enums"]["idea_status"]
           title: string
           updated_at: string
@@ -244,7 +244,7 @@ export type Database = {
           id?: string
           link?: string | null
           photo_path?: string | null
-          proposed_by: string
+          proposed_by?: string | null
           status?: Database["public"]["Enums"]["idea_status"]
           title: string
           updated_at?: string
@@ -257,7 +257,7 @@ export type Database = {
           id?: string
           link?: string | null
           photo_path?: string | null
-          proposed_by?: string
+          proposed_by?: string | null
           status?: Database["public"]["Enums"]["idea_status"]
           title?: string
           updated_at?: string

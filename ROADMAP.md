@@ -3,7 +3,7 @@
 > **Status:** Phase 0 scaffolding generated; pending local validation by builder
 > **Last updated:** 2026-05-13
 > **Owner:** Solo build
-> **Working title:** Huddle (placeholder bundle ID: `app.placeholder.huddle`)
+> **Name:** Huddle (OQ-1 resolved) · **Bundle ID:** `com.huddleapp.huddle` (OQ-3 resolved)
 
 ---
 
@@ -673,22 +673,26 @@ project-root/
 
 ---
 
-### Phase 9 — Anti-Scraping & Security Hardening
+### Phase 9 — Anti-Scraping & Security Hardening 🟡 IN-APP COMPLETE (perimeter deferred)
 
 **Objective:** Make the application costly and unappealing to scrape, even for sophisticated actors.
 
+**Status (2026-06-17):** The **in-app** hardening is shipped on branch `phase-9-hardening` (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions, 9.3 SECURITY.md + audit + self-test). The **perimeter** (Cloudflare, Sentry, prod secrets, ToS) is genuinely blocked on a domain (OQ-2) + the relevant accounts + a deployed environment, and is tracked as a live checklist in `docs/SECURITY.md`. The primary access guarantee — Postgres RLS — was re-verified (157 pgTAP assertions + live anon/no-key checks).
+
 **Tasks**
-- [ ] Move web DNS to Cloudflare; enable proxy (orange cloud), Bot Fight Mode, and Security Level: Medium
-- [ ] Cloudflare WAF rules: block known scraper UAs, geo-rate-limit if needed
-- [ ] Cloudflare Rate Limiting Rules: aggressive limits on `/api/*` and auth endpoints
-- [ ] Verify Turnstile is enforced on every sign-up code path (web + mobile)
-- [ ] Add Turnstile to "create invite" if invite links can be brute-forced — re-check token entropy from Phase 4
-- [ ] `robots.txt` disallowing all crawlers on `(app)/*` routes
-- [ ] `X-Robots-Tag: noindex` header on authenticated pages
-- [ ] Terms of Service draft explicitly forbidding automated access; link from sign-up
-- [ ] Sentry: enable error monitoring with PII scrubbing rules
-- [ ] Run `npm audit` and resolve any high/critical
-- [ ] Penetration self-test using a second account: try to read another group's data, modify roles, replay tokens, etc. Document results in `SECURITY.md`
+- [ ] Move web DNS to Cloudflare; enable proxy, Bot Fight Mode, Security Level: Medium — **deferred (needs domain + account)**
+- [ ] Cloudflare WAF rules — **deferred**
+- [ ] Cloudflare Rate Limiting Rules — **deferred** (in-memory search limiter exists as defence-in-depth, D51)
+- [x] Verify Turnstile is enforced on web sign-up; mobile has no Turnstile equivalent (gap documented in SECURITY.md)
+- [x] Re-check invite token entropy — 256-bit CSPRNG, single-use, 7-day expiry → **Turnstile on invite-create NOT required** (SECURITY.md §2)
+- [x] `robots.txt` disallowing crawlers (`Disallow: /`, app is private) — `app/robots.ts`
+- [x] `X-Robots-Tag: noindex` header — `next.config.ts` (all routes)
+- [ ] Terms of Service forbidding automated access — **deferred (authorship is OQ-8)**
+- [ ] Sentry error monitoring — **deferred (needs DSN)**
+- [x] Run `pnpm audit` — 26 advisories (6 high, 5 critical), **all in dev/build tooling, not the runtime bundle**; remediation plan in SECURITY.md §4
+- [x] Penetration self-test (cross-group read, role tamper, token replay, decision immutability, realtime leakage) — executed; results in `docs/SECURITY.md` §3
+- [x] Fail-closed production assertions (Turnstile bypass D38; send-push dev secret D65) — `instrumentation.ts` + send-push
+- [x] Security headers (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) + report-only CSP
 
 **Files likely affected**
 - `apps/web/middleware.ts` (security headers)
@@ -790,15 +794,15 @@ Every phase enforces these gates before progressing.
 **Open questions (must be answered before they become blockers)**
 - [x] **OQ-1: Project name.** Resolved → **Huddle**.
 - [ ] **OQ-2: Domain name.** Needed by Phase 10 at the latest.
-- [ ] **OQ-3: Bundle identifiers** for iOS (`com.x.y`) and Android (`com.x.y`). Currently placeholder `app.placeholder.huddle`. Must be finalized before Phase 10 store submission.
+- [x] **OQ-3: Bundle identifiers.** Resolved → **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json`.
 - [x] **OQ-4: Visual design direction.** Resolved → "Pop" direction: violet brand (c-purple) + pink accent (c-pink), Montserrat Bold + Lato Regular type on web (mobile keeps the native system font), and the brand logo (figures + lightbulb) wired in both apps. **Light/dark mode** with a persisted system/light/dark toggle: web uses semantic `@theme` tokens + a `.dark` class with a no-flash script; mobile uses a `ThemeContext` + `useColors()` theme-aware `makeStyles(c)` factories. Tokens in `globals.css` (web) / `apps/mobile/src/lib/theme.ts` (mobile). Shipped on PR #10.
 - [ ] **OQ-5: Image moderation policy.** User-uploaded photos can be anything. Options: (a) no moderation (risky); (b) manual report-and-review; (c) automated (Hive, AWS Rekognition — costs money). Need a decision before Phase 5.
-- [ ] **OQ-6: Account deletion & data export.** Many jurisdictions (GDPR, CCPA) require these. Even if we don't market in the EU, app stores increasingly require deletion. Plan a sub-task in Phase 10.
+- [x] **OQ-6: Account deletion.** Built → **in-app self-serve deletion** (`delete-account` Edge Function + web `/account` + mobile settings). Deletion de-attributes content (SET NULL), refuses sole-admin-of-shared-group, cleans up solo groups. Data export deferred (not store-required for v1).
 - [ ] **OQ-7: Geographic scope.** US only? Global? Affects compliance posture.
 - [ ] **OQ-8: Terms of Service & Privacy Policy authorship.** Are you writing these, using a template (Termly, iubenda), or hiring? Required by both app stores.
 - [ ] **OQ-9: Username vs display name uniqueness rules.** Username is unique; display name is free-form. Confirm.
 - [x] **OQ-10: Invite link revocation.** Resolved in Phase 4 → yes. Implemented as DELETE (per the Phase 1 RLS design) rather than a flag; a revoked token reads as "not found", indistinguishable from never-existed.
-- [ ] **OQ-11: License.** Currently "all rights reserved" by default. Pick a license (MIT, Apache-2.0, GPL, or proprietary) before public launch. Affects whether outside contributors can engage.
+- [x] **OQ-11: License.** Resolved → **proprietary / all rights reserved** (`LICENSE` at repo root). Source is reference-only; no reuse license granted.
 
 ---
 

@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { verifyTurnstileToken } from '../src/turnstile';
+import {
+  verifyTurnstileToken,
+  assertTurnstileProductionSafe,
+  TURNSTILE_TEST_SECRET,
+} from '../src/turnstile';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -86,5 +90,49 @@ describe('verifyTurnstileToken', () => {
     expect(call).toBeDefined();
     const headers = call![1]?.headers as Record<string, string>;
     expect(headers['content-type']).toBe('application/x-www-form-urlencoded');
+  });
+});
+
+describe('assertTurnstileProductionSafe (D38 fail-closed)', () => {
+  const realSecret = '0xREAL_secret_value';
+
+  it('does nothing outside production, even with the bypass on', () => {
+    expect(() =>
+      assertTurnstileProductionSafe({
+        nodeEnv: 'development',
+        testModeFlag: 'true',
+        secret: TURNSTILE_TEST_SECRET,
+      }),
+    ).not.toThrow();
+  });
+
+  it('allows production with a real secret and no test flag', () => {
+    expect(() =>
+      assertTurnstileProductionSafe({
+        nodeEnv: 'production',
+        testModeFlag: undefined,
+        secret: realSecret,
+      }),
+    ).not.toThrow();
+  });
+
+  it('throws in production when the test-mode flag is on', () => {
+    expect(() =>
+      assertTurnstileProductionSafe({
+        nodeEnv: 'production',
+        testModeFlag: 'true',
+        secret: realSecret,
+      }),
+    ).toThrow(/production/i);
+  });
+
+  it('throws in production when the test secret is configured', () => {
+    expect(() =>
+      assertTurnstileProductionSafe({
+        nodeEnv: 'production',
+        testModeFlag: undefined,
+        secret: TURNSTILE_TEST_SECRET,
+      }),
+    ).toThrow(/production/i);
   });
 });

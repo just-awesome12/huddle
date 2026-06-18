@@ -68,10 +68,10 @@ export default function GroupListScreen() {
         <View style={styles.titleRow}>
           <ThemeToggle />
           <Button
-            label="🔔"
+            label="⚙"
             variant="ghost"
-            accessibilityLabel="Notification settings"
-            onPress={() => router.push('/settings/notifications')}
+            accessibilityLabel="Settings"
+            onPress={() => router.push('/settings')}
           />
           <Button
             label="Sign out"
