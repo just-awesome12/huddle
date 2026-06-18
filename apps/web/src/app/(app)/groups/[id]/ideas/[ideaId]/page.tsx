@@ -4,8 +4,10 @@ import { fetchGroupMembers } from '@huddle/api-client/groups';
 import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
+import { blockUserAction } from '@/actions/moderation';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
+import { ReportIdeaForm } from '@/components/ReportIdeaForm';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
 
@@ -138,6 +140,22 @@ export default async function IdeaDetailPage({
             buttonLabel="Delete idea"
             confirmPrompt="Delete this idea? This cannot be undone."
             confirmLabel="Delete idea"
+            variant="secondary"
+          />
+        </div>
+      )}
+
+      {/* Moderation (OQ-5): report the content, or block its author.
+          Only for other people's ideas. */}
+      {idea.proposed_by && idea.proposed_by !== user.id && (
+        <div className="mt-6 flex flex-col gap-3 border-t border-line pt-6">
+          <ReportIdeaForm ideaId={ideaId} />
+          <ConfirmActionForm
+            action={blockUserAction}
+            fields={{ groupId: id, blockedId: idea.proposed_by }}
+            buttonLabel={`Block @${idea.proposer?.username ?? 'this user'}`}
+            confirmPrompt="Block this person? You won't see their ideas anymore. You can undo this in Account."
+            confirmLabel="Block"
             variant="secondary"
           />
         </div>
