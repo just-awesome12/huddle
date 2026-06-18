@@ -9,6 +9,7 @@ import {
   useRemoveMember,
 } from '@huddle/api-client/groups-hooks';
 import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
+import { useGroupVoteState } from '@huddle/api-client/votes-hooks';
 import type { IdeaCategory, IdeaStatus } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -74,6 +75,7 @@ export default function GroupDetailScreen() {
   const group = useGroup(supabase, id);
   const members = useGroupMembers(supabase, id);
   const ideas = useGroupIdeas(supabase, id, filters);
+  const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
   const leaveGroup = useLeaveGroup(supabase);
   const removeMember = useRemoveMember(supabase);
 
@@ -209,6 +211,11 @@ export default function GroupDetailScreen() {
                       </Text>
                     </View>
                     <View style={styles.ideaBadges}>
+                      {(voteState.data?.countByIdea[idea.id] ?? 0) > 0 ? (
+                        <Text style={styles.voteCount}>
+                          ❤ {voteState.data?.countByIdea[idea.id]}
+                        </Text>
+                      ) : null}
                       <CategoryBadge category={idea.category} />
                       <StatusBadge status={idea.status} />
                     </View>
@@ -365,6 +372,7 @@ const makeStyles = (c: ThemeColors) =>
     ideaInfo: { flexShrink: 1 },
     ideaTitle: { fontSize: 14, fontWeight: '600', color: c.text },
     ideaMeta: { fontSize: 12, color: c.muted },
-    ideaBadges: { flexDirection: 'row', gap: 6, flexShrink: 0 },
+    ideaBadges: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 },
+    voteCount: { fontSize: 12, fontWeight: '600', color: c.muted },
     membersTitle: { marginTop: 20 },
   });

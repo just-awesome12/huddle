@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Linking,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +21,7 @@ import {
 } from '@huddle/api-client/ideas-hooks';
 import { isHuddleError } from '@huddle/api-client/errors';
 import { useReportIdea, useBlockUser } from '@huddle/api-client/moderation-hooks';
+import { useGroupVoteState, useVoteIdea } from '@huddle/api-client/votes-hooks';
 import type { ReportReason } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -52,6 +54,8 @@ export default function IdeaDetailScreen() {
   const photoUrl = useIdeaPhotoUrl(supabase, idea.data?.photo_path ?? null);
   const reportIdea = useReportIdea(supabase, myUserId ?? '');
   const blockUser = useBlockUser(supabase, myUserId ?? '');
+  const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
+  const vote = useVoteIdea(supabase, id);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reported, setReported] = useState(false);
@@ -123,6 +127,24 @@ export default function IdeaDetailScreen() {
             Proposed by {idea.data.proposer?.display_name ?? 'someone'} on{' '}
             {new Date(idea.data.created_at).toLocaleDateString()}
           </Text>
+
+          {(() => {
+            const voted = voteState.data?.myVotes.includes(ideaId) ?? false;
+            const count = voteState.data?.countByIdea[ideaId] ?? 0;
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: voted }}
+                disabled={vote.isPending || voteState.isPending}
+                onPress={() => vote.mutate({ ideaId, voted })}
+                style={[styles.voteBtn, voted && styles.voteBtnOn]}
+              >
+                <Text style={[styles.voteText, voted && styles.voteTextOn]}>
+                  {voted ? '❤' : '🤍'} {count}
+                </Text>
+              </Pressable>
+            );
+          })()}
 
           {photoUrl.data ? (
             <Image source={{ uri: photoUrl.data }} style={styles.photo} testID="idea-photo" />
@@ -288,6 +310,20 @@ const makeStyles = (c: ThemeColors) =>
     title: { fontSize: 20, fontWeight: '700', color: c.text },
     badges: { flexDirection: 'row', gap: 8 },
     meta: { fontSize: 12, color: c.muted },
+    voteBtn: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    voteBtnOn: { borderColor: c.brand[600], backgroundColor: c.brandBg },
+    voteText: { fontSize: 13, fontWeight: '600', color: c.muted },
+    voteTextOn: { color: c.brandInk },
     photo: {
       width: '100%',
       height: 220,

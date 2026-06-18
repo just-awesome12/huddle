@@ -2,12 +2,15 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroupMembers } from '@huddle/api-client/groups';
 import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
+import { fetchGroupVoteState } from '@huddle/api-client/votes';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
 import { blockUserAction } from '@/actions/moderation';
+import { toggleVoteAction } from '@/actions/votes';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { ReportIdeaForm } from '@/components/ReportIdeaForm';
+import { VoteButton } from '@/components/VoteButton';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
 
@@ -41,6 +44,18 @@ export default async function IdeaDetailPage({
 
   const statusAction = setIdeaStatusAction.bind(null, id, ideaId);
 
+  // Vote state (Phase 11). Best-effort — render zero if it fails.
+  let voteCount = 0;
+  let voted = false;
+  try {
+    const votes = await fetchGroupVoteState(supabase, id, user.id);
+    voteCount = votes.countByIdea[ideaId] ?? 0;
+    voted = votes.myVotes.includes(ideaId);
+  } catch {
+    // leave defaults
+  }
+  const voteAction = toggleVoteAction.bind(null, id, ideaId, voted);
+
   // Private bucket → short-lived signed URL, minted per render.
   let photoUrl: string | null = null;
   if (idea.photo_path) {
@@ -73,6 +88,10 @@ export default async function IdeaDetailPage({
           Proposed by {idea.proposer?.display_name ?? 'someone'} on{' '}
           {new Date(idea.created_at).toLocaleDateString()}
         </p>
+
+        <div className="mt-4">
+          <VoteButton action={voteAction} voted={voted} count={voteCount} />
+        </div>
 
         {photoUrl && (
           <img
