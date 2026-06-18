@@ -726,7 +726,7 @@ project-root/
 **Tasks**
 - [ ] Accessibility audit on web: keyboard nav, focus rings, ARIA labels, axe-core sweep
 - [ ] Mobile: VoiceOver and TalkBack passes on critical flows
-- [ ] Loading skeletons everywhere; error boundaries; offline messaging
+- [~] Loading skeletons / error boundaries / offline messaging — **error boundary + 404 shipped** (`(app)/error.tsx`, `not-found.tsx`); web **loading skeletons DEFERRED** (Next 16 route `loading.tsx` + in-page `<Suspense>` both linger/duplicate the prior route's DOM with realtime `router.refresh()` — see lesson 21; mobile already has inline loaders)
 - [ ] Web Lighthouse audit; target Performance ≥ 90, Accessibility ≥ 95
 - [ ] Mobile: cold-start time ≤ 3s on a mid-range device
 - [ ] Icon set, splash screens, app store assets
