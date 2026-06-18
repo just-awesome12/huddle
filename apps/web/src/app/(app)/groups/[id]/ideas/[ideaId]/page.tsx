@@ -1,11 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroupMembers } from '@huddle/api-client/groups';
-import {
-  fetchIdea,
-  getIdeaPhotoUrl,
-  type IdeaWithProposer,
-} from '@huddle/api-client/ideas';
+import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
@@ -56,10 +52,7 @@ export default async function IdeaDetailPage({
   return (
     <div className="mx-auto max-w-2xl">
       <GroupRealtime groupId={id} />
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to ideas
       </Link>
 
@@ -89,9 +82,7 @@ export default async function IdeaDetailPage({
         )}
 
         {idea.description && (
-          <p className="mt-4 whitespace-pre-wrap text-sm text-content">
-            {idea.description}
-          </p>
+          <p className="mt-4 whitespace-pre-wrap text-sm text-content">{idea.description}</p>
         )}
 
         {idea.link && (

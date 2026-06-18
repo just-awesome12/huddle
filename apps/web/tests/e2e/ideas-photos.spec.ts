@@ -32,9 +32,7 @@ const PNG_FIXTURE = Buffer.from(
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -87,16 +85,11 @@ test('create idea with photo → renders signed URL on detail', async ({ page })
 
   // The image actually loads (signed URL is valid).
   await expect
-    .poll(async () =>
-      img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0),
-    )
+    .poll(async () => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0))
     .toBe(true);
 });
 
-test('photo object is NOT readable without a signed URL', async ({
-  page,
-  request,
-}) => {
+test('photo object is NOT readable without a signed URL', async ({ page, request }) => {
   await signUp(page, makeTestUser('gs'));
   await createGroup(page, 'Guess Group');
 

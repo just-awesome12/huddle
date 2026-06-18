@@ -6,11 +6,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { CategoryBadge, CATEGORY_LABELS } from '@/components/IdeaBadges';
 
-export default async function HistoryPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function HistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await getSupabaseServerClient();
@@ -31,10 +27,7 @@ export default async function HistoryPage({
   return (
     <div className="mx-auto max-w-2xl">
       <GroupRealtime groupId={id} />
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to {group.name}
       </Link>
 
@@ -59,9 +52,7 @@ export default async function HistoryPage({
         <ul className="mt-6 flex flex-col gap-3" data-testid="decision-list">
           {decisions.map((d) => {
             const categoryFilter =
-              d.filters &&
-              typeof d.filters === 'object' &&
-              'category' in d.filters
+              d.filters && typeof d.filters === 'object' && 'category' in d.filters
                 ? (d.filters as { category?: string | null }).category
                 : null;
             return (
@@ -83,17 +74,15 @@ export default async function HistoryPage({
                         {d.chosen.title}
                       </Link>
                     ) : (
-                      <span className="text-sm font-medium text-faint italic">
-                        (idea removed)
-                      </span>
+                      <span className="text-sm font-medium text-faint italic">(idea removed)</span>
                     )}
                   </div>
                   {d.chosen && <CategoryBadge category={d.chosen.category} />}
                 </div>
                 <p className="mt-2 text-xs text-muted">
                   by {d.runner?.display_name ?? 'someone'} ·{' '}
-                  {new Date(d.created_at).toLocaleString()} · from{' '}
-                  {d.candidate_idea_ids.length} option
+                  {new Date(d.created_at).toLocaleString()} · from {d.candidate_idea_ids.length}{' '}
+                  option
                   {d.candidate_idea_ids.length === 1 ? '' : 's'}
                   {categoryFilter
                     ? ` · ${CATEGORY_LABELS[categoryFilter as keyof typeof CATEGORY_LABELS] ?? categoryFilter} only`

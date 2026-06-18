@@ -7,6 +7,7 @@ group — with per-user preferences and tap-to-deep-link. It adds Huddle's
 **Database Webhooks** (pg_net).
 
 Shipped as three slices on branch `phase-8-push`:
+
 - **8.1** — `notification_prefs`, pure logic, `send-push`, data layer, tests.
 - **8.2** — pg_net trigger fan-out + live verification.
 - **8.3** — mobile registration, preferences screen, deep links.

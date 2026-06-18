@@ -31,8 +31,7 @@ function makeClient({
   return client as never;
 }
 
-const chainOf = (c: unknown) =>
-  (c as { _chain: Record<string, ReturnType<typeof vi.fn>> })._chain;
+const chainOf = (c: unknown) => (c as { _chain: Record<string, ReturnType<typeof vi.fn>> })._chain;
 
 describe('registerPushToken', () => {
   it('upserts the caller’s token keyed on (user, token)', async () => {

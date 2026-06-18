@@ -20,8 +20,7 @@ import type { NextConfig } from 'next';
 // Supabase origin(s) the browser legitimately talks to (REST/Realtime/
 // Storage). Read at build from the public env so the policy matches the
 // target environment; falls back to local.
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const SUPABASE_WS = SUPABASE_URL.replace(/^http/, 'ws');
 const TURNSTILE = 'https://challenges.cloudflare.com';
 

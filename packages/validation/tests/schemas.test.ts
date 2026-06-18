@@ -35,7 +35,6 @@ function validSignUp(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
-
 // =====================================================================
 // Username
 // =====================================================================
@@ -83,7 +82,6 @@ describe('usernameSchema', () => {
   });
 });
 
-
 // =====================================================================
 // Display name
 // =====================================================================
@@ -115,7 +113,6 @@ describe('displayNameSchema', () => {
   });
 });
 
-
 // =====================================================================
 // Sign-up
 // =====================================================================
@@ -135,18 +132,17 @@ describe('signUpSchema', () => {
   });
 
   it('rejects malformed email', () => {
-    expect(() => signUpSchema.parse(validSignUp({ email: 'not-an-email' })))
-      .toThrow(/valid email/);
+    expect(() => signUpSchema.parse(validSignUp({ email: 'not-an-email' }))).toThrow(/valid email/);
   });
 
   it('rejects passwords shorter than 8 chars', () => {
-    expect(() => signUpSchema.parse(validSignUp({ password: 'short' })))
-      .toThrow(/at least 8/);
+    expect(() => signUpSchema.parse(validSignUp({ password: 'short' }))).toThrow(/at least 8/);
   });
 
   it('rejects passwords longer than 72 chars (bcrypt limit)', () => {
-    expect(() => signUpSchema.parse(validSignUp({ password: 'a'.repeat(73) })))
-      .toThrow(/at most 72/);
+    expect(() => signUpSchema.parse(validSignUp({ password: 'a'.repeat(73) }))).toThrow(
+      /at most 72/,
+    );
   });
 
   it('accepts a password at exactly 72 chars', () => {
@@ -155,21 +151,19 @@ describe('signUpSchema', () => {
   });
 
   it('rejects missing turnstileToken', () => {
-    expect(() => signUpSchema.parse(validSignUp({ turnstileToken: '' })))
-      .toThrow(/human-verification/);
+    expect(() => signUpSchema.parse(validSignUp({ turnstileToken: '' }))).toThrow(
+      /human-verification/,
+    );
   });
 
   it('rejects invalid username', () => {
-    expect(() => signUpSchema.parse(validSignUp({ username: 'AB' })))
-      .toThrow(/at least 3/);
+    expect(() => signUpSchema.parse(validSignUp({ username: 'AB' }))).toThrow(/at least 3/);
   });
 
   it('rejects invalid display name', () => {
-    expect(() => signUpSchema.parse(validSignUp({ displayName: '' })))
-      .toThrow(/required/);
+    expect(() => signUpSchema.parse(validSignUp({ displayName: '' }))).toThrow(/required/);
   });
 });
-
 
 // =====================================================================
 // Sign-in
@@ -177,10 +171,12 @@ describe('signUpSchema', () => {
 
 describe('signInSchema', () => {
   it('accepts a valid payload', () => {
-    expect(signInSchema.parse({
-      email: 'alice@huddle.test',
-      password: 'whatever',
-    })).toEqual({
+    expect(
+      signInSchema.parse({
+        email: 'alice@huddle.test',
+        password: 'whatever',
+      }),
+    ).toEqual({
       email: 'alice@huddle.test',
       password: 'whatever',
     });
@@ -189,27 +185,32 @@ describe('signInSchema', () => {
   it('does NOT enforce password length (sign-in keeps legacy passwords usable)', () => {
     // A 3-char password is invalid for SIGN-UP, but should be accepted
     // on sign-in if the user already has one.
-    expect(() => signInSchema.parse({
-      email: 'alice@huddle.test',
-      password: 'abc',
-    })).not.toThrow();
+    expect(() =>
+      signInSchema.parse({
+        email: 'alice@huddle.test',
+        password: 'abc',
+      }),
+    ).not.toThrow();
   });
 
   it('rejects empty password', () => {
-    expect(() => signInSchema.parse({
-      email: 'alice@huddle.test',
-      password: '',
-    })).toThrow(/Password is required/);
+    expect(() =>
+      signInSchema.parse({
+        email: 'alice@huddle.test',
+        password: '',
+      }),
+    ).toThrow(/Password is required/);
   });
 
   it('rejects malformed email', () => {
-    expect(() => signInSchema.parse({
-      email: 'nope',
-      password: 'whatever',
-    })).toThrow(/valid email/);
+    expect(() =>
+      signInSchema.parse({
+        email: 'nope',
+        password: 'whatever',
+      }),
+    ).toThrow(/valid email/);
   });
 });
-
 
 // =====================================================================
 // Password reset request
@@ -217,16 +218,15 @@ describe('signInSchema', () => {
 
 describe('passwordResetRequestSchema', () => {
   it('accepts a valid email', () => {
-    expect(passwordResetRequestSchema.parse({ email: 'alice@huddle.test' }))
-      .toEqual({ email: 'alice@huddle.test' });
+    expect(passwordResetRequestSchema.parse({ email: 'alice@huddle.test' })).toEqual({
+      email: 'alice@huddle.test',
+    });
   });
 
   it('rejects malformed email', () => {
-    expect(() => passwordResetRequestSchema.parse({ email: 'nope' }))
-      .toThrow(/valid email/);
+    expect(() => passwordResetRequestSchema.parse({ email: 'nope' })).toThrow(/valid email/);
   });
 });
-
 
 // =====================================================================
 // Profile update
@@ -234,11 +234,13 @@ describe('passwordResetRequestSchema', () => {
 
 describe('profileUpdateSchema', () => {
   it('accepts a full update', () => {
-    expect(profileUpdateSchema.parse({
-      username: 'new_name',
-      displayName: 'New Name',
-      avatarUrl: 'https://example.com/avatar.png',
-    })).toMatchObject({
+    expect(
+      profileUpdateSchema.parse({
+        username: 'new_name',
+        displayName: 'New Name',
+        avatarUrl: 'https://example.com/avatar.png',
+      }),
+    ).toMatchObject({
       username: 'new_name',
       displayName: 'New Name',
     });
@@ -253,11 +255,9 @@ describe('profileUpdateSchema', () => {
   });
 
   it('rejects a non-URL avatar', () => {
-    expect(() => profileUpdateSchema.parse({ avatarUrl: 'not-a-url' }))
-      .toThrow();
+    expect(() => profileUpdateSchema.parse({ avatarUrl: 'not-a-url' })).toThrow();
   });
 });
-
 
 // =====================================================================
 // Onboarding
@@ -265,10 +265,12 @@ describe('profileUpdateSchema', () => {
 
 describe('onboardingSchema', () => {
   it('accepts a valid payload', () => {
-    expect(onboardingSchema.parse({
-      username: 'alice',
-      displayName: 'Alice',
-    })).toEqual({
+    expect(
+      onboardingSchema.parse({
+        username: 'alice',
+        displayName: 'Alice',
+      }),
+    ).toEqual({
       username: 'alice',
       displayName: 'Alice',
     });
@@ -279,7 +281,6 @@ describe('onboardingSchema', () => {
     expect(() => onboardingSchema.parse({ displayName: 'Alice' })).toThrow();
   });
 });
-
 
 // =====================================================================
 // Groups
@@ -374,9 +375,10 @@ describe('createInviteSchema', () => {
   });
 
   it('accepts an email invite and normalises the email', () => {
-    expect(
-      createInviteSchema.parse({ groupId, invitedEmail: '  Pal@Example.COM ' }),
-    ).toEqual({ groupId, invitedEmail: 'pal@example.com' });
+    expect(createInviteSchema.parse({ groupId, invitedEmail: '  Pal@Example.COM ' })).toEqual({
+      groupId,
+      invitedEmail: 'pal@example.com',
+    });
   });
 
   it('accepts a by-user invite', () => {
@@ -402,9 +404,9 @@ describe('createInviteSchema', () => {
   });
 
   it('rejects a malformed email', () => {
-    expect(() =>
-      createInviteSchema.parse({ groupId, invitedEmail: 'not-an-email' }),
-    ).toThrow(/valid email/);
+    expect(() => createInviteSchema.parse({ groupId, invitedEmail: 'not-an-email' })).toThrow(
+      /valid email/,
+    );
   });
 });
 
@@ -449,7 +451,9 @@ describe('createIdeaSchema', () => {
   });
 
   it('rejects titles over 200 characters', () => {
-    expect(() => createIdeaSchema.parse({ ...base, title: 'a'.repeat(201) })).toThrow(/at most 200/);
+    expect(() => createIdeaSchema.parse({ ...base, title: 'a'.repeat(201) })).toThrow(
+      /at most 200/,
+    );
   });
 
   it('rejects unknown categories', () => {
@@ -463,14 +467,18 @@ describe('createIdeaSchema', () => {
   });
 
   it('rejects descriptions over 4000 characters', () => {
-    expect(() =>
-      createIdeaSchema.parse({ ...base, description: 'a'.repeat(4001) }),
-    ).toThrow(/at most 4000/);
+    expect(() => createIdeaSchema.parse({ ...base, description: 'a'.repeat(4001) })).toThrow(
+      /at most 4000/,
+    );
   });
 
   it('accepts http(s) links and rejects other schemes', () => {
-    expect(createIdeaSchema.parse({ ...base, link: 'https://example.com/x' }).link).toBe('https://example.com/x');
-    expect(() => createIdeaSchema.parse({ ...base, link: 'javascript:alert(1)' })).toThrow(/valid http/);
+    expect(createIdeaSchema.parse({ ...base, link: 'https://example.com/x' }).link).toBe(
+      'https://example.com/x',
+    );
+    expect(() => createIdeaSchema.parse({ ...base, link: 'javascript:alert(1)' })).toThrow(
+      /valid http/,
+    );
     expect(() => createIdeaSchema.parse({ ...base, link: 'not a url' })).toThrow(/valid http/);
   });
 });

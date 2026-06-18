@@ -20,13 +20,7 @@ type Phase = 'idle' | 'rolling' | 'done';
 const MIN_SPIN_MS = 1400;
 const TICK_MS = 90;
 
-export function PickerClient({
-  groupId,
-  ideas,
-}: {
-  groupId: string;
-  ideas: PickableIdea[];
-}) {
+export function PickerClient({ groupId, ideas }: { groupId: string; ideas: PickableIdea[] }) {
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -49,7 +43,7 @@ export function PickerClient({
   }, [ideas, category, useShortlist, selected]);
 
   const canPick = candidates.length >= 2 && phase !== 'rolling';
-  const chosen = chosenId ? ideas.find((i) => i.id === chosenId) ?? null : null;
+  const chosen = chosenId ? (ideas.find((i) => i.id === chosenId) ?? null) : null;
 
   function toggleSelected(id: string) {
     setSelected((prev) => {
@@ -108,9 +102,7 @@ export function PickerClient({
   if (ideas.length < 2) {
     return (
       <div className="mt-6 rounded-lg border border-dashed border-line px-6 py-8 text-center">
-        <p className="text-sm font-medium text-content">
-          Not enough ideas to pick from yet
-        </p>
+        <p className="text-sm font-medium text-content">Not enough ideas to pick from yet</p>
         <p className="mt-1 text-sm text-muted">
           Add at least two on-the-radar ideas, then come back to let Huddle choose.
         </p>
@@ -128,15 +120,9 @@ export function PickerClient({
     <div className="mt-6 flex flex-col gap-6">
       {/* Category filter */}
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
-          Category
-        </h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Category</h3>
         <div className="mt-2 flex flex-wrap gap-2" data-testid="picker-categories">
-          <FilterChip
-            active={category === ''}
-            label="Any"
-            onClick={() => setCategory('')}
-          />
+          <FilterChip active={category === ''} label="Any" onClick={() => setCategory('')} />
           {(Object.keys(CATEGORY_LABELS) as IdeaCategory[]).map((c) => (
             <FilterChip
               key={c}
@@ -162,8 +148,7 @@ export function PickerClient({
         </label>
         {useShortlist && (
           <p className="mt-1 text-xs text-muted">
-            Tick the ideas to include. Leave all unticked to use every idea in
-            the category.
+            Tick the ideas to include. Leave all unticked to use every idea in the category.
           </p>
         )}
       </div>
@@ -196,9 +181,7 @@ export function PickerClient({
                       aria-label={`Include ${idea.title}`}
                     />
                   )}
-                  <span className="truncate text-sm font-medium text-content">
-                    {idea.title}
-                  </span>
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
                 </div>
                 <CategoryBadge category={idea.category} />
               </div>
@@ -263,10 +246,7 @@ export function PickerClient({
 
 /** Ideas shown in the candidate list — narrowed only by category so the
  *  shortlist checkboxes stay visible for the whole category. */
-function pickableForDisplay(
-  ideas: PickableIdea[],
-  category: IdeaCategory | '',
-): PickableIdea[] {
+function pickableForDisplay(ideas: PickableIdea[], category: IdeaCategory | ''): PickableIdea[] {
   return category ? ideas.filter((i) => i.category === category) : ideas;
 }
 

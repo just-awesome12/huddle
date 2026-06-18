@@ -48,11 +48,10 @@ export default function AccountScreen() {
         <View style={styles.danger}>
           <Text style={styles.dangerTitle}>Delete account</Text>
           <Text style={styles.dangerBody}>
-            This permanently deletes your account and removes your personal
-            information. Ideas and picks you contributed stay in your groups but
-            are no longer attributed to you. If you&rsquo;re the only admin of a
-            group with other members, you&rsquo;ll need to hand it off first.
-            This can&rsquo;t be undone.
+            This permanently deletes your account and removes your personal information. Ideas and
+            picks you contributed stay in your groups but are no longer attributed to you. If
+            you&rsquo;re the only admin of a group with other members, you&rsquo;ll need to hand it
+            off first. This can&rsquo;t be undone.
           </Text>
           <View style={styles.actionRow}>
             <ConfirmAction

@@ -49,14 +49,8 @@ export async function registerPushToken(
 }
 
 /** Remove a device token (sign-out, or the user disabling notifications). */
-export async function removePushToken(
-  client: HuddleClient,
-  expoToken: string,
-): Promise<void> {
-  const { error } = await client
-    .from('push_tokens')
-    .delete()
-    .eq('expo_token', expoToken);
+export async function removePushToken(client: HuddleClient, expoToken: string): Promise<void> {
+  const { error } = await client.from('push_tokens').delete().eq('expo_token', expoToken);
   if (error) throwMapped(error);
 }
 

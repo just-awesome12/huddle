@@ -1,10 +1,4 @@
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  type PressableProps,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -61,10 +55,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
 });
 
-function variants(c: ThemeColors): Record<
-  Variant,
-  { bg: object; pressed: object; label: object }
-> {
+function variants(c: ThemeColors): Record<Variant, { bg: object; pressed: object; label: object }> {
   // Secondary/ghost use surface-2 in dark so they're not bright lavender
   // pills on a dark canvas; in light they keep the soft brand tint.
   const subtle = c.surface === '#ffffff' ? c.brand[50] : c.surface2;

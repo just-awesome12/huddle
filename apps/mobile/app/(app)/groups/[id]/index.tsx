@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -155,10 +148,7 @@ export default function GroupDetailScreen() {
                 <Text style={styles.sectionTitle}>
                   Ideas{ideas.isSuccess ? ` (${ideas.data.length})` : ''}
                 </Text>
-                <Button
-                  label="New idea"
-                  onPress={() => router.push(`/groups/${id}/ideas/new`)}
-                />
+                <Button label="New idea" onPress={() => router.push(`/groups/${id}/ideas/new`)} />
               </View>
 
               <View style={styles.chipsRow}>
@@ -236,9 +226,7 @@ export default function GroupDetailScreen() {
               <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>
                   {item.profile.display_name}
-                  {item.userId === myUserId ? (
-                    <Text style={styles.you}> (you)</Text>
-                  ) : null}
+                  {item.userId === myUserId ? <Text style={styles.you}> (you)</Text> : null}
                 </Text>
                 <Text style={styles.memberUsername}>@{item.profile.username}</Text>
               </View>
@@ -260,9 +248,7 @@ export default function GroupDetailScreen() {
                           )
                         : null
                     }
-                    onConfirm={() =>
-                      removeMember.mutate({ groupId: id, userId: item.userId })
-                    }
+                    onConfirm={() => removeMember.mutate({ groupId: id, userId: item.userId })}
                   />
                 ) : null}
               </View>
@@ -299,85 +285,86 @@ export default function GroupDetailScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.canvas },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: c.canvas,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    backgroundColor: c.surface,
-  },
-  headerActions: { flexDirection: 'row', gap: 4 },
-  body: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
-  groupName: { fontSize: 20, fontWeight: '700', color: c.text },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-  sectionTitle: {
-    marginTop: 16,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: c.muted,
-  },
-  list: { paddingVertical: 12, gap: 8 },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  memberInfo: { flexShrink: 1 },
-  memberName: { fontSize: 14, fontWeight: '600', color: c.text },
-  you: { color: c.faint, fontWeight: '400' },
-  memberUsername: { fontSize: 12, color: c.muted },
-  memberActions: { alignItems: 'flex-end', gap: 8 },
-  footer: {
-    marginTop: 24,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: c.border,
-  },
-  ideasBlock: { gap: 10 },
-  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  ideasHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  mutedText: { fontSize: 13, color: c.muted },
-  ideaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  ideaRowPressed: { backgroundColor: c.surface2 },
-  ideaInfo: { flexShrink: 1 },
-  ideaTitle: { fontSize: 14, fontWeight: '600', color: c.text },
-  ideaMeta: { fontSize: 12, color: c.muted },
-  ideaBadges: { flexDirection: 'row', gap: 6, flexShrink: 0 },
-  membersTitle: { marginTop: 20 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.canvas },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      backgroundColor: c.canvas,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      backgroundColor: c.surface,
+    },
+    headerActions: { flexDirection: 'row', gap: 4 },
+    body: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
+    groupName: { fontSize: 20, fontWeight: '700', color: c.text },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    sectionTitle: {
+      marginTop: 16,
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    list: { paddingVertical: 12, gap: 8 },
+    memberRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    memberInfo: { flexShrink: 1 },
+    memberName: { fontSize: 14, fontWeight: '600', color: c.text },
+    you: { color: c.faint, fontWeight: '400' },
+    memberUsername: { fontSize: 12, color: c.muted },
+    memberActions: { alignItems: 'flex-end', gap: 8 },
+    footer: {
+      marginTop: 24,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+    },
+    ideasBlock: { gap: 10 },
+    actionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    ideasHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    mutedText: { fontSize: 13, color: c.muted },
+    ideaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    ideaRowPressed: { backgroundColor: c.surface2 },
+    ideaInfo: { flexShrink: 1 },
+    ideaTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+    ideaMeta: { fontSize: 12, color: c.muted },
+    ideaBadges: { flexDirection: 'row', gap: 6, flexShrink: 0 },
+    membersTitle: { marginTop: 20 },
+  });

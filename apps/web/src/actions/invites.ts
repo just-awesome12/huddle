@@ -22,10 +22,8 @@ export async function createInviteAction(
   const parsed = createInviteSchema.safeParse({
     groupId: formData.get('groupId'),
     // Empty input means a plain link invite, not an empty email.
-    invitedEmail:
-      typeof rawEmail === 'string' && rawEmail.trim() !== '' ? rawEmail : undefined,
-    invitedUserId:
-      typeof rawUserId === 'string' && rawUserId !== '' ? rawUserId : undefined,
+    invitedEmail: typeof rawEmail === 'string' && rawEmail.trim() !== '' ? rawEmail : undefined,
+    invitedUserId: typeof rawUserId === 'string' && rawUserId !== '' ? rawUserId : undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };

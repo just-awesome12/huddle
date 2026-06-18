@@ -1,10 +1,6 @@
 import Link from 'next/link';
 import { acceptInviteSchema } from '@huddle/validation';
-import {
-  peekInvite,
-  inviteErrorKind,
-  type InvitePeek,
-} from '@huddle/api-client/invites';
+import { peekInvite, inviteErrorKind, type InvitePeek } from '@huddle/api-client/invites';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { AcceptInviteForm } from '@/components/AcceptInviteForm';
 
@@ -27,11 +23,7 @@ function StatusCard({ title, body }: { title: string; body: string }) {
   );
 }
 
-export default async function AcceptInvitePage({
-  params,
-}: {
-  params: Promise<{ token: string }>;
-}) {
+export default async function AcceptInvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   const parsed = acceptInviteSchema.safeParse({ token });
@@ -98,9 +90,7 @@ export default async function AcceptInvitePage({
         <h2 className="mt-1 text-xl font-medium" data-testid="invite-group-name">
           {peek.group_name}
         </h2>
-        <p className="mt-1 text-sm text-muted">
-          Invited by {peek.inviter_display_name}
-        </p>
+        <p className="mt-1 text-sm text-muted">Invited by {peek.inviter_display_name}</p>
         <div className="mt-6">
           <AcceptInviteForm token={parsed.data.token} />
         </div>

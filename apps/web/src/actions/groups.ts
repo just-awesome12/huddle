@@ -119,8 +119,7 @@ export async function removeMemberAction(
   } catch (e) {
     if (isHuddleError(e) && e.huddle.kind === 'validation') {
       return {
-        formError:
-          'That member is the only admin. Promote someone else to admin first.',
+        formError: 'That member is the only admin. Promote someone else to admin first.',
       };
     }
     if (isHuddleError(e) && e.huddle.kind === 'unauthorized') {

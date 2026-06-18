@@ -134,21 +134,22 @@ export function GoogleSignInButton() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  wrap: { gap: 6 },
-  button: {
-    borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.surface,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  buttonPressed: { backgroundColor: c.surface2 },
-  buttonDisabled: { opacity: 0.6 },
-  label: { fontSize: 14, fontWeight: '600', color: c.text },
-  error: { fontSize: 12, color: c.danger },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrap: { gap: 6 },
+    button: {
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      borderRadius: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 44,
+    },
+    buttonPressed: { backgroundColor: c.surface2 },
+    buttonDisabled: { opacity: 0.6 },
+    label: { fontSize: 14, fontWeight: '600', color: c.text },
+    error: { fontSize: 12, color: c.danger },
+  });

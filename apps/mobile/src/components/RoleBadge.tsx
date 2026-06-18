@@ -18,15 +18,16 @@ export function RoleBadge({ role }: RoleBadgeProps) {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  admin: { backgroundColor: c.brand[600] },
-  member: { backgroundColor: c.surface2 },
-  label: { fontSize: 11, fontWeight: '600' },
-  adminLabel: { color: c.surface },
-  memberLabel: { color: c.muted },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    badge: {
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    admin: { backgroundColor: c.brand[600] },
+    member: { backgroundColor: c.surface2 },
+    label: { fontSize: 11, fontWeight: '600' },
+    adminLabel: { color: c.surface },
+    memberLabel: { color: c.muted },
+  });

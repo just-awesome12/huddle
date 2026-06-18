@@ -63,18 +63,19 @@ export default function NewIdeaScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.canvas },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    backgroundColor: c.surface,
-  },
-  heading: { fontSize: 16, fontWeight: '600', color: c.text },
-  spacer: { width: 64 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.canvas },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      backgroundColor: c.surface,
+    },
+    heading: { fontSize: 16, fontWeight: '600', color: c.text },
+    spacer: { width: 64 },
+  });

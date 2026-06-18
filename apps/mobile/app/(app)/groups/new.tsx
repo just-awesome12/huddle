@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
 import { createGroupSchema } from '@huddle/validation';
@@ -82,19 +75,20 @@ export default function NewGroupScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  flex: { flex: 1, backgroundColor: c.canvas },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
-  card: {
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 16,
-  },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-  muted: { color: c.muted, fontSize: 14 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: c.canvas },
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 16,
+    },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    muted: { color: c.muted, fontSize: 14 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+  });

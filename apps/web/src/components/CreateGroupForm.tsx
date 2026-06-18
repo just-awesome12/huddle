@@ -7,10 +7,7 @@ import { Button } from './Button';
 import { FormField } from './FormField';
 
 export function CreateGroupForm() {
-  const [state, formAction, pending] = useActionState(
-    createGroupAction,
-    EMPTY_GROUP_STATE,
-  );
+  const [state, formAction, pending] = useActionState(createGroupAction, EMPTY_GROUP_STATE);
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">

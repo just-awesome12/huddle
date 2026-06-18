@@ -26,17 +26,13 @@ export default function AppError({
     <div className="mx-auto max-w-md py-16 text-center">
       <h2 className="text-lg font-semibold text-content">Something went wrong</h2>
       <p className="mt-2 text-sm text-muted">
-        That page hit an unexpected error. You can try again, or head back to
-        your groups.
+        That page hit an unexpected error. You can try again, or head back to your groups.
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
         <Button type="button" onClick={reset}>
           Try again
         </Button>
-        <Link
-          href="/groups"
-          className="text-sm font-medium text-muted hover:text-brand-ink"
-        >
+        <Link href="/groups" className="text-sm font-medium text-muted hover:text-brand-ink">
           Back to groups
         </Link>
       </div>

@@ -40,9 +40,7 @@ function makeClient({
     order: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: queryData, error: queryError }),
     // When no .single() is chained, the chain itself resolves
-    then: vi.fn((resolve: (v: unknown) => void) =>
-      resolve({ data: queryData, error: queryError }),
-    ),
+    then: vi.fn((resolve: (v: unknown) => void) => resolve({ data: queryData, error: queryError })),
   };
   return {
     auth: {
@@ -86,8 +84,8 @@ describe('fetchMyGroups', () => {
     ];
     const client = makeClient({ queryData: raw });
     // Override the chain so the array resolves directly (not via .single())
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) => resolve({ data: raw, error: null }),
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({ data: raw, error: null }),
     );
 
     const result = await fetchMyGroups(client as never);
@@ -99,18 +97,20 @@ describe('fetchMyGroups', () => {
 
   it('returns an empty array when the user is in no groups', async () => {
     const client = makeClient({ queryData: [] });
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) => resolve({ data: [], error: null }),
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({ data: [], error: null }),
     );
     const result = await fetchMyGroups(client as never);
     expect(result).toEqual([]);
   });
 
   it('throws a HuddleError when the query fails', async () => {
-    const client = makeClient({ queryData: null, queryError: { code: '42501', message: 'denied' } });
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) =>
-        resolve({ data: null, error: { code: '42501', message: 'denied' } }),
+    const client = makeClient({
+      queryData: null,
+      queryError: { code: '42501', message: 'denied' },
+    });
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({ data: null, error: { code: '42501', message: 'denied' } }),
     );
     await expect(fetchMyGroups(client as never)).rejects.toMatchObject({
       huddle: { kind: 'unauthorized' },
@@ -169,8 +169,8 @@ describe('fetchGroupMembers', () => {
       },
     ];
     const client = makeClient({ queryData: raw });
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) => resolve({ data: raw, error: null }),
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({ data: raw, error: null }),
     );
 
     const result = await fetchGroupMembers(client as never, 'group-1');
@@ -182,8 +182,8 @@ describe('fetchGroupMembers', () => {
 
   it('returns an empty array when the group has no members (edge case)', async () => {
     const client = makeClient({ queryData: [] });
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) => resolve({ data: [], error: null }),
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({ data: [], error: null }),
     );
     const result = await fetchGroupMembers(client as never, 'group-1');
     expect(result).toEqual([]);
@@ -194,12 +194,11 @@ describe('fetchGroupMembers', () => {
       queryData: null,
       queryError: { code: '23514', message: 'cannot leave group with zero admins' },
     });
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) =>
-        resolve({
-          data: null,
-          error: { code: '23514', message: 'cannot leave group with zero admins' },
-        }),
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({
+        data: null,
+        error: { code: '23514', message: 'cannot leave group with zero admins' },
+      }),
     );
     await expect(fetchGroupMembers(client as never, 'group-1')).rejects.toMatchObject({
       huddle: { kind: 'validation' },
@@ -284,9 +283,7 @@ describe('leaveGroup', () => {
 describe('removeMember', () => {
   it('deletes the target membership row', async () => {
     const client = makeClient({ queryData: null });
-    await expect(
-      removeMember(client as never, 'group-1', 'user-2'),
-    ).resolves.toBeUndefined();
+    await expect(removeMember(client as never, 'group-1', 'user-2')).resolves.toBeUndefined();
     expect(client._chain.eq).toHaveBeenCalledWith('user_id', 'user-2');
   });
 
@@ -295,9 +292,9 @@ describe('removeMember', () => {
       queryData: null,
       queryError: { code: '42501', message: 'denied' },
     });
-    await expect(
-      removeMember(client as never, 'group-1', 'user-2'),
-    ).rejects.toMatchObject({ huddle: { kind: 'unauthorized' } });
+    await expect(removeMember(client as never, 'group-1', 'user-2')).rejects.toMatchObject({
+      huddle: { kind: 'unauthorized' },
+    });
   });
 });
 
@@ -305,9 +302,8 @@ describe('sole-admin guard error mapping', () => {
   it('check_violation (23514) maps to kind:validation via fetchGroupMembers', async () => {
     const solAdminError = { code: '23514', message: 'cannot leave group with zero admins' };
     const client = makeClient({ queryData: null, queryError: solAdminError });
-    vi.spyOn(client._chain, 'then').mockImplementation(
-      (resolve: (v: unknown) => void) =>
-        resolve({ data: null, error: solAdminError }),
+    vi.spyOn(client._chain, 'then').mockImplementation((resolve: (v: unknown) => void) =>
+      resolve({ data: null, error: solAdminError }),
     );
 
     try {

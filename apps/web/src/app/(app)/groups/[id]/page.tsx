@@ -5,11 +5,7 @@ import {
   fetchGroupMembers,
   type GroupMemberWithProfile,
 } from '@huddle/api-client/groups';
-import {
-  fetchGroupIdeas,
-  type IdeaFilters,
-  type IdeaWithProposer,
-} from '@huddle/api-client/ideas';
+import { fetchGroupIdeas, type IdeaFilters, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { ideaFiltersSchema } from '@huddle/validation';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { leaveGroupAction, removeMemberAction } from '@/actions/groups';
@@ -32,22 +28,12 @@ function filterHref(groupId: string, filters: IdeaFilters): string {
   return `/groups/${groupId}${qs ? `?${qs}` : ''}`;
 }
 
-function FilterChip({
-  href,
-  active,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-}) {
+function FilterChip({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
     <Link
       href={href}
       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-        active
-          ? 'bg-brand-600 text-white'
-          : 'bg-surface-2 text-muted hover:bg-line'
+        active ? 'bg-brand-600 text-white' : 'bg-surface-2 text-muted hover:bg-line'
       }`}
     >
       {label}
@@ -159,32 +145,28 @@ export default async function GroupDetailPage({
             active={!filters.status}
             label="Any status"
           />
-          {(Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[]).map(
-            (status) => (
-              <FilterChip
-                key={status}
-                href={filterHref(id, { status, category: filters.category })}
-                active={filters.status === status}
-                label={STATUS_LABELS[status]}
-              />
-            ),
-          )}
+          {(Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[]).map((status) => (
+            <FilterChip
+              key={status}
+              href={filterHref(id, { status, category: filters.category })}
+              active={filters.status === status}
+              label={STATUS_LABELS[status]}
+            />
+          ))}
           <span className="mx-1 h-4 w-px bg-line" />
           <FilterChip
             href={filterHref(id, { status: filters.status })}
             active={!filters.category}
             label="Any category"
           />
-          {(Object.keys(CATEGORY_LABELS) as (keyof typeof CATEGORY_LABELS)[]).map(
-            (category) => (
-              <FilterChip
-                key={category}
-                href={filterHref(id, { status: filters.status, category })}
-                active={filters.category === category}
-                label={CATEGORY_LABELS[category]}
-              />
-            ),
-          )}
+          {(Object.keys(CATEGORY_LABELS) as (keyof typeof CATEGORY_LABELS)[]).map((category) => (
+            <FilterChip
+              key={category}
+              href={filterHref(id, { status: filters.status, category })}
+              active={filters.category === category}
+              label={CATEGORY_LABELS[category]}
+            />
+          ))}
         </div>
 
         {ideas.length === 0 ? (
@@ -207,9 +189,7 @@ export default async function GroupDetailPage({
                   className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-line hover:bg-surface-2"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium text-content">
-                      {idea.title}
-                    </span>
+                    <span className="truncate text-sm font-medium text-content">{idea.title}</span>
                     <span className="text-xs text-muted">
                       by {idea.proposer?.display_name ?? 'someone'} ·{' '}
                       {new Date(idea.created_at).toLocaleDateString()}
@@ -239,13 +219,9 @@ export default async function GroupDetailPage({
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-content">
                   {member.profile.display_name}
-                  {member.userId === user.id && (
-                    <span className="ml-1 text-faint">(you)</span>
-                  )}
+                  {member.userId === user.id && <span className="ml-1 text-faint">(you)</span>}
                 </span>
-                <span className="text-xs text-muted">
-                  @{member.profile.username}
-                </span>
+                <span className="text-xs text-muted">@{member.profile.username}</span>
               </div>
               <div className="flex items-center gap-3">
                 <RoleBadge role={member.role} />

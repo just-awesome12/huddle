@@ -30,9 +30,7 @@ function makeTestUser(): TestUser {
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -117,9 +115,7 @@ test('sole admin cannot leave; sees friendly error', async ({ page }) => {
   // Inline confirmation step.
   await page.getByRole('button', { name: 'Leave group' }).click();
 
-  await expect(
-    page.getByText(/only admin.*promote another member/i),
-  ).toBeVisible();
+  await expect(page.getByText(/only admin.*promote another member/i)).toBeVisible();
   // Still on the group page — leave was blocked by the DB trigger.
   await expect(page.getByTestId('group-name')).toHaveText('Lonely Group');
 });

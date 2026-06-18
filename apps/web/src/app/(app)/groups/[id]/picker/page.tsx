@@ -6,11 +6,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { PickerClient, type PickableIdea } from '@/components/PickerClient';
 
-export default async function PickerPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PickerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await getSupabaseServerClient();
@@ -34,10 +30,7 @@ export default async function PickerPage({
   return (
     <div className="mx-auto max-w-2xl">
       <GroupRealtime groupId={id} />
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to {group.name}
       </Link>
 

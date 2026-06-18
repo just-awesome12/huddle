@@ -59,8 +59,7 @@ export function mapSupabaseError(input: unknown): HuddleError {
 
   const err = input as ErrorLike;
   const code = typeof err.code === 'string' ? err.code : undefined;
-  const message =
-    typeof err.message === 'string' ? err.message : 'Unknown error';
+  const message = typeof err.message === 'string' ? err.message : 'Unknown error';
   const status = err.status ?? err.statusCode;
 
   // ---- Authorization failures ----

@@ -93,11 +93,7 @@ export default function IdeaDetailScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.headerBar}>
-        <Button
-          label="← Back"
-          variant="ghost"
-          onPress={() => router.replace(`/groups/${id}`)}
-        />
+        <Button label="← Back" variant="ghost" onPress={() => router.replace(`/groups/${id}`)} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -115,11 +111,7 @@ export default function IdeaDetailScreen() {
           </Text>
 
           {photoUrl.data ? (
-            <Image
-              source={{ uri: photoUrl.data }}
-              style={styles.photo}
-              testID="idea-photo"
-            />
+            <Image source={{ uri: photoUrl.data }} style={styles.photo} testID="idea-photo" />
           ) : null}
 
           {idea.data.description ? (
@@ -127,10 +119,7 @@ export default function IdeaDetailScreen() {
           ) : null}
 
           {idea.data.link ? (
-            <Text
-              style={styles.link}
-              onPress={() => Linking.openURL(idea.data.link!)}
-            >
+            <Text style={styles.link} onPress={() => Linking.openURL(idea.data.link!)}>
               {idea.data.link}
             </Text>
           ) : null}
@@ -198,59 +187,60 @@ export default function IdeaDetailScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.canvas },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: c.canvas,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    backgroundColor: c.surface,
-  },
-  scroll: { padding: 16, gap: 16 },
-  card: {
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 10,
-  },
-  title: { fontSize: 20, fontWeight: '700', color: c.text },
-  badges: { flexDirection: 'row', gap: 8 },
-  meta: { fontSize: 12, color: c.muted },
-  photo: {
-    width: '100%',
-    height: 220,
-    borderRadius: 8,
-    backgroundColor: c.surface2,
-  },
-  description: { fontSize: 14, color: c.text, lineHeight: 20 },
-  link: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: c.text,
-    textDecorationLine: 'underline',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: c.border,
-    paddingTop: 12,
-  },
-  manageRow: { flexDirection: 'row', gap: 8 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.canvas },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      backgroundColor: c.canvas,
+    },
+    headerBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      backgroundColor: c.surface,
+    },
+    scroll: { padding: 16, gap: 16 },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 10,
+    },
+    title: { fontSize: 20, fontWeight: '700', color: c.text },
+    badges: { flexDirection: 'row', gap: 8 },
+    meta: { fontSize: 12, color: c.muted },
+    photo: {
+      width: '100%',
+      height: 220,
+      borderRadius: 8,
+      backgroundColor: c.surface2,
+    },
+    description: { fontSize: 14, color: c.text, lineHeight: 20 },
+    link: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: c.text,
+      textDecorationLine: 'underline',
+    },
+    statusRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingTop: 12,
+    },
+    manageRow: { flexDirection: 'row', gap: 8 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+  });

@@ -24,8 +24,7 @@ export async function runPickerAction(input: {
   const parsed = runPickerSchema.safeParse({
     groupId: input.groupId,
     category: input.category ?? undefined,
-    shortlist:
-      input.shortlist && input.shortlist.length > 0 ? input.shortlist : undefined,
+    shortlist: input.shortlist && input.shortlist.length > 0 ? input.shortlist : undefined,
   });
   if (!parsed.success) return { ok: false, error: 'generic' };
 

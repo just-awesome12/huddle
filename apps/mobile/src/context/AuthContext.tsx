@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session } from '@huddle/api-client/native';
 import { supabase } from '@/lib/supabase';
 
@@ -97,8 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       username,
       loading,
-      needsOnboarding:
-        !!session && (username === null || PLACEHOLDER_USERNAME_RE.test(username)),
+      needsOnboarding: !!session && (username === null || PLACEHOLDER_USERNAME_RE.test(username)),
       refreshProfile: async () => {
         if (session?.user.id) await fetchProfile(session.user.id);
       },

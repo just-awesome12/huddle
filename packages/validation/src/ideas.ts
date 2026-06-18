@@ -11,13 +11,7 @@ import { z } from 'zod';
  */
 
 // Mirrors Database["public"]["Enums"]["idea_category"]
-export const ideaCategorySchema = z.enum([
-  'food',
-  'activity',
-  'place',
-  'event',
-  'other',
-]);
+export const ideaCategorySchema = z.enum(['food', 'activity', 'place', 'event', 'other']);
 export type IdeaCategory = z.infer<typeof ideaCategorySchema>;
 
 // Mirrors Database["public"]["Enums"]["idea_status"]

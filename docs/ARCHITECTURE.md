@@ -33,15 +33,15 @@ The MVP schema. Concrete DDL is in `supabase/migrations/*.sql`; RLS policies are
 
 ### Tables
 
-| Table | Purpose |
-|---|---|
-| `public.profiles` | 1:1 with `auth.users`. Public identity (username, display name, avatar). |
-| `public.groups` | Unit of collaboration. Each group is created by a profile and has 1..N members. |
-| `public.group_members` | Junction (group_id, user_id, role). Role enum: `admin` or `member`. Composite PK. |
-| `public.group_invites` | Pending invitations. Token-based, expiring, single-use. |
-| `public.ideas` | Proposed content within a group. Category + status enums. May reference a stored photo. |
-| `public.decisions` | Append-only history of picker runs. Each row records candidates and the chosen idea. |
-| `public.push_tokens` | Expo push notification tokens, per user per device. |
+| Table                  | Purpose                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| `public.profiles`      | 1:1 with `auth.users`. Public identity (username, display name, avatar).                |
+| `public.groups`        | Unit of collaboration. Each group is created by a profile and has 1..N members.         |
+| `public.group_members` | Junction (group_id, user_id, role). Role enum: `admin` or `member`. Composite PK.       |
+| `public.group_invites` | Pending invitations. Token-based, expiring, single-use.                                 |
+| `public.ideas`         | Proposed content within a group. Category + status enums. May reference a stored photo. |
+| `public.decisions`     | Append-only history of picker runs. Each row records candidates and the chosen idea.    |
+| `public.push_tokens`   | Expo push notification tokens, per user per device.                                     |
 
 ### Relationships
 
@@ -86,19 +86,19 @@ Both check against `(select auth.uid())`. They never accept a "claimed identity"
 
 ### Triggers
 
-| Trigger | Table | Purpose |
-|---|---|---|
-| `on_auth_user_created` | `auth.users` | Auto-create `profiles` row with placeholder username `u_<12hex>`. |
-| `profiles_lowercase_username` | `public.profiles` | Normalize username to lowercase. |
-| `profiles_set_updated_at` | `public.profiles` | Maintain `updated_at` (uses `clock_timestamp()`). |
-| `groups_trim_name` | `public.groups` | Trim whitespace from name. |
-| `groups_set_updated_at` | `public.groups` | Maintain `updated_at`. |
-| `on_group_created` | `public.groups` | Auto-add creator as admin member. |
-| `enforce_last_admin_on_delete` | `public.group_members` | Block deleting last admin (unless parent group is being deleted). |
-| `enforce_last_admin_on_update` | `public.group_members` | Block demoting last admin from `admin` to `member`. |
-| `group_invites_reject_if_member` | `public.group_invites` | Reject invite if `invited_user_id` is already a member. |
-| `ideas_trim_title` | `public.ideas` | Trim title. |
-| `ideas_set_updated_at` | `public.ideas` | Maintain `updated_at`. |
+| Trigger                          | Table                  | Purpose                                                           |
+| -------------------------------- | ---------------------- | ----------------------------------------------------------------- |
+| `on_auth_user_created`           | `auth.users`           | Auto-create `profiles` row with placeholder username `u_<12hex>`. |
+| `profiles_lowercase_username`    | `public.profiles`      | Normalize username to lowercase.                                  |
+| `profiles_set_updated_at`        | `public.profiles`      | Maintain `updated_at` (uses `clock_timestamp()`).                 |
+| `groups_trim_name`               | `public.groups`        | Trim whitespace from name.                                        |
+| `groups_set_updated_at`          | `public.groups`        | Maintain `updated_at`.                                            |
+| `on_group_created`               | `public.groups`        | Auto-add creator as admin member.                                 |
+| `enforce_last_admin_on_delete`   | `public.group_members` | Block deleting last admin (unless parent group is being deleted). |
+| `enforce_last_admin_on_update`   | `public.group_members` | Block demoting last admin from `admin` to `member`.               |
+| `group_invites_reject_if_member` | `public.group_invites` | Reject invite if `invited_user_id` is already a member.           |
+| `ideas_trim_title`               | `public.ideas`         | Trim title.                                                       |
+| `ideas_set_updated_at`           | `public.ideas`         | Maintain `updated_at`.                                            |
 
 ### Storage bucket
 
@@ -109,16 +109,16 @@ Both check against `(select auth.uid())`. They never accept a "claimed identity"
 
 Every table has RLS enabled. Operations not listed have **no policy** and are therefore denied.
 
-| Table | SELECT | INSERT | UPDATE | DELETE |
-|---|---|---|---|---|
-| `profiles` | any authenticated | (trigger only) | owner only | (cascade only) |
-| `groups` | members | authenticated, `created_by = auth.uid()` | admins | admins |
-| `group_members` | members of same group | (trigger / Edge Function only) | admins (subject to last-admin trigger) | self or admin (subject to last-admin trigger) |
-| `group_invites` | admins of group OR invited user | admins of group, `created_by = auth.uid()` | (Edge Function only) | admins of group |
-| `ideas` | members | members, `proposed_by = auth.uid()` | members | proposer or admin |
-| `decisions` | members | (service role only) | (immutable) | (immutable, cascade only) |
-| `push_tokens` | owner only | owner only | owner only | owner only |
-| `storage.objects` (idea-photos bucket) | members of group folder | members of group folder | members of group folder | members of group folder |
+| Table                                  | SELECT                          | INSERT                                     | UPDATE                                 | DELETE                                        |
+| -------------------------------------- | ------------------------------- | ------------------------------------------ | -------------------------------------- | --------------------------------------------- |
+| `profiles`                             | any authenticated               | (trigger only)                             | owner only                             | (cascade only)                                |
+| `groups`                               | members                         | authenticated, `created_by = auth.uid()`   | admins                                 | admins                                        |
+| `group_members`                        | members of same group           | (trigger / Edge Function only)             | admins (subject to last-admin trigger) | self or admin (subject to last-admin trigger) |
+| `group_invites`                        | admins of group OR invited user | admins of group, `created_by = auth.uid()` | (Edge Function only)                   | admins of group                               |
+| `ideas`                                | members                         | members, `proposed_by = auth.uid()`        | members                                | proposer or admin                             |
+| `decisions`                            | members                         | (service role only)                        | (immutable)                            | (immutable, cascade only)                     |
+| `push_tokens`                          | owner only                      | owner only                                 | owner only                             | owner only                                    |
+| `storage.objects` (idea-photos bucket) | members of group folder         | members of group folder                    | members of group folder                | members of group folder                       |
 
 ## Decision log (ADR-lite)
 
@@ -202,7 +202,7 @@ Decisions made, in chronological order.
 
 ### 2026-05-13 — Storage end-to-end tests deferred to Phase 5
 
-- **Decision:** pgTAP tests verify the policy *expressions* (`is_group_member(extract group_id from path)`) but not end-to-end `INSERT INTO storage.objects` because that table is owned by `supabase_storage_admin` and its production-safety triggers cannot be disabled by `postgres`.
+- **Decision:** pgTAP tests verify the policy _expressions_ (`is_group_member(extract group_id from path)`) but not end-to-end `INSERT INTO storage.objects` because that table is owned by `supabase_storage_admin` and its production-safety triggers cannot be disabled by `postgres`.
 - **Reasoning:** The pgTAP coverage proves that authorization decisions are correct for every (caller, path) combination. Wiring those decisions into PostgREST + storage.objects is end-to-end testable via `supabase-js` against a real Supabase instance in Phase 5.
 
 ### 2026-05-13 — Types are committed, not generated in CI

@@ -60,11 +60,7 @@ export default function EditIdeaScreen() {
 
   const done = () => router.replace(`/groups/${id}/ideas/${ideaId}`);
 
-  const onSubmit = (
-    values: IdeaFormValues,
-    photo: PickedPhoto | null,
-    remove: boolean,
-  ) => {
+  const onSubmit = (values: IdeaFormValues, photo: PickedPhoto | null, remove: boolean) => {
     setFormError(null);
     updateIdea.mutate(
       { ideaId, params: values },
@@ -82,10 +78,7 @@ export default function EditIdeaScreen() {
               { onSettled: done },
             );
           } else if (remove && idea.data.photo_path) {
-            removePhoto.mutate(
-              { ideaId, photoPath: idea.data.photo_path },
-              { onSettled: done },
-            );
+            removePhoto.mutate({ ideaId, photoPath: idea.data.photo_path }, { onSettled: done });
           } else {
             done();
           }
@@ -120,26 +113,27 @@ export default function EditIdeaScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.canvas },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: c.canvas,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    backgroundColor: c.surface,
-  },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: c.text },
-  spacer: { width: 64 },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.canvas },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      backgroundColor: c.canvas,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      backgroundColor: c.surface,
+    },
+    headerTitle: { fontSize: 16, fontWeight: '600', color: c.text },
+    spacer: { width: 64 },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+  });

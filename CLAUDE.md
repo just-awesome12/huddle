@@ -16,20 +16,20 @@ Targets: **web (Next.js)** and **mobile (Expo / React Native)**, sharing a TypeS
 
 ## 2. Stack and conventions
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Monorepo | Turborepo + pnpm workspaces | `pnpm install` at root |
-| Web | Next.js 16 (App Router) + Tailwind v4 | Server Actions for all mutations; Server Components for reads |
-| Mobile | Expo SDK 55 + React Native + Expo Router | File-based routing mirrors App Router |
-| Backend | Supabase (Postgres + Auth + RLS + Realtime + Storage) | Local stack via `supabase start` |
-| Auth | Email/password + Google OAuth | Apple deferred (needs developer account) |
-| Anti-scraping | Cloudflare Turnstile (web) + auth wall + Cloudflare proxy | Mobile has no Turnstile equivalent |
-| Push | Expo Push v1 | Real APNs/FCM later |
-| Web E2E | Playwright | 45 tests, all passing |
-| Mobile E2E | Maestro (deferred to Phase 9) | Not set up yet; Expo web preview used for smoke tests |
-| Unit | Vitest | 77 (validation) + 129 (api-client) = 206 |
-| RLS | pgTAP | 144 assertions across 11 files |
-| Realtime RLS | node integration probe | `realtime-rls.integration.mjs` (live stack; verifies R-4) |
+| Layer         | Choice                                                    | Notes                                                         |
+| ------------- | --------------------------------------------------------- | ------------------------------------------------------------- |
+| Monorepo      | Turborepo + pnpm workspaces                               | `pnpm install` at root                                        |
+| Web           | Next.js 16 (App Router) + Tailwind v4                     | Server Actions for all mutations; Server Components for reads |
+| Mobile        | Expo SDK 55 + React Native + Expo Router                  | File-based routing mirrors App Router                         |
+| Backend       | Supabase (Postgres + Auth + RLS + Realtime + Storage)     | Local stack via `supabase start`                              |
+| Auth          | Email/password + Google OAuth                             | Apple deferred (needs developer account)                      |
+| Anti-scraping | Cloudflare Turnstile (web) + auth wall + Cloudflare proxy | Mobile has no Turnstile equivalent                            |
+| Push          | Expo Push v1                                              | Real APNs/FCM later                                           |
+| Web E2E       | Playwright                                                | 45 tests, all passing                                         |
+| Mobile E2E    | Maestro (deferred to Phase 9)                             | Not set up yet; Expo web preview used for smoke tests         |
+| Unit          | Vitest                                                    | 77 (validation) + 129 (api-client) = 206                      |
+| RLS           | pgTAP                                                     | 144 assertions across 11 files                                |
+| Realtime RLS  | node integration probe                                    | `realtime-rls.integration.mjs` (live stack; verifies R-4)     |
 
 ### Workspace layout
 
@@ -102,51 +102,51 @@ The Phase 2 close point is tagged `phase-2-complete`.
 
 D1–D25 from earlier phases are captured in the main `ARCHITECTURE.md`. D26–D42 are in `ARCHITECTURE_PHASE2_APPENDIX.md`. D43–D47 are in `ARCHITECTURE_PHASE3_APPENDIX.md`. D48–D51 are in `ARCHITECTURE_PHASE4_APPENDIX.md`. D52–D55 are in `ARCHITECTURE_PHASE5_APPENDIX.md`. D56–D59 are in `ARCHITECTURE_PHASE6_APPENDIX.md`. D60–D64 are in `ARCHITECTURE_PHASE7_APPENDIX.md`. D65–D69 are in `ARCHITECTURE_PHASE8_APPENDIX.md`. Highlights that affect ongoing work:
 
-| # | Decision |
-|---|---|
-| D26 | Web auth uses Server Actions, not client-side Supabase calls. |
-| D29 | `'use server'` files export only async functions. Shared types live in sibling `*-state.ts` files. |
-| D30 | Local dev has email confirmation OFF; production will enable it. |
-| D31 | `handle_new_user` creates `profiles` row with placeholder username `u_<12hex>` at signup. |
-| D32 | Onboarding is gated at the proxy (web) / GatedStack (mobile) by detecting the placeholder username. |
-| D33 | Email-signup users bypass onboarding — server action / submit handler writes the chosen username immediately. Onboarding is effectively OAuth-only. |
-| D34 | Turnstile uses "managed" mode. |
-| D35 | Local dev uses Cloudflare's always-pass test keys. |
-| D36 | Turnstile verifier lives in `@huddle/api-client` — the package is the seam between apps and external services. |
-| D37 | Turnstile test mode requires BOTH `NEXT_PUBLIC_TURNSTILE_TEST_MODE=true` AND the documented Cloudflare test secret. **Cloudflare's test secret only accepts tokens issued by the matching test site key** — cross-pairing real + test keys fails silently. |
-| D38 | Phase 9 will add a startup assertion that refuses to boot in production with test mode on. |
-| D39 | Mobile auth state lives in a single React Context (`AuthProvider`) at the root layout. |
-| D40 | Mobile navigation uses Expo Router (file-based). |
-| D41 | Mobile auth errors are shown inline (no toasts). |
-| D42 | Mobile Google OAuth uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` + manual `setSession`. Native SDK (`react-native-google-signin`) is more robust but needs a custom dev build — revisit later if OAuth UX needs improvement. |
-| D43 | Web reads use Server Components + raw api-client functions; mutations use Server Actions. TanStack Query hooks are for mobile / client components only. |
-| D44 | api-client splits framework-free raw functions (`/groups`) from react-query hooks (`/groups-hooks`) so server bundles never import react-query. |
-| D45 | Group creation goes through the `create_group` SECURITY DEFINER RPC (INSERT…RETURNING is checked against the SELECT policy before the membership trigger runs). |
-| D46 | Mobile screen routes mirror the web URL shape for deep-link parity (`huddle://groups/...`, Phase 4). |
-| D47 | `react` is pinned in api-client devDependencies to mobile's version so pnpm builds exactly one react-query instance (see lesson 12). |
-| D48 | Invite acceptance via `peek_invite` / `accept_invite` SECURITY DEFINER RPCs (not Edge Functions); custom HD000–HD004 SQLSTATEs are the client error contract — map by code, never by message text. Edge Functions debut in Phase 7. |
-| D49 | Mobile resumes deep links after auth via a module-scope pending-path stash in GatedStack (web equivalent: the proxy's `?next=` round-trip, open-redirect-guarded in the auth actions). |
-| D50 | Invites are shared as web URLs built from `EXPO_PUBLIC_WEB_URL` so recipients without the app can join; `huddle://` resolves the same path in-app. Universal links are Phase 10. |
-| D51 | v1 search rate limiting is an in-memory per-user sliding window in the Next route handler — defence-in-depth only; the perimeter limit is Phase 9 (Cloudflare). Mobile queries PostgREST directly until then. |
-| D52 | Idea edit permissions keep the Phase 1 model: any member may update any field at the DB; the UI gates edit/delete controls to proposer/admin as UX only. Delete is RLS-enforced. |
-| D53 | OQ-5 resolved → report-and-review moderation for v1 (no automated scanning); report button ships with Phase 10 store prep. Member-only photo visibility bounds the risk. |
-| D54 | Web photo uploads go through Server Actions as FormData with client-side compression; `serverActions.bodySizeLimit: 4mb` (default 1mb). Upholds the no-browser-Supabase-client rule (D26/D43). |
-| D55 | Photo storage objects are managed manually (upload→point row→cleanup old, with orphan rollback); `deleteIdea` removes the object since storage doesn't cascade; filenames are non-crypto unique (no RN polyfill). |
-| D56 | Realtime uses plain Postgres Changes channels — RLS enforcement on Postgres Changes verified empirically (R-4: member receives, non-member receives nothing). No private-channel broadcast workaround. Socket must be authed as the user (`realtime.setAuth`). |
-| D57 | One framework-free realtime helper (`subscribeToGroup`/`subscribeToMyGroups`); platform providers invalidate differently — web throttled `router.refresh()` (no client cache, D43), mobile TanStack Query invalidation. |
-| D58 | Realtime invalidations are throttled (web 500ms leading+trailing) and subscriptions scoped (per-group channel + a my-groups channel) — never "refetch everything on any change". |
-| D59 | `createBrowserSupabaseClient` accepts a resolved env; the web app passes statically-referenced `NEXT_PUBLIC_*` (the env helper's dynamic `process.env[key]` is undefined in client bundles — see lesson 19). |
-| D60 | The picker runs in the `run_picker` Edge Function (first Edge Function), not an RPC: server CSPRNG pick + service_role `decisions` insert; membership 403; candidates read RLS-scoped + `on_radar` only. Error contract is a JSON `{ error }` body mapped by code. |
-| D61 | `decisions.chosen_idea_id` is `ON DELETE NO ACTION` (not RESTRICT): blocks a *direct* hard-delete of a chosen idea (23503 → "dismiss instead") while the deferred end-of-statement check lets a group-delete still cascade everything. |
-| D62 | Pure pick/shuffle in `@huddle/core` (injectable RNG, **rejection sampling** = unbiased); Deno can't import the workspace pkg, so `supabase/functions/_shared/picker.ts` is a copy guarded by a behavioural drift test. |
-| D63 | Picker requires **≥2 candidates** after filtering (else 422 `too_few_candidates`); clients mirror the count to disable the run. Diverges from the roadmap's "1 candidate → picked" — a 1-option pick is meaningless. |
-| D64 | Web invokes `run_picker` via a Server Action (`getUser()` first so the ssr client forwards the JWT); mobile via `useRunPicker` on the native client. Upholds D26/D43 (no browser Supabase calls). |
-| D65 | Push fan-out is pg_net AFTER INSERT triggers → `send-push` (one seam, all write paths). `send-push` is webhook-authed (`verify_jwt` off + shared secret), not user-facing. Dev secret/URL committed; prod must override (Phase 9 boot assertion, cf. D38). |
-| D66 | `notification_prefs`: no row until the user changes a setting; absent row = every event enabled (`DEFAULT_PREFS` in `@huddle/core` + `send-push`). RLS own-row; `send-push` reads as service_role. |
-| D67 | `send-push` honours an `x-huddle-dry-run` header (with a valid secret) that returns the selected tokens + sample message WITHOUT dispatching — lets the integration probe assert selection/payload with no Expo call. |
-| D68 | Pure notification selection/payload logic in `@huddle/core/notifications`; Deno mirror in `supabase/functions/_shared/notifications.ts` with a behavioural drift-guard test (same pattern as D62). |
-| D69 | Mobile push is web-guarded (no v1 web push): token registered on session, removed on sign-out; `DeviceNotRegistered` pruned; taps route to `data.path`. Real-device delivery is deferred/manual. |
-| D70 | Phase 9 in-app posture: RLS is the access boundary (re-verified); headers + noindex + report-only CSP in `next.config.ts`; fail-closed prod assertions (D38/D65). The perimeter (Cloudflare/Sentry/prod secrets/ToS) is deferred — blocked on domain (OQ-2) + accounts — and tracked in `docs/SECURITY.md`, which is the Phase 9 record (no appendix). |
+| #   | Decision                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D26 | Web auth uses Server Actions, not client-side Supabase calls.                                                                                                                                                                                                                                                                                                                                                               |
+| D29 | `'use server'` files export only async functions. Shared types live in sibling `*-state.ts` files.                                                                                                                                                                                                                                                                                                                          |
+| D30 | Local dev has email confirmation OFF; production will enable it.                                                                                                                                                                                                                                                                                                                                                            |
+| D31 | `handle_new_user` creates `profiles` row with placeholder username `u_<12hex>` at signup.                                                                                                                                                                                                                                                                                                                                   |
+| D32 | Onboarding is gated at the proxy (web) / GatedStack (mobile) by detecting the placeholder username.                                                                                                                                                                                                                                                                                                                         |
+| D33 | Email-signup users bypass onboarding — server action / submit handler writes the chosen username immediately. Onboarding is effectively OAuth-only.                                                                                                                                                                                                                                                                         |
+| D34 | Turnstile uses "managed" mode.                                                                                                                                                                                                                                                                                                                                                                                              |
+| D35 | Local dev uses Cloudflare's always-pass test keys.                                                                                                                                                                                                                                                                                                                                                                          |
+| D36 | Turnstile verifier lives in `@huddle/api-client` — the package is the seam between apps and external services.                                                                                                                                                                                                                                                                                                              |
+| D37 | Turnstile test mode requires BOTH `NEXT_PUBLIC_TURNSTILE_TEST_MODE=true` AND the documented Cloudflare test secret. **Cloudflare's test secret only accepts tokens issued by the matching test site key** — cross-pairing real + test keys fails silently.                                                                                                                                                                  |
+| D38 | Phase 9 will add a startup assertion that refuses to boot in production with test mode on.                                                                                                                                                                                                                                                                                                                                  |
+| D39 | Mobile auth state lives in a single React Context (`AuthProvider`) at the root layout.                                                                                                                                                                                                                                                                                                                                      |
+| D40 | Mobile navigation uses Expo Router (file-based).                                                                                                                                                                                                                                                                                                                                                                            |
+| D41 | Mobile auth errors are shown inline (no toasts).                                                                                                                                                                                                                                                                                                                                                                            |
+| D42 | Mobile Google OAuth uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` + manual `setSession`. Native SDK (`react-native-google-signin`) is more robust but needs a custom dev build — revisit later if OAuth UX needs improvement.                                                                                                                                                                                |
+| D43 | Web reads use Server Components + raw api-client functions; mutations use Server Actions. TanStack Query hooks are for mobile / client components only.                                                                                                                                                                                                                                                                     |
+| D44 | api-client splits framework-free raw functions (`/groups`) from react-query hooks (`/groups-hooks`) so server bundles never import react-query.                                                                                                                                                                                                                                                                             |
+| D45 | Group creation goes through the `create_group` SECURITY DEFINER RPC (INSERT…RETURNING is checked against the SELECT policy before the membership trigger runs).                                                                                                                                                                                                                                                             |
+| D46 | Mobile screen routes mirror the web URL shape for deep-link parity (`huddle://groups/...`, Phase 4).                                                                                                                                                                                                                                                                                                                        |
+| D47 | `react` is pinned in api-client devDependencies to mobile's version so pnpm builds exactly one react-query instance (see lesson 12).                                                                                                                                                                                                                                                                                        |
+| D48 | Invite acceptance via `peek_invite` / `accept_invite` SECURITY DEFINER RPCs (not Edge Functions); custom HD000–HD004 SQLSTATEs are the client error contract — map by code, never by message text. Edge Functions debut in Phase 7.                                                                                                                                                                                         |
+| D49 | Mobile resumes deep links after auth via a module-scope pending-path stash in GatedStack (web equivalent: the proxy's `?next=` round-trip, open-redirect-guarded in the auth actions).                                                                                                                                                                                                                                      |
+| D50 | Invites are shared as web URLs built from `EXPO_PUBLIC_WEB_URL` so recipients without the app can join; `huddle://` resolves the same path in-app. Universal links are Phase 10.                                                                                                                                                                                                                                            |
+| D51 | v1 search rate limiting is an in-memory per-user sliding window in the Next route handler — defence-in-depth only; the perimeter limit is Phase 9 (Cloudflare). Mobile queries PostgREST directly until then.                                                                                                                                                                                                               |
+| D52 | Idea edit permissions keep the Phase 1 model: any member may update any field at the DB; the UI gates edit/delete controls to proposer/admin as UX only. Delete is RLS-enforced.                                                                                                                                                                                                                                            |
+| D53 | OQ-5 resolved → report-and-review moderation for v1 (no automated scanning); report button ships with Phase 10 store prep. Member-only photo visibility bounds the risk.                                                                                                                                                                                                                                                    |
+| D54 | Web photo uploads go through Server Actions as FormData with client-side compression; `serverActions.bodySizeLimit: 4mb` (default 1mb). Upholds the no-browser-Supabase-client rule (D26/D43).                                                                                                                                                                                                                              |
+| D55 | Photo storage objects are managed manually (upload→point row→cleanup old, with orphan rollback); `deleteIdea` removes the object since storage doesn't cascade; filenames are non-crypto unique (no RN polyfill).                                                                                                                                                                                                           |
+| D56 | Realtime uses plain Postgres Changes channels — RLS enforcement on Postgres Changes verified empirically (R-4: member receives, non-member receives nothing). No private-channel broadcast workaround. Socket must be authed as the user (`realtime.setAuth`).                                                                                                                                                              |
+| D57 | One framework-free realtime helper (`subscribeToGroup`/`subscribeToMyGroups`); platform providers invalidate differently — web throttled `router.refresh()` (no client cache, D43), mobile TanStack Query invalidation.                                                                                                                                                                                                     |
+| D58 | Realtime invalidations are throttled (web 500ms leading+trailing) and subscriptions scoped (per-group channel + a my-groups channel) — never "refetch everything on any change".                                                                                                                                                                                                                                            |
+| D59 | `createBrowserSupabaseClient` accepts a resolved env; the web app passes statically-referenced `NEXT_PUBLIC_*` (the env helper's dynamic `process.env[key]` is undefined in client bundles — see lesson 19).                                                                                                                                                                                                                |
+| D60 | The picker runs in the `run_picker` Edge Function (first Edge Function), not an RPC: server CSPRNG pick + service_role `decisions` insert; membership 403; candidates read RLS-scoped + `on_radar` only. Error contract is a JSON `{ error }` body mapped by code.                                                                                                                                                          |
+| D61 | `decisions.chosen_idea_id` is `ON DELETE NO ACTION` (not RESTRICT): blocks a _direct_ hard-delete of a chosen idea (23503 → "dismiss instead") while the deferred end-of-statement check lets a group-delete still cascade everything.                                                                                                                                                                                      |
+| D62 | Pure pick/shuffle in `@huddle/core` (injectable RNG, **rejection sampling** = unbiased); Deno can't import the workspace pkg, so `supabase/functions/_shared/picker.ts` is a copy guarded by a behavioural drift test.                                                                                                                                                                                                      |
+| D63 | Picker requires **≥2 candidates** after filtering (else 422 `too_few_candidates`); clients mirror the count to disable the run. Diverges from the roadmap's "1 candidate → picked" — a 1-option pick is meaningless.                                                                                                                                                                                                        |
+| D64 | Web invokes `run_picker` via a Server Action (`getUser()` first so the ssr client forwards the JWT); mobile via `useRunPicker` on the native client. Upholds D26/D43 (no browser Supabase calls).                                                                                                                                                                                                                           |
+| D65 | Push fan-out is pg_net AFTER INSERT triggers → `send-push` (one seam, all write paths). `send-push` is webhook-authed (`verify_jwt` off + shared secret), not user-facing. Dev secret/URL committed; prod must override (Phase 9 boot assertion, cf. D38).                                                                                                                                                                  |
+| D66 | `notification_prefs`: no row until the user changes a setting; absent row = every event enabled (`DEFAULT_PREFS` in `@huddle/core` + `send-push`). RLS own-row; `send-push` reads as service_role.                                                                                                                                                                                                                          |
+| D67 | `send-push` honours an `x-huddle-dry-run` header (with a valid secret) that returns the selected tokens + sample message WITHOUT dispatching — lets the integration probe assert selection/payload with no Expo call.                                                                                                                                                                                                       |
+| D68 | Pure notification selection/payload logic in `@huddle/core/notifications`; Deno mirror in `supabase/functions/_shared/notifications.ts` with a behavioural drift-guard test (same pattern as D62).                                                                                                                                                                                                                          |
+| D69 | Mobile push is web-guarded (no v1 web push): token registered on session, removed on sign-out; `DeviceNotRegistered` pruned; taps route to `data.path`. Real-device delivery is deferred/manual.                                                                                                                                                                                                                            |
+| D70 | Phase 9 in-app posture: RLS is the access boundary (re-verified); headers + noindex + report-only CSP in `next.config.ts`; fail-closed prod assertions (D38/D65). The perimeter (Cloudflare/Sentry/prod secrets/ToS) is deferred — blocked on domain (OQ-2) + accounts — and tracked in `docs/SECURITY.md`, which is the Phase 9 record (no appendix).                                                                      |
 | D71 | Account deletion (OQ-6) = `delete-account` Edge Function (3rd; verify_jwt on, caller-only). Migration 018 makes `ideas.proposed_by`/`decisions.run_by` SET NULL so deletion **de-attributes** content/history (not delete) — preserves group continuity + avoids the chosen-idea NO ACTION FK. Refuses (409) sole-admin-of-a-shared-group; deletes solo groups first so the last-admin trigger skips. Data export deferred. |
 
 ---
@@ -189,13 +189,13 @@ These are non-negotiable. The previous build hit them all. Read before generatin
 
 17. **Verify library APIs against installed types, not memory** (a sharper restatement of lesson 10 for fast-moving SDKs). `expo-image-manipulator` in SDK 55 deprecated `manipulateAsync(uri, actions, opts)` in favour of a contextual API (`ImageManipulator.manipulate(uri).resize(...).renderAsync()` then `.saveAsync({format, compress, base64})`). Grep the package's `build/*.d.ts` before writing the call — generating from the older signature typechecks against nothing until runtime.
 
-18. **Supabase Realtime reads the publication at boot.** Adding tables to `supabase_realtime` via migration *after* `supabase start` delivers no events until a clean stack restart (`supabase stop && supabase start`). After any publication change, re-verify with a live subscriber — a green channel that delivers nothing looks identical to a wiring bug. (Also: postgres_changes RLS is enforced per-subscriber on this stack, but the socket must be authed as the user via `realtime.setAuth` or it's anon and gets nothing.)
+18. **Supabase Realtime reads the publication at boot.** Adding tables to `supabase_realtime` via migration _after_ `supabase start` delivers no events until a clean stack restart (`supabase stop && supabase start`). After any publication change, re-verify with a live subscriber — a green channel that delivers nothing looks identical to a wiring bug. (Also: postgres_changes RLS is enforced per-subscriber on this stack, but the socket must be authed as the user via `realtime.setAuth` or it's anon and gets nothing.)
 
 19. **Next inlines only STATIC `process.env.NEXT_PUBLIC_*`.** A dynamic `process.env[key]` lookup (e.g. a shared env helper) returns undefined in the browser bundle — fine server-side where Node has the full env, but client components get nothing. Reference the vars statically in app code, or hand resolved values to the library (we did the latter: `createBrowserSupabaseClient(env)` fed by `apps/web/src/lib/supabase-browser.ts`). Expo/Metro inlines `EXPO_PUBLIC_*` more permissively, so mobile didn't hit this.
 
 20. **`supabase gen types` (CLI 2.106) demands a platform token even for local, and `>` clobbers `database.ts` on failure.** `pnpm types:generate` (`--local`) fails with `LegacyPlatformAuthRequiredError` and, because the script redirects stdout to the file, leaves `packages/types/src/database.ts` truncated. Workaround: `SUPABASE_ACCESS_TOKEN=sbp_dummy_local supabase gen types typescript --db-url "postgresql://postgres:postgres@127.0.0.1:54322/postgres" --schema public,graphql_public` (any non-empty token satisfies the gate; the dummy isn't used for a direct `--db-url` connection). Generate to a `.new` file, diff it (expect only your new table), then `mv` it in. Include `graphql_public` or you'll drop that schema from the committed file. Don't update the CLI mid-phase (lesson 7).
 
-21. **Next 16 streaming loading states + realtime `router.refresh()` linger/duplicate the DOM (Phase 10).** Attempted route `loading.tsx` AND in-page `<Suspense>` for the group pages; both made the *previous* route's DOM persist (hidden) during client navigation — strict locators then resolve to 2 elements (e.g. `Ideas (N)` ×2, both hidden). In-page Suspense fixed most cases but still duplicated specifically when `GroupRealtime`'s `router.refresh()` fired into the boundary (the user's own INSERT echo). Net: web loading states are DEFERRED on this Next 16 + realtime-refresh setup — the awaited page render is the stable baseline (54 Playwright green). Mobile already shows inline loaders. Resilience shipped instead via `(app)/error.tsx` + `not-found.tsx`. If revisited: try decoupling realtime from `router.refresh()` (e.g. targeted cache tags), or pin/upgrade Next and re-test. (AGENTS.md: "This is NOT the Next.js you know.")
+21. **Next 16 streaming loading states + realtime `router.refresh()` linger/duplicate the DOM (Phase 10).** Attempted route `loading.tsx` AND in-page `<Suspense>` for the group pages; both made the _previous_ route's DOM persist (hidden) during client navigation — strict locators then resolve to 2 elements (e.g. `Ideas (N)` ×2, both hidden). In-page Suspense fixed most cases but still duplicated specifically when `GroupRealtime`'s `router.refresh()` fired into the boundary (the user's own INSERT echo). Net: web loading states are DEFERRED on this Next 16 + realtime-refresh setup — the awaited page render is the stable baseline (54 Playwright green). Mobile already shows inline loaders. Resilience shipped instead via `(app)/error.tsx` + `not-found.tsx`. If revisited: try decoupling realtime from `router.refresh()` (e.g. targeted cache tags), or pin/upgrade Next and re-test. (AGENTS.md: "This is NOT the Next.js you know.")
 
 ---
 
@@ -232,6 +232,7 @@ Supabase must be running for Playwright, manual testing, and the dev server. If 
 ### Env files
 
 **`apps/web/.env.local`:**
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
@@ -241,6 +242,7 @@ TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA     # test pair
 ```
 
 **`apps/mobile/.env.local`:**
+
 ```
 EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
@@ -272,11 +274,13 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 ## 8. Open questions
 
 **Still open:**
+
 - **OQ-2** Domain name — needs Justin to register one; also unblocks the Phase 9 perimeter (Cloudflare) + universal links.
 - **OQ-7** Geographic scope (single-region vs multi-region).
 - **OQ-8** ToS / Privacy policy authorship — needs Justin to decide who writes the legal copy (required for store submission).
 
 **Resolved:**
+
 - **OQ-1** → name is **"Huddle"** (Phase 10; verify store/trademark availability before submission).
 - **OQ-3** → bundle ID / package = **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json` (Phase 10).
 - **OQ-4** → "Pop" visual direction: violet brand + pink accent, Montserrat/Lato on web; light/dark mode with a persisted toggle on both apps; brand logo PNG. Shipped PR #10.
@@ -288,9 +292,10 @@ redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"   # must be explicit
 
 ## 9. Status: where you're starting
 
-**Merged to main:** Phases 0–8 (PRs #11 Phase 7, #12 Phase 8, and earlier). 
+**Merged to main:** Phases 0–8 (PRs #11 Phase 7, #12 Phase 8, and earlier).
 
 **In flight (branch `phase-10-launch`, rebased on main):** Phase 9 **in-app** hardening + Phase 10 launch prep — opened as one PR covering both:
+
 - **Phase 9** (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions D38/D65, 9.3 `docs/SECURITY.md`). Perimeter (Cloudflare/Sentry/prod secrets/ToS) deferred — blocked on domain/accounts/deploy (`docs/SECURITY.md` §5).
 - **Phase 10 so far** (10.1 name/bundle/license config, 10.2 account-deletion backend, 10.3 account-deletion UI). OQ-1/3/6/11 resolved.
 
@@ -309,6 +314,7 @@ Test suite green at last run: typecheck (7) + lint (6); unit **156** (validation
 This project ran through Phases 0–2 in Anthropic's chat interface using a "zip and overlay" delivery flow because Claude couldn't write directly to Justin's filesystem. That flow was slow and surfaced a lot of environment-specific bugs only on Justin's machine. Moving to Claude Code eliminates that — you can edit files in `C:\Temp\huddle` directly, run `pnpm typecheck` and `pnpm --filter web test:e2e` yourself, see Metro output, and iterate without round-trips.
 
 The expectation:
+
 - For most tasks, you'll edit files, run commands, and report back with what you did. No need to ask before every edit on routine work in `apps/`, `packages/`, `supabase/migrations/`, `docs/`, etc.
 - **Ask first** before: destructive operations (`supabase db reset`, `rm -rf` on anything outside `.next` / `.expo` / `node_modules`), git operations beyond commit (rebases, force pushes, branch deletions), modifying CI config in `.github/`, modifying `supabase/seed.sql` (test data lives there), changing the root `package.json` or `pnpm-lock.yaml` in ways beyond `pnpm install`.
 - Don't update the Supabase CLI mid-phase. Don't run `expo install --fix` without confirming first — it can change multiple package versions at once.

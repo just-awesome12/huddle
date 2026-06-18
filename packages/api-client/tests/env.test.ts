@@ -34,15 +34,19 @@ describe('resolvePublicEnv', () => {
   });
 
   it('throws when URL is missing', () => {
-    expect(() => resolvePublicEnv({
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'x',
-    })).toThrow(/URL is not configured/);
+    expect(() =>
+      resolvePublicEnv({
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: 'x',
+      }),
+    ).toThrow(/URL is not configured/);
   });
 
   it('throws when public key is missing', () => {
-    expect(() => resolvePublicEnv({
-      NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
-    })).toThrow(/public key is not configured/);
+    expect(() =>
+      resolvePublicEnv({
+        NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co',
+      }),
+    ).toThrow(/public key is not configured/);
   });
 });
 
@@ -74,8 +78,10 @@ describe('resolveServiceEnv', () => {
   });
 
   it('still throws when public key is missing (inherits public-env check)', () => {
-    expect(() => resolveServiceEnv({
-      SUPABASE_SERVICE_ROLE_KEY: 'legacy',
-    })).toThrow(/URL is not configured/);
+    expect(() =>
+      resolveServiceEnv({
+        SUPABASE_SERVICE_ROLE_KEY: 'legacy',
+      }),
+    ).toThrow(/URL is not configured/);
   });
 });

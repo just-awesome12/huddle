@@ -1,9 +1,4 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { groupQueryKeys } from './groups';
 import {
   inviteQueryKeys,
@@ -39,10 +34,7 @@ export {
 export function useGroupInvites(
   client: HuddleClient,
   groupId: string,
-  options?: Omit<
-    UseQueryOptions<GroupInviteWithInvitee[], Error>,
-    'queryKey' | 'queryFn'
-  >,
+  options?: Omit<UseQueryOptions<GroupInviteWithInvitee[], Error>, 'queryKey' | 'queryFn'>,
 ) {
   return useQuery({
     queryKey: inviteQueryKeys.forGroup(groupId),

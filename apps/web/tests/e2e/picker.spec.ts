@@ -27,9 +27,7 @@ function makeTestUser(tag: string): TestUser {
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -56,11 +54,7 @@ async function createGroup(page: Page, name: string): Promise<string> {
   return page.url();
 }
 
-async function createIdea(
-  page: Page,
-  groupUrl: string,
-  opts: { title: string; category: string },
-) {
+async function createIdea(page: Page, groupUrl: string, opts: { title: string; category: string }) {
   await page.goto(groupUrl);
   await page.getByRole('link', { name: 'New idea' }).click();
   await page.waitForURL(/\/ideas\/new$/);
@@ -106,23 +100,15 @@ test('a category with fewer than two ideas disables the pick', async ({ page }) 
   await expect(page.getByTestId('picker-run')).toBeEnabled();
 
   // Activity has only 1 → disabled.
-  await page
-    .getByTestId('picker-categories')
-    .getByRole('button', { name: 'Activity' })
-    .click();
+  await page.getByTestId('picker-categories').getByRole('button', { name: 'Activity' }).click();
   await expect(page.getByTestId('picker-run')).toBeDisabled();
 
   // Food has 2 → enabled again.
-  await page
-    .getByTestId('picker-categories')
-    .getByRole('button', { name: 'Food' })
-    .click();
+  await page.getByTestId('picker-categories').getByRole('button', { name: 'Food' }).click();
   await expect(page.getByTestId('picker-run')).toBeEnabled();
 });
 
-test('a chosen idea cannot be hard-deleted — user is told to dismiss', async ({
-  page,
-}) => {
+test('a chosen idea cannot be hard-deleted — user is told to dismiss', async ({ page }) => {
   await signUp(page, makeTestUser('fk'));
   const groupUrl = await createGroup(page, 'FK Group');
   await createIdea(page, groupUrl, { title: 'Tacos', category: 'food' });

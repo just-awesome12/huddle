@@ -55,19 +55,12 @@ function str(v: unknown): string | null {
 
 /** Group-name lookup (used in two event types). */
 async function groupName(service: Service, groupId: string): Promise<string> {
-  const { data } = await service
-    .from('groups')
-    .select('name')
-    .eq('id', groupId)
-    .maybeSingle();
+  const { data } = await service.from('groups').select('name').eq('id', groupId).maybeSingle();
   return (data?.name as string) ?? 'your group';
 }
 
 /** Build Recipient[] for a set of user ids (their tokens × their prefs). */
-async function recipientsForUsers(
-  service: Service,
-  userIds: string[],
-): Promise<Recipient[]> {
+async function recipientsForUsers(service: Service, userIds: string[]): Promise<Recipient[]> {
   if (userIds.length === 0) return [];
   const [{ data: tokens }, { data: prefs }] = await Promise.all([
     service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
@@ -89,10 +82,7 @@ async function recipientsForUsers(
 }
 
 async function memberIds(service: Service, groupId: string): Promise<string[]> {
-  const { data } = await service
-    .from('group_members')
-    .select('user_id')
-    .eq('group_id', groupId);
+  const { data } = await service.from('group_members').select('user_id').eq('group_id', groupId);
   return (data ?? []).map((m) => m.user_id as string);
 }
 

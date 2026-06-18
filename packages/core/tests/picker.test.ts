@@ -83,9 +83,7 @@ describe('Deno mirror drift guard', () => {
       for (const v of [0, 1, 7, 100, 99999, TWO_POW_32 - 1]) {
         // Use enough repeats in the sequence to satisfy any re-draws.
         const draws = [v, 3, 5, 9];
-        expect(randomIndex(n, seqRand(draws))).toBe(
-          mirror.randomIndex(n, seqRand(draws)),
-        );
+        expect(randomIndex(n, seqRand(draws))).toBe(mirror.randomIndex(n, seqRand(draws)));
       }
     }
   });
@@ -94,8 +92,6 @@ describe('Deno mirror drift guard', () => {
     const items = ['p', 'q', 'r', 's', 't'];
     expect(pickOne(items, seqRand([42]))).toBe(mirror.pickOne(items, seqRand([42])));
     const draws = [4, 3, 2, 1];
-    expect(shuffle(items, seqRand(draws))).toEqual(
-      mirror.shuffle(items, seqRand(draws)),
-    );
+    expect(shuffle(items, seqRand(draws))).toEqual(mirror.shuffle(items, seqRand(draws)));
   });
 });

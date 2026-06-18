@@ -10,10 +10,7 @@ interface AcceptInviteFormProps {
 }
 
 export function AcceptInviteForm({ token }: AcceptInviteFormProps) {
-  const [state, formAction, pending] = useActionState(
-    acceptInviteAction,
-    EMPTY_INVITE_STATE,
-  );
+  const [state, formAction, pending] = useActionState(acceptInviteAction, EMPTY_INVITE_STATE);
 
   return (
     <form action={formAction} className="flex flex-col gap-3">

@@ -13,16 +13,16 @@ Cloudflare) is defence-in-depth on top of that.
 
 ## 1. In-app defences (shipped)
 
-| Control | Where | Notes |
-|---|---|---|
-| Row-Level Security on every table | `supabase/migrations/*` | The real access boundary. 157 pgTAP assertions across 13 files. |
-| Security headers | `apps/web/next.config.ts` | HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy, X-Robots-Tag: noindex. |
-| CSP (report-only) | `apps/web/next.config.ts` | `Content-Security-Policy-Report-Only`, scoped to self + Supabase + Turnstile. Observe, then enforce with nonces (deferred). |
-| No crawling/indexing | `apps/web/src/app/robots.ts` + noindex header | Private app; `Disallow: /`. |
-| Human verification | Cloudflare Turnstile on web sign-up | `apps/web/src/components/TurnstileWidget.tsx`, verified server-side in `auth.ts`. Mobile has no Turnstile equivalent (documented gap). |
-| Fail-closed prod guards | `instrumentation.ts` (Turnstile, D38); `send-push` (webhook secret, D65) | Web refuses to boot if the Turnstile bypass is reachable in production; send-push refuses the dev webhook secret outside local. |
-| Search rate limiting | `apps/web/src/app/api/profiles/search` | In-memory per-user sliding window (D51) — defence-in-depth; the real perimeter limit is Cloudflare (deferred). |
-| Auth wall | `apps/web/src/proxy.ts` | All non-public routes redirect to sign-in; robots/sitemap excluded so they serve. |
+| Control                           | Where                                                                    | Notes                                                                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Row-Level Security on every table | `supabase/migrations/*`                                                  | The real access boundary. 157 pgTAP assertions across 13 files.                                                                        |
+| Security headers                  | `apps/web/next.config.ts`                                                | HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy, X-Robots-Tag: noindex.              |
+| CSP (report-only)                 | `apps/web/next.config.ts`                                                | `Content-Security-Policy-Report-Only`, scoped to self + Supabase + Turnstile. Observe, then enforce with nonces (deferred).            |
+| No crawling/indexing              | `apps/web/src/app/robots.ts` + noindex header                            | Private app; `Disallow: /`.                                                                                                            |
+| Human verification                | Cloudflare Turnstile on web sign-up                                      | `apps/web/src/components/TurnstileWidget.tsx`, verified server-side in `auth.ts`. Mobile has no Turnstile equivalent (documented gap). |
+| Fail-closed prod guards           | `instrumentation.ts` (Turnstile, D38); `send-push` (webhook secret, D65) | Web refuses to boot if the Turnstile bypass is reachable in production; send-push refuses the dev webhook secret outside local.        |
+| Search rate limiting              | `apps/web/src/app/api/profiles/search`                                   | In-memory per-user sliding window (D51) — defence-in-depth; the real perimeter limit is Cloudflare (deferred).                         |
+| Auth wall                         | `apps/web/src/proxy.ts`                                                  | All non-public routes redirect to sign-in; robots/sitemap excluded so they serve.                                                      |
 
 ---
 
@@ -40,12 +40,12 @@ resolved as **not required**.
 
 ## 3. Penetration self-test (executed 2026-06-17, local stack)
 
-| Check | Expected | Result |
-|---|---|---|
-| REST request with **no apikey** to `/rest/v1/ideas`, `/groups` | no data | **200 `[]`** — falls through to the `anon` role; RLS returns nothing. (Hosted Supabase's Kong returns 401 without an apikey; locally the gate is RLS — both safe, no leak.) |
-| `anon` apikey on `decisions` (member-only) | empty | **`[]`** |
-| Cross-group read / role tamper / token replay / decision immutability | denied | Covered exhaustively by pgTAP (157 assertions): non-member SELECT empty, non-admin role changes rejected, `decisions` INSERT/UPDATE/DELETE denied to clients, used/expired/revoked invites rejected (HD00x). |
-| Realtime leakage to non-members | none | Empirically verified (R-4) — `realtime-rls.integration.mjs`. |
+| Check                                                                 | Expected | Result                                                                                                                                                                                                       |
+| --------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| REST request with **no apikey** to `/rest/v1/ideas`, `/groups`        | no data  | **200 `[]`** — falls through to the `anon` role; RLS returns nothing. (Hosted Supabase's Kong returns 401 without an apikey; locally the gate is RLS — both safe, no leak.)                                  |
+| `anon` apikey on `decisions` (member-only)                            | empty    | **`[]`**                                                                                                                                                                                                     |
+| Cross-group read / role tamper / token replay / decision immutability | denied   | Covered exhaustively by pgTAP (157 assertions): non-member SELECT empty, non-admin role changes rejected, `decisions` INSERT/UPDATE/DELETE denied to clients, used/expired/revoked invites rejected (HD00x). |
+| Realtime leakage to non-members                                       | none     | Empirically verified (R-4) — `realtime-rls.integration.mjs`.                                                                                                                                                 |
 
 No data-isolation failures found. The "no auth → 401" expectation from
 the roadmap holds at the **production** gateway; locally the equivalent

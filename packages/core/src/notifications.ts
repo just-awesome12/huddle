@@ -71,10 +71,7 @@ export interface NotificationContent {
 }
 
 /** Build one Expo message per token from shared content. */
-export function buildExpoMessages(
-  tokens: string[],
-  content: NotificationContent,
-): ExpoMessage[] {
+export function buildExpoMessages(tokens: string[], content: NotificationContent): ExpoMessage[] {
   return tokens.map((to) => ({
     to,
     title: content.title,

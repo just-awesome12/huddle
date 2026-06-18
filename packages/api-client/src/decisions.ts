@@ -15,10 +15,7 @@ type IdeaCategory = Database['public']['Enums']['idea_category'];
 
 /** A history row with the chosen idea and who ran the picker. */
 export interface DecisionWithDetails extends DecisionRow {
-  chosen: Pick<
-    IdeaRow,
-    'id' | 'title' | 'category' | 'status' | 'photo_path'
-  > | null;
+  chosen: Pick<IdeaRow, 'id' | 'title' | 'category' | 'status' | 'photo_path'> | null;
   runner: Pick<ProfileRow, 'id' | 'username' | 'display_name' | 'avatar_url'> | null;
 }
 
@@ -133,10 +130,7 @@ export async function runPicker(
  */
 async function toPickerError(error: unknown): Promise<PickerError> {
   const context = (error as { context?: unknown }).context;
-  if (
-    context &&
-    typeof (context as { json?: unknown }).json === 'function'
-  ) {
+  if (context && typeof (context as { json?: unknown }).json === 'function') {
     try {
       const body = (await (context as Response).json()) as {
         error?: PickerErrorCode;

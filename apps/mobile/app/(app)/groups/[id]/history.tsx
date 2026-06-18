@@ -1,11 +1,4 @@
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
@@ -38,7 +31,11 @@ export default function HistoryScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.heading}>Group not found</Text>
-        <Button label="Back to groups" variant="secondary" onPress={() => router.replace('/groups')} />
+        <Button
+          label="Back to groups"
+          variant="secondary"
+          onPress={() => router.replace('/groups')}
+        />
       </View>
     );
   }
@@ -69,8 +66,7 @@ export default function HistoryScreen() {
         }
         renderItem={({ item }) => {
           const filters = item.filters as { category?: string | null } | null;
-          const categoryFilter =
-            filters && typeof filters === 'object' ? filters.category : null;
+          const categoryFilter = filters && typeof filters === 'object' ? filters.category : null;
           return (
             <View style={styles.row}>
               <View style={styles.rowTop}>
@@ -91,8 +87,8 @@ export default function HistoryScreen() {
               </View>
               <Text style={styles.meta}>
                 by {item.runner?.display_name ?? 'someone'} ·{' '}
-                {new Date(item.created_at).toLocaleString()} · from{' '}
-                {item.candidate_idea_ids.length} option
+                {new Date(item.created_at).toLocaleString()} · from {item.candidate_idea_ids.length}{' '}
+                option
                 {item.candidate_idea_ids.length === 1 ? '' : 's'}
                 {categoryFilter
                   ? ` · ${CATEGORY_LABELS[categoryFilter as keyof typeof CATEGORY_LABELS] ?? categoryFilter} only`
@@ -149,7 +145,12 @@ const makeStyles = (c: ThemeColors) =>
       paddingVertical: 12,
       gap: 8,
     },
-    rowTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 },
+    rowTop: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
     rowInfo: { flexShrink: 1 },
     rowLabel: {
       fontSize: 11,

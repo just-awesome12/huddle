@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -81,9 +74,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [queryClient]);
 
-  return (
-    <RealtimeContext.Provider value={{ status }}>{children}</RealtimeContext.Provider>
-  );
+  return <RealtimeContext.Provider value={{ status }}>{children}</RealtimeContext.Provider>;
 }
 
 export function useRealtimeStatus(): RealtimeStatus | 'CONNECTING' {

@@ -18,12 +18,7 @@ export const inviteTokenSchema = z
 export const createInviteSchema = z
   .object({
     groupId: z.string().uuid('Invalid group id'),
-    invitedEmail: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .email('Enter a valid email address')
-      .optional(),
+    invitedEmail: z.string().trim().toLowerCase().email('Enter a valid email address').optional(),
     invitedUserId: z.string().uuid('Invalid user id').optional(),
   })
   .refine((v) => !(v.invitedEmail && v.invitedUserId), {

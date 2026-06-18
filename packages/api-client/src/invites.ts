@@ -13,8 +13,7 @@ import { throwMapped, requireUserId, type HuddleClient } from './internal';
 
 type GroupRow = Database['public']['Tables']['groups']['Row'];
 export type GroupInviteRow = Database['public']['Tables']['group_invites']['Row'];
-export type InvitePeek =
-  Database['public']['Functions']['peek_invite']['Returns'][number];
+export type InvitePeek = Database['public']['Functions']['peek_invite']['Returns'][number];
 
 /** Invite row as listed on the admin invite page, with the invited
  *  user's username when the invite is addressed to a specific user. */
@@ -125,9 +124,7 @@ export async function fetchGroupInvites(
  * still open and unexpired. RLS allows the invited user to see these.
  * Surfaced as "Invites for you" on the groups list.
  */
-export async function fetchMyPendingInvites(
-  client: HuddleClient,
-): Promise<PendingInvite[]> {
+export async function fetchMyPendingInvites(client: HuddleClient): Promise<PendingInvite[]> {
   const userId = await requireUserId(client);
 
   const { data, error } = await client
@@ -143,10 +140,7 @@ export async function fetchMyPendingInvites(
 }
 
 /** Revoke (delete) an open invite. Admins only via RLS. */
-export async function revokeInvite(
-  client: HuddleClient,
-  inviteId: string,
-): Promise<void> {
+export async function revokeInvite(client: HuddleClient, inviteId: string): Promise<void> {
   const { error } = await client.from('group_invites').delete().eq('id', inviteId);
   if (error) throwMapped(error);
 }
@@ -160,23 +154,15 @@ export async function revokeInvite(
  * inviter display name, expiry, and a computed status:
  * 'valid' | 'expired' | 'accepted' | 'already_member' | 'wrong_user'.
  */
-export async function peekInvite(
-  client: HuddleClient,
-  token: string,
-): Promise<InvitePeek> {
-  const { data, error } = await client
-    .rpc('peek_invite', { p_token: token })
-    .single();
+export async function peekInvite(client: HuddleClient, token: string): Promise<InvitePeek> {
+  const { data, error } = await client.rpc('peek_invite', { p_token: token }).single();
 
   if (error) throwMapped(error);
   return data!;
 }
 
 /** Accept an invite. Returns the joined group on success. */
-export async function acceptInvite(
-  client: HuddleClient,
-  token: string,
-): Promise<GroupRow> {
+export async function acceptInvite(client: HuddleClient, token: string): Promise<GroupRow> {
   const { data, error } = await client.rpc('accept_invite', { p_token: token });
 
   if (error) throwMapped(error);

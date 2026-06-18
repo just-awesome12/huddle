@@ -13,10 +13,7 @@ import type { RealtimeChange } from '@huddle/api-client/realtime';
  * safer than a stale screen. `decisions` is wired for Phase 7; until
  * then there are no decision queries to hit.
  */
-export function invalidateForChange(
-  queryClient: QueryClient,
-  change: RealtimeChange,
-): void {
+export function invalidateForChange(queryClient: QueryClient, change: RealtimeChange): void {
   const { table, groupId } = change;
 
   switch (table) {

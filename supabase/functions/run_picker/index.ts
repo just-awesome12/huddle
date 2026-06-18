@@ -26,8 +26,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.47.10';
 import { cryptoRandomUint32, pickOne } from '../_shared/picker.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface PickerBody {
   groupId?: unknown;
@@ -65,8 +64,7 @@ Deno.serve(async (req) => {
       return json({ error: 'bad_request' }, 400);
     }
 
-    const category =
-      typeof body.filters?.category === 'string' ? body.filters.category : null;
+    const category = typeof body.filters?.category === 'string' ? body.filters.category : null;
     const shortlist =
       Array.isArray(body.filters?.shortlist) &&
       body.filters.shortlist.every((v) => typeof v === 'string')

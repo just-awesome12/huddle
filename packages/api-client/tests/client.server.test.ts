@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  createServerSupabaseClient,
-  type CookieAdapter,
-} from '../src/client.server';
+import { createServerSupabaseClient, type CookieAdapter } from '../src/client.server';
 
 beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';

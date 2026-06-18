@@ -1,10 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  fetchGroupDecisions,
-  runPicker,
-  PickerError,
-  decisionQueryKeys,
-} from '../src/decisions';
+import { fetchGroupDecisions, runPicker, PickerError, decisionQueryKeys } from '../src/decisions';
 
 // -----------------------------------------------------------------------
 // Mocks

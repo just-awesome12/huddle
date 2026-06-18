@@ -230,9 +230,7 @@ describe('deleteIdea', () => {
       queryData: null,
       queryError: { code: '42501', message: 'denied' },
     });
-    await expect(
-      deleteIdea(client as never, 'idea-1', 'g/i/photo.jpg'),
-    ).rejects.toBeTruthy();
+    await expect(deleteIdea(client as never, 'idea-1', 'g/i/photo.jpg')).rejects.toBeTruthy();
     expect(client._storage.remove).not.toHaveBeenCalled();
   });
 });
@@ -315,9 +313,7 @@ describe('removeIdeaPhoto / getIdeaPhotoUrl', () => {
 
   it('returns a signed URL', async () => {
     const client = makeClient({ queryData: null, signedUrl: 'https://s/url' });
-    await expect(getIdeaPhotoUrl(client as never, 'g1/i1/x.jpg')).resolves.toBe(
-      'https://s/url',
-    );
+    await expect(getIdeaPhotoUrl(client as never, 'g1/i1/x.jpg')).resolves.toBe('https://s/url');
     expect(client._storage.createSignedUrl).toHaveBeenCalledWith('g1/i1/x.jpg', 3600);
   });
 });

@@ -128,32 +128,32 @@ Entities and key relationships (DDL specified in Phase 1):
 
 ## 5. Technology Stack
 
-| Layer | Choice | Reasoning |
-|---|---|---|
-| Monorepo | Turborepo + pnpm workspaces | Standard, fast, well-documented |
-| Language | TypeScript (`strict`) | Required by you |
-| Web | Next.js 15 (App Router) | Hybrid SSR/CSR, mature, Vercel-first |
-| Mobile | Expo SDK 52 + React Native 0.76 | Single TS codebase, OTA updates, managed builds via EAS |
-| Web styling | Tailwind CSS + shadcn/ui | Accessible, themable, fast to build |
-| Mobile styling | NativeWind (Tailwind for RN) | Keeps styling vocabulary consistent with web |
-| State / data | TanStack Query + Supabase client | Cache + realtime invalidation |
-| Forms | React Hook Form + Zod | Type-safe forms shared between apps |
-| Validation | Zod | Shared between client and server |
-| DB / Auth / Storage / Realtime | Supabase | One service covers four needs |
-| Auth providers | Email/password, Google, Apple | Per your spec |
-| Edge logic | Supabase Edge Functions (Deno) | For picker shuffle, invite tokens, rate limits |
-| Push notifications | Expo Push Notifications + `expo-notifications` | Free, integrated with mobile build |
-| Anti-bot | Cloudflare proxy + Cloudflare Turnstile | Free tier, low integration cost |
-| CDN / proxy | Cloudflare (web) | Bot fight, rate limiting, WAF |
-| Hosting (web) | Vercel | First-party Next.js host |
-| Hosting (mobile) | App Store + Google Play, builds via EAS | Required for native deployment |
-| CI/CD | GitHub Actions + EAS Build + Vercel Git integration | Standard |
-| Unit tests | Vitest | Fast, ESM-native |
-| Web E2E | Playwright | Best-in-class |
-| Mobile E2E | Maestro | Simpler than Detox; YAML flows |
-| Linting / formatting | ESLint + Prettier (shared configs) | Standard |
-| Error monitoring | Sentry (free tier) | Web + mobile + edge functions |
-| Analytics (post-MVP) | PostHog or Plausible (deferred) | Will revisit when usage data matters |
+| Layer                          | Choice                                              | Reasoning                                               |
+| ------------------------------ | --------------------------------------------------- | ------------------------------------------------------- |
+| Monorepo                       | Turborepo + pnpm workspaces                         | Standard, fast, well-documented                         |
+| Language                       | TypeScript (`strict`)                               | Required by you                                         |
+| Web                            | Next.js 15 (App Router)                             | Hybrid SSR/CSR, mature, Vercel-first                    |
+| Mobile                         | Expo SDK 52 + React Native 0.76                     | Single TS codebase, OTA updates, managed builds via EAS |
+| Web styling                    | Tailwind CSS + shadcn/ui                            | Accessible, themable, fast to build                     |
+| Mobile styling                 | NativeWind (Tailwind for RN)                        | Keeps styling vocabulary consistent with web            |
+| State / data                   | TanStack Query + Supabase client                    | Cache + realtime invalidation                           |
+| Forms                          | React Hook Form + Zod                               | Type-safe forms shared between apps                     |
+| Validation                     | Zod                                                 | Shared between client and server                        |
+| DB / Auth / Storage / Realtime | Supabase                                            | One service covers four needs                           |
+| Auth providers                 | Email/password, Google, Apple                       | Per your spec                                           |
+| Edge logic                     | Supabase Edge Functions (Deno)                      | For picker shuffle, invite tokens, rate limits          |
+| Push notifications             | Expo Push Notifications + `expo-notifications`      | Free, integrated with mobile build                      |
+| Anti-bot                       | Cloudflare proxy + Cloudflare Turnstile             | Free tier, low integration cost                         |
+| CDN / proxy                    | Cloudflare (web)                                    | Bot fight, rate limiting, WAF                           |
+| Hosting (web)                  | Vercel                                              | First-party Next.js host                                |
+| Hosting (mobile)               | App Store + Google Play, builds via EAS             | Required for native deployment                          |
+| CI/CD                          | GitHub Actions + EAS Build + Vercel Git integration | Standard                                                |
+| Unit tests                     | Vitest                                              | Fast, ESM-native                                        |
+| Web E2E                        | Playwright                                          | Best-in-class                                           |
+| Mobile E2E                     | Maestro                                             | Simpler than Detox; YAML flows                          |
+| Linting / formatting           | ESLint + Prettier (shared configs)                  | Standard                                                |
+| Error monitoring               | Sentry (free tier)                                  | Web + mobile + edge functions                           |
+| Analytics (post-MVP)           | PostHog or Plausible (deferred)                     | Will revisit when usage data matters                    |
 
 ---
 
@@ -241,6 +241,7 @@ project-root/
 **Objective:** Stand up the monorepo, shared tooling, and a working Supabase project so we have a clean substrate to build on.
 
 **Tasks**
+
 - [ ] Initialize repo (`git init`, push to GitHub)
 - [ ] Configure pnpm workspaces + Turborepo
 - [ ] Create empty `apps/web` (Next.js 15, App Router, TS strict, Tailwind)
@@ -255,6 +256,7 @@ project-root/
 - [ ] Configure Sentry projects (web, mobile, edge) — install SDKs but don't enable yet
 
 **Files likely affected**
+
 - `package.json` (root), `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`
 - `apps/web/*` (scaffold), `apps/mobile/*` (scaffold)
 - `packages/config/*`, `packages/*/package.json`
@@ -262,12 +264,14 @@ project-root/
 - `supabase/config.toml`
 
 **Implementation notes**
+
 - Use `pnpm dlx create-next-app@latest --typescript --tailwind --eslint --app --src-dir=false --import-alias='@/*'` for web.
 - Use `pnpm dlx create-expo-app@latest --template tabs` then strip down for mobile.
 - Pin all package versions; no `^` ranges in root devDependencies.
-- Don't write any feature code yet — this phase is *only* substrate.
+- Don't write any feature code yet — this phase is _only_ substrate.
 
 **Validation steps**
+
 - [ ] `pnpm install` succeeds from a clean clone
 - [ ] `pnpm -r build` (or `turbo run build`) succeeds across all packages and apps
 - [ ] `pnpm -r lint` and `pnpm -r typecheck` pass
@@ -276,6 +280,7 @@ project-root/
 - [ ] CI passes on a throwaway PR
 
 **Tests that must pass**
+
 - No app tests yet (no features). Gate is "all tooling green."
 
 ---
@@ -285,6 +290,7 @@ project-root/
 **Objective:** Define the entire MVP data model as migrations with strict RLS, plus generated TypeScript types. This phase is the security spine of the whole product — get it right before any UI.
 
 **Tasks**
+
 - [ ] Write migration: `profiles` table (id FK to `auth.users`, username unique, display_name, avatar_url, created_at)
 - [ ] Write migration: `groups` table (id, name, created_by, created_at)
 - [ ] Write migration: `group_members` table (group_id, user_id, role enum: 'admin'|'member', joined_at; PK composite)
@@ -300,12 +306,14 @@ project-root/
 - [ ] Write seed SQL with two test users, two groups, sample ideas (for local dev only)
 
 **Files likely affected**
+
 - `supabase/migrations/*.sql` (one per logical change, ordered)
 - `supabase/seed.sql`
 - `packages/types/src/database.ts` (generated)
 - `packages/types/src/index.ts`
 
 **Implementation notes**
+
 - **RLS policy outline** (each implemented as `SELECT`, `INSERT`, `UPDATE`, `DELETE` rules):
   - `profiles`: any authenticated user can read; only owner can update.
   - `groups`: visible only to members. Insert allowed for any authenticated user. Update/delete only by admin members.
@@ -318,6 +326,7 @@ project-root/
 - Every migration is reversible (`up` and `down` if using a tool that supports it; otherwise document rollback steps in the migration file header).
 
 **Validation steps**
+
 - [ ] `supabase db reset` runs cleanly with all migrations + seed
 - [ ] `packages/types/src/database.ts` regenerates without errors
 - [ ] Manual SQL probe: as user A, attempt to `SELECT *` from group B's ideas → returns 0 rows
@@ -326,6 +335,7 @@ project-root/
 - [ ] Trigger test: insert into `auth.users` (via Supabase Auth signup) → corresponding `profiles` row exists
 
 **Tests that must pass before Phase 2**
+
 - [ ] **Unit (SQL):** A test script (in `supabase/tests/`) using `pgTAP` or raw SQL assertions that exercises every RLS rule for every table with at least one positive and one negative case
 - [ ] **Regression:** Phase 0 CI still green; type generation does not break any package build
 
@@ -338,12 +348,14 @@ project-root/
 **Status (closed 2026-05-22):** Shipped across sub-phases 2.1–2.7. Email/password + Google OAuth work on web (fully verified, 16 Playwright tests) and mobile (verified in web preview; native OAuth + deep-link deferred). Apple OAuth deferred to a later phase. Full design captured in `docs/ARCHITECTURE.md` Phase 2 appendix (data flows, decision log D26–D42, mobile environment gotchas).
 
 **What shipped vs. plan:**
+
 - ✅ Google OAuth (web + mobile) — **Apple deferred** (needs Apple Developer account; revisit at launch prep / Phase 10)
 - ✅ Web Turnstile implemented as a **Server Action verification**, not a standalone route handler (cleaner with the Server-Action-based auth; same security property)
 - ⏸️ Native Google OAuth + `huddle://` deep-link verified by code review only — full device verification deferred (Expo Go was pinned to SDK 54 during the SDK 55 rollout; needs emulator or dev build)
 - ⏸️ Mobile E2E (Maestro) deferred to Phase 9 per original plan
 
 **Tasks**
+
 - [x] Configure Google OAuth in Supabase Auth (`config.toml` + Google Cloud client); Apple deferred
 - [x] Implement `packages/api-client` Supabase client factories (browser, server, service-role, native; shared interface)
 - [x] **Web:** sign-up, sign-in, sign-out pages under `(auth)` route group
@@ -357,18 +369,21 @@ project-root/
 - [x] Display name + username capture step (onboarding) for OAuth users (writes to `profiles`)
 
 **Files likely affected**
+
 - `packages/api-client/src/client.ts`, `client.native.ts`
 - `apps/web/app/(auth)/**`, `apps/web/middleware.ts`, `apps/web/app/auth/callback/route.ts`
 - `apps/mobile/app/(auth)/**`, `apps/mobile/app/_layout.tsx`
 - `packages/validation/src/auth.ts` (Zod schemas for sign-up/sign-in)
 
 **Implementation notes**
+
 - Sign-up form fields: email, password, display name, username, Turnstile token. Validate username uniqueness via a unique constraint at the DB; surface 23505 errors as a friendly message.
-- Apple Sign-In on web requires the "Sign in with Apple JS" SDK *or* the OAuth flow — confirm which Supabase currently supports best at implementation time.
+- Apple Sign-In on web requires the "Sign in with Apple JS" SDK _or_ the OAuth flow — confirm which Supabase currently supports best at implementation time.
 - Mobile: store session in `expo-secure-store`, not AsyncStorage.
 - Do **not** persist OAuth tokens in plain logs (configure Sentry scrubbing).
 
 **Validation steps**
+
 - [x] Sign up via email/password on web → land on app shell → see own profile
 - [x] Sign in with Google on web → same
 - [ ] ~~Sign in with Apple on web~~ — deferred
@@ -379,6 +394,7 @@ project-root/
 - [x] Profile row exists after sign-up (Phase 1 `handle_new_user` trigger fires)
 
 **Tests that must pass before Phase 3**
+
 - [x] **Unit:** Zod schemas accept valid payloads and reject invalid ones (37 tests)
 - [x] **Unit:** Turnstile verification helper handles success/failure responses (8 tests; 50 total in api-client)
 - [x] **E2E (web, Playwright):** full sign-up + sign-in + sign-out happy path (16 tests)
@@ -394,12 +410,14 @@ project-root/
 **Status (closed 2026-06-11):** Shipped in sub-phases 3.1 (shared data layer), 3.2 (web UI), 3.3 (mobile UI) on branch `phase-3-groups` (PR #1). Full design + decision log D43–D47 in `docs/ARCHITECTURE_PHASE3_APPENDIX.md`.
 
 **What shipped vs. plan:**
+
 - ✅ Zod schemas, raw data functions, and TanStack Query hooks — with a split: raw functions in `@huddle/api-client/groups` (used by web Server Components/Actions per D43), hooks in `/groups-hooks` (used by mobile)
 - ✅ Web + mobile screens, role badges, admin-only controls, inline two-step confirmations
 - ➕ **Unplanned migration:** `create_group` SECURITY DEFINER RPC — `INSERT…RETURNING` on groups is rejected by RLS before the membership trigger runs (D45)
 - ⏸️ Multi-member UI flows (remove member, removed member loses access) cannot be exercised end-to-end until Phase 4 invites can add a second member; DB behavior covered by pgTAP
 
 **Tasks**
+
 - [x] Zod schemas for group create/update payloads in `packages/validation`
 - [x] Hooks: `useMyGroups`, `useGroup(id)`, `useGroupMembers(id)`, `useCreateGroup`, `useUpdateGroup`, `useDeleteGroup`, `useLeaveGroup`, `useRemoveMember`
 - [x] **Web:** `/groups` (list), `/groups/new`, `/groups/[id]` (detail), `/groups/[id]/settings`
@@ -408,25 +426,29 @@ project-root/
 - [x] Confirmation dialogs for destructive actions (inline two-step, not native dialogs)
 
 **Files likely affected**
+
 - `packages/validation/src/groups.ts`
 - `packages/api-client/src/groups.ts`
 - `apps/web/app/(app)/groups/**`
 - `apps/mobile/app/(app)/groups/**`
 
 **Implementation notes**
+
 - All hooks built on TanStack Query; mutations invalidate the relevant queries.
 - Never trust the client's view of `role` — every destructive action will be rejected by RLS if the user isn't actually admin; UI hiding is purely UX.
 - Group deletion cascades to members, ideas, decisions, invites (foreign keys with `ON DELETE CASCADE`, defined in Phase 1 migration — verify before this phase).
 
 **Validation steps**
+
 - [x] Create a group → appears in my list → I'm admin (web E2E + mobile smoke)
 - [x] Second user (no membership) cannot see the group via API (pgTAP; web 404 path verified)
 - [x] Admin can rename, member cannot (rename verified E2E; member-block by pgTAP)
-- [~] Admin can remove a member; removed member loses access immediately — *DB layer verified by pgTAP; UI flow needs Phase 4 invites for a second member*
+- [~] Admin can remove a member; removed member loses access immediately — _DB layer verified by pgTAP; UI flow needs Phase 4 invites for a second member_
 - [x] Member can leave; admin cannot leave if sole admin (friendly error verified on web E2E + mobile smoke)
 - [x] Admin can delete; cascades remove all related rows (pgTAP cascade tests + E2E)
 
 **Tests that must pass before Phase 4**
+
 - [x] **Unit:** Group Zod schemas (12 tests; validation total 49)
 - [x] **Integration:** Group data functions with mocked Supabase client (22 tests; api-client total 72) + `create_group` RPC pgTAP suite (7 assertions; pgTAP total 127)
 - [x] **E2E (web):** 8 Playwright group tests (create, list, rename, sole-admin block, delete, cancel, 404)
@@ -441,6 +463,7 @@ project-root/
 **Status (closed 2026-06-13):** Shipped in sub-phases 4.1 (RPCs + data layer), 4.2 (web UI + auth deep links), 4.3 (mobile UI + deep-link resume), 4.4 (username search + add-by-username) on branch `phase-4-invites` (PR #4). Full design + decision log D48–D51 in `docs/ARCHITECTURE_PHASE4_APPENDIX.md`.
 
 **What shipped vs. plan:**
+
 - 🔄 **No Edge Functions.** `accept_invite` + `peek_invite` are SECURITY DEFINER RPCs (D48, extends D45); `create_invite` needed nothing at all — Phase 1's column-default token generation + admin RLS INSERT…RETURNING already covered it. Edge Function infra debuts in Phase 7 (picker).
 - 🔄 Tokens are generated **in Postgres** (Phase 1's `generate_invite_token()`); the planned `packages/core/invite-token.ts` never needed to exist.
 - ➕ "Invites for you" section on the groups list (web + mobile) so addressed invites are discoverable — not in the original plan but required to complete the username-invite loop.
@@ -449,6 +472,7 @@ project-root/
 - ⚠️ v1 search rate limit is in-memory per-user in the route handler (D51); the perimeter limit is a Phase 9 Cloudflare item. Mobile searches Supabase directly — same Phase 9 item.
 
 **Tasks**
+
 - [x] ~~Edge Function:~~ `create_invite` — plain RLS INSERT with DB-generated token (no function needed)
 - [x] ~~Edge Function:~~ `accept_invite` — SECURITY DEFINER RPC + `peek_invite` RPC (D48)
 - [x] **Web/Mobile:** "Invite to group" UI: generate link button, copy-to-clipboard, QR code (mobile), share sheet (mobile), revoke list (both — OQ-10 resolved: yes, revocation via DELETE)
@@ -457,6 +481,7 @@ project-root/
 - [x] Accept-invite page (web) and deep link handler (mobile) for `/invites/[token]`
 
 **Files likely affected**
+
 - `supabase/functions/create-invite/index.ts`
 - `supabase/functions/accept-invite/index.ts`
 - `apps/web/app/(app)/groups/[id]/invite/page.tsx`
@@ -467,20 +492,23 @@ project-root/
 - `packages/core/src/invite-token.ts`
 
 **Implementation notes**
+
 - Tokens: 32 bytes from `crypto.randomBytes` (or `crypto.getRandomValues` in Edge), base64url-encoded. Stored only as the literal string (or a hash if you want defense-in-depth — decide at implementation).
 - Default invite expiry: 7 days. Configurable later.
 - Username search must enforce rate limit (10 req/min/user) to prevent enumeration.
 - Deep links: use Expo's `scheme` and `expo-linking`.
 
 **Validation steps**
+
 - [x] Generate invite link → second user opens link signed-out → prompted to sign in → after auth, accept flow runs → they're a member (web E2E with ?next= round-trip; mobile smoke with pending-path resume)
 - [x] Reused token (already accepted) → friendly error (E2E + pgTAP HD002)
-- [~] Expired token → friendly error — *pgTAP-verified (HD001) + status-card unit path; not E2E'd end-to-end since default expiry is 7 days*
+- [~] Expired token → friendly error — _pgTAP-verified (HD001) + status-card unit path; not E2E'd end-to-end since default expiry is 7 days_
 - [x] Username search returns matches; non-existent username returns empty (E2E)
 - [x] Username search rate-limited after 10 rapid calls (E2E asserts the 11th request returns 429)
-- [~] Mobile deep link `huddle://invites/<token>` opens accept screen — *path routing verified via Expo web preview (identical route mapping); real scheme-based open deferred with the other native-device items (Phase 10)*
+- [~] Mobile deep link `huddle://invites/<token>` opens accept screen — _path routing verified via Expo web preview (identical route mapping); real scheme-based open deferred with the other native-device items (Phase 10)_
 
 **Tests that must pass before Phase 5**
+
 - [x] **Unit:** ~~invite token generator~~ — token generation lives in Postgres (Phase 1); format enforced by CHECK constraint + pgTAP; client-side schemas tested (15 new validation tests, total 64)
 - [x] **Integration:** ~~Edge Functions~~ — replaced by RPC pgTAP suite (17 assertions, total 144) + 24 new api-client tests (total 96)
 - [x] **E2E (web):** two-browser tests — admin invites, second user accepts (link AND username paths); 8 new tests, total 32
@@ -495,6 +523,7 @@ project-root/
 **Status (closed 2026-06-13):** Shipped in sub-phases 5.1 (data layer), 5.2 (web UI), 5.3 (web photos), 5.4 (mobile UI + photos) on branch `phase-5-ideas` (PR #6). Full design + decision log D52–D55 in `docs/ARCHITECTURE_PHASE5_APPENDIX.md`.
 
 **What shipped vs. plan:**
+
 - 🔄 **No migration needed.** Phase 1's `ideas` table, enums, constraints, triggers, RLS, and `idea-photos` bucket already covered the model — verified, not rebuilt.
 - 🔄 **Edit permissions kept the Phase 1 model** (any member edits any field; UI gates controls to proposer/admin as UX). Decided as D52 — the roadmap's "RLS blocks non-proposers" expectation was the looser-than-planned Phase 1 reality.
 - 🔄 **Hard delete** (D55), with manual storage-object cleanup since objects don't cascade. Phase 7 flag recorded: `decisions.chosen_idea_id` FK is `ON DELETE CASCADE` — revisit when the picker ships.
@@ -503,6 +532,7 @@ project-root/
 - ⏸️ Optimistic status updates and skeleton loaders not implemented — query invalidation + spinners were sufficient; revisit if latency shows.
 
 **Tasks**
+
 - [x] Zod schemas for idea create/update
 - [x] Hooks: `useGroupIdeas(groupId, filters)`, `useCreateIdea`, `useUpdateIdea`, `useUpdateIdeaStatus`, `useDeleteIdea` (+ photo hooks)
 - [x] ~~Supabase Storage bucket `idea-photos` with RLS~~ — already existed from Phase 1; verified against the path convention
@@ -512,6 +542,7 @@ project-root/
 - [x] Empty states (skeleton loaders deferred — spinners used)
 
 **Files likely affected**
+
 - `packages/validation/src/ideas.ts`
 - `packages/api-client/src/ideas.ts`
 - `apps/web/app/(app)/groups/[id]/ideas/**`
@@ -519,21 +550,24 @@ project-root/
 - `supabase/migrations/*storage*.sql` (RLS for storage)
 
 **Implementation notes**
+
 - Categories enum: `food`, `activity`, `place`, `event`, `other`. Defined in DB and mirrored in Zod.
 - Photo path convention: `{group_id}/{idea_id}/{uuid}.{ext}` — encodes group_id so storage RLS can extract it.
 - Optimistic updates for status changes (revert on error).
 - The "history view" requirement (FR-10) is satisfied by the ideas list with filters — no separate history page needed.
 
 **Validation steps**
+
 - [x] Create idea with all fields → appears in list (web E2E + mobile smoke)
 - [x] Upload photo → renders; non-member cannot fetch the photo URL even if guessed (web E2E: loading signed image + 400 on direct/public object fetch)
 - [x] Filter by category → list updates (web E2E + mobile smoke)
 - [x] Filter by status → list updates (web E2E + mobile smoke)
-- [~] Non-proposer non-admin cannot edit title/description — *UI hides controls (E2E two-browser); RLS itself ALLOWS it per the Phase 1 model upheld in D52. Delete is RLS-blocked.*
+- [~] Non-proposer non-admin cannot edit title/description — _UI hides controls (E2E two-browser); RLS itself ALLOWS it per the Phase 1 model upheld in D52. Delete is RLS-blocked._
 - [x] Any member can mark on_radar → done (web E2E two-browser proves a non-proposer member can change status)
 - [x] Hard-delete chosen (D55); storage object cleaned up manually; Phase 7 FK-cascade flag recorded for `decisions.chosen_idea_id`
 
 **Tests that must pass before Phase 6**
+
 - [x] **Unit:** idea schema validations (13 new, total 77 validation)
 - [x] **Integration:** photo upload + signed URL retrieval, replace/rollback, guessed-URL rejection (11 new api-client tests, total 121; + web E2E storage check)
 - [x] **E2E (web):** create idea, upload photo, change status, filter, edit, delete, non-proposer gating (10 new tests, total 42)
@@ -548,12 +582,14 @@ project-root/
 **Status (closed 2026-06-14):** Shipped in sub-phases 6.1 (publication + framework-free helper + R-4 verification), 6.2 (web provider), 6.3 (mobile provider) on branch `phase-6-realtime` (PR #9). Full design + decision log D56–D59 in `docs/ARCHITECTURE_PHASE6_APPENDIX.md`.
 
 **What shipped vs. plan:**
+
 - 🔄 **No `useRealtimeChannel` hook in api-client.** The shared piece is framework-free `subscribeToGroup` / `subscribeToMyGroups` (returns an unsubscribe); the react bindings live in the platform providers, because web and mobile invalidate differently (D57).
 - 🔄 **Web does NOT invalidate a query cache** — it has none (RSC reads, D43). Events trigger a throttled `router.refresh()`. Only mobile invalidates TanStack Query.
 - ➕ R-4 verified with an asserting two-user integration test (member receives, non-member does not); plain Postgres Changes is safe (D56) — no private-channel broadcast needed.
 - ➕ Fixed the browser-env inlining bug (D59) surfaced by web's first client-side Supabase client.
 
 **Tasks**
+
 - [x] Enable Realtime publications for `groups`, `group_members`, `ideas`, `decisions` (migration 014, `REPLICA IDENTITY FULL`)
 - [x] ~~`useRealtimeChannel` hook~~ → framework-free `subscribeToGroup`/`subscribeToMyGroups` in `@huddle/api-client/realtime` (D57)
 - [x] Wire into caches: mobile invalidates TanStack Query; web runs throttled `router.refresh()` (RSC, no cache)
@@ -561,17 +597,20 @@ project-root/
 - [x] Reconnect-on-resume on mobile (`AppState` → reconnect + refetch)
 
 **Files affected**
+
 - `supabase/migrations/20260613120000_realtime_publication.sql`
 - `packages/api-client/src/realtime.ts` (+ `client.browser.ts` env override)
 - `apps/web/src/components/{RealtimeProvider,GroupRealtime,ConnectionDot}.tsx`, `apps/web/src/lib/supabase-browser.ts`
 - `apps/mobile/src/context/RealtimeContext.tsx`, `apps/mobile/src/components/ConnectionDot.tsx`, `apps/mobile/src/lib/realtime-invalidate.ts`
 
 **Validation steps**
+
 - [x] Two browsers, same group: A adds idea → B sees it within ~1s (web E2E)
 - [x] User B removed from group → B no longer receives events / loses access (web E2E: B's page goes 404 live; RLS integration test confirms non-member receives nothing)
-- [~] Mobile backgrounded then resumed → reconnects + refetches — *code path verified; a real background/resume cycle needs a native device/emulator (Phase 10). The live-update path itself is preview-verified.*
+- [~] Mobile backgrounded then resumed → reconnects + refetches — _code path verified; a real background/resume cycle needs a native device/emulator (Phase 10). The live-update path itself is preview-verified._
 
 **Tests that must pass before Phase 7**
+
 - [x] **Integration:** realtime subscription delivers events that match RLS scope (`realtime-rls.integration.mjs`, asserting)
 - [x] **E2E (web):** two-context Playwright test verifying live update (3 new, total 45)
 - [x] **Regression:** all prior tests green (45 Playwright, 144 pgTAP, 206 unit — 77 validation + 129 api-client incl. 8 realtime helper tests)
@@ -585,6 +624,7 @@ project-root/
 **Status (closed 2026-06-17):** Shipped in sub-phases 7.1 (FK migration + pure picker + `run_picker` Edge Function + decisions data layer), 7.2 (web picker UI + history), 7.3 (mobile picker UI + history) on branch `phase-7-picker`. Full design + decision log D60–D64 in `docs/ARCHITECTURE_PHASE7_APPENDIX.md`.
 
 **What shipped vs. plan:**
+
 - ➕ **First Edge Function** stood up: `run_picker` (Deno), with `[edge_runtime]` + `[functions.run_picker]` in `config.toml` and a `supabase/functions/_shared/` convention for shared code. Verified by a live integration probe (`run_picker.integration.mjs`, 9/9).
 - 🔄 **FK is `ON DELETE NO ACTION`, not `RESTRICT`** (D61). NO ACTION blocks a direct chosen-idea delete (→ "dismiss instead") while still letting a group-delete cascade — RESTRICT would have aborted the cascade.
 - 🔄 **Requires ≥2 candidates** (D63), diverging from the "1 candidate → that one is picked" validation step below — a one-option pick is meaningless. Returns `422 too_few_candidates`; clients disable the run button below the threshold.
@@ -593,6 +633,7 @@ project-root/
 - 🔄 Routes are `/groups/[id]/picker` + `/groups/[id]/history` (dedicated pages, mirrored on mobile), not a `/pick` modal.
 
 **Tasks**
+
 - [x] Edge Function: `run_picker(group_id, options)` — validates membership, queries candidates respecting filters, performs cryptographically random pick (`crypto.getRandomValues`), inserts `decisions` row, returns chosen idea
 - [x] Picker UI on web: options (category filter, optional "shortlist" toggle with idea multi-select), animated reveal
 - [x] Picker UI on mobile: equivalent with native feel
@@ -600,17 +641,20 @@ project-root/
 - [x] Empty-state copy for when there are too few on_radar ideas
 
 **Files likely affected**
+
 - `supabase/functions/run-picker/index.ts`
 - `packages/core/src/picker.ts` (pure shuffle logic, unit-testable)
 - `apps/web/app/(app)/groups/[id]/pick/**`
 - `apps/mobile/app/(app)/groups/[id]/pick.tsx`
 
 **Implementation notes**
+
 - The picker runs **server-side only** (Edge Function) so the result can't be re-rolled by a tampering client. The `decisions` table has RLS allowing INSERT only by `service_role`, enforced by the Edge Function using its secret key.
 - Pure shuffle/pick logic lives in `packages/core/src/picker.ts` so it can be unit-tested without infrastructure. The Edge Function uses a drift-guarded Deno mirror (it can't import the pnpm workspace pkg) (D62).
 - Animation: a ~1.4s JS-timer "spin" before reveal (no Reanimated dependency). Keep tasteful.
 
 **Validation steps**
+
 - [x] Picker with too few candidates → friendly empty state / disabled run, no decision recorded
 - [~] ~~Picker with 1 candidate → that one is picked~~ → **changed to require ≥2** (D63): 1 candidate returns `too_few_candidates`; a one-option pick is meaningless
 - [x] Picker pick is unbiased — `@huddle/core` uses rejection sampling; unit-tested (no modulo bias)
@@ -619,6 +663,7 @@ project-root/
 - [x] Non-member cannot invoke the Edge Function for that group (→ 403, live probe)
 
 **Tests that must pass before Phase 8**
+
 - [x] **Unit:** picker logic (unbiased index, edge cases: empty, single, permutation; + Deno-mirror drift guard) — 10 in `@huddle/core`
 - [x] **Integration:** live `run_picker` probe (`run_picker.integration.mjs`, 9/9) + api-client decisions unit tests (9)
 - [x] **E2E (web):** run picker, see history entry; sub-2 filter disables run; chosen idea refuses hard-delete — `picker.spec.ts` (3)
@@ -633,12 +678,14 @@ project-root/
 **Status (closed 2026-06-17):** Shipped in sub-phases 8.1 (notification_prefs + pure logic + send-push Edge Function + data layer), 8.2 (pg_net Database Webhook triggers), 8.3 (mobile registration + prefs screen + deep links) on branch `phase-8-push` (stacked on Phase 7's `phase-7-picker` for the Edge Function infra). Full design + decision log D65–D69 in `docs/ARCHITECTURE_PHASE8_APPENDIX.md`.
 
 **What shipped vs. plan:**
+
 - ➕ **send-push** is the second Edge Function (webhook-authed, `verify_jwt` off); fan-out is **pg_net Database Webhook triggers** on all three tables — one seam covering every write path, not per-call-site invocation (D65).
 - 🔄 **No 60s debounce/batching** — each INSERT fans out immediately. Acceptable for v1 volumes; revisit if noisy (appendix §4).
 - 🔄 **Token cleanup is reactive**, not a marked-inactive flag: tokens are hard-removed on sign-out and pruned when Expo reports `DeviceNotRegistered`.
 - ➕ A dry-run header makes send-push testable without hitting Expo (D67); pure selection logic + Deno mirror with a drift guard (D68).
 
 **Tasks**
+
 - [x] Request notification permissions on mobile (after sign-in, via NotificationsManager)
 - [x] Register Expo push token; store in `push_tokens` (web-guarded; no-op without an EAS projectId)
 - [x] Database triggers: on `ideas`/`decisions`/`group_invites` INSERT, fan out to send-push (excludes the actor)
@@ -647,18 +694,21 @@ project-root/
 - [x] Token cleanup: removed on sign-out; pruned on `DeviceNotRegistered`
 
 **Files likely affected**
+
 - `supabase/functions/send-push/index.ts`
 - `supabase/migrations/*notification_prefs*.sql`
 - `apps/mobile/lib/notifications.ts`
 - `apps/mobile/app/(app)/settings/notifications.tsx`
 
 **Implementation notes**
+
 - Use Expo Push API (`https://exp.host/--/api/v2/push/send`). It's free.
 - A queue/batch approach prevents spamming if many ideas are posted rapidly — debounce per group per user (e.g., 60s).
 - Respect user preferences before sending — check prefs row in the Edge Function.
 - Web does **not** get push notifications in v1 (deferred).
 
 **Validation steps**
+
 - [x] Selection: actor excluded; opted-out users excluded; all of a user's devices included (live dry-run probe + unit tests)
 - [x] B taps notification → opens the deep link (`data.path` routing wired)
 - [x] B disables "new idea" → selection excludes B for that event (prefs + send-push, probe-verified)
@@ -666,6 +716,7 @@ project-root/
 - [~] **Manual / real-device:** A posts → B receives push within ~5s — DEFERRED (needs a dev build with an EAS projectId; can't be automated)
 
 **Tests that must pass before Phase 9**
+
 - [x] **Unit:** notification preference filtering logic — `@huddle/core` (11, incl. drift guard) + api-client push (6)
 - [x] **Integration:** send-push dry-run probe (9/9, correct selection + payload shape) + live fan-out via `net._http_response`
 - [~] **Manual:** real-device push delivery test (cannot reliably automate) — DEFERRED
@@ -680,6 +731,7 @@ project-root/
 **Status (2026-06-17):** The **in-app** hardening is shipped on branch `phase-9-hardening` (9.1 headers/noindex/robots, 9.2 fail-closed prod assertions, 9.3 SECURITY.md + audit + self-test). The **perimeter** (Cloudflare, Sentry, prod secrets, ToS) is genuinely blocked on a domain (OQ-2) + the relevant accounts + a deployed environment, and is tracked as a live checklist in `docs/SECURITY.md`. The primary access guarantee — Postgres RLS — was re-verified (157 pgTAP assertions + live anon/no-key checks).
 
 **Tasks**
+
 - [ ] Move web DNS to Cloudflare; enable proxy, Bot Fight Mode, Security Level: Medium — **deferred (needs domain + account)**
 - [ ] Cloudflare WAF rules — **deferred**
 - [ ] Cloudflare Rate Limiting Rules — **deferred** (in-memory search limiter exists as defence-in-depth, D51)
@@ -695,17 +747,20 @@ project-root/
 - [x] Security headers (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy) + report-only CSP
 
 **Files likely affected**
+
 - `apps/web/middleware.ts` (security headers)
 - `apps/web/public/robots.txt`
 - Cloudflare dashboard config (document in `SECURITY.md`)
 - `docs/SECURITY.md`
 
 **Implementation notes**
+
 - CSP (Content-Security-Policy) header is a tarpit — start with `report-only`, observe for a week, then enforce.
 - HSTS, X-Frame-Options, Referrer-Policy: configure in `next.config.ts` headers.
 - Document every Cloudflare rule and its rationale; dashboard config is otherwise undiscoverable.
 
 **Validation steps**
+
 - [ ] Headless Chrome with default UA against `(app)/*` → blocked or Turnstile-challenged
 - [ ] Curl with no auth against any data endpoint → 401
 - [ ] Burst of 100 requests in 10s to `/api/profiles/search` → rate-limited
@@ -713,6 +768,7 @@ project-root/
 - [ ] CSP report-only logs reviewed; no false positives before enforcement
 
 **Tests that must pass before Phase 10**
+
 - [ ] **Unit/Integration:** unchanged from prior phases, must still pass
 - [ ] **Manual security test plan** (documented in `SECURITY.md`) executed end-to-end
 - [ ] **Regression:** prior phases green
@@ -724,6 +780,7 @@ project-root/
 **Objective:** Ship a beta. Address accessibility, performance, error states, and submit to app stores.
 
 **Tasks**
+
 - [ ] Accessibility audit on web: keyboard nav, focus rings, ARIA labels, axe-core sweep
 - [ ] Mobile: VoiceOver and TalkBack passes on critical flows
 - [~] Loading skeletons / error boundaries / offline messaging — **error boundary + 404 shipped** (`(app)/error.tsx`, `not-found.tsx`); web **loading skeletons DEFERRED** (Next 16 route `loading.tsx` + in-page `<Suspense>` both linger/duplicate the prior route's DOM with realtime `router.refresh()` — see lesson 21; mobile already has inline loaders)
@@ -738,15 +795,18 @@ project-root/
 - [ ] All docs in `docs/` finalized (see `DOCUMENTATION_PLAN.md`)
 
 **Files likely affected**
+
 - Across the board; primarily UI components and assets
 - `apps/mobile/assets/**`
 - `docs/**`
 
 **Implementation notes**
+
 - App Store review timelines: budget 1–2 weeks. Apple is stricter; expect a rejection round for things like privacy manifests and sign-in alternatives parity.
 - Privacy policy is required for both stores. Draft early.
 
 **Validation steps**
+
 - [ ] Lighthouse scores meet targets on `/groups` and `/groups/[id]`
 - [ ] axe-core: zero serious/critical violations
 - [ ] TestFlight build installs and runs on real iOS device
@@ -755,6 +815,7 @@ project-root/
 - [ ] Status page reports green
 
 **Tests that must pass before launch**
+
 - [ ] **Full regression:** every unit, integration, and E2E test from every prior phase passes in CI
 - [ ] **Smoke test on production:** sign up new user → create group → invite → second user joins → posts idea → picker runs → notification received
 
@@ -764,17 +825,17 @@ project-root/
 
 Every phase enforces these gates before progressing.
 
-| Gate | Tool | Scope |
-|---|---|---|
-| Type-check | `tsc --noEmit` | All packages/apps |
-| Lint | ESLint | All packages/apps |
-| Format | Prettier `--check` | All packages/apps |
-| Unit | Vitest | `packages/*`, `apps/web/lib`, `apps/mobile/lib` |
-| RLS contract | pgTAP (or SQL assertion script) | `supabase/tests/*.sql` |
-| Edge Functions | Vitest + mocked Supabase | `supabase/functions/*/test.ts` |
-| Web E2E | Playwright | `apps/web/tests/e2e/*` |
-| Mobile E2E | Maestro | `apps/mobile/tests/maestro/*` |
-| Regression | Re-run prior phases' tests in CI | All of the above |
+| Gate           | Tool                             | Scope                                           |
+| -------------- | -------------------------------- | ----------------------------------------------- |
+| Type-check     | `tsc --noEmit`                   | All packages/apps                               |
+| Lint           | ESLint                           | All packages/apps                               |
+| Format         | Prettier `--check`               | All packages/apps                               |
+| Unit           | Vitest                           | `packages/*`, `apps/web/lib`, `apps/mobile/lib` |
+| RLS contract   | pgTAP (or SQL assertion script)  | `supabase/tests/*.sql`                          |
+| Edge Functions | Vitest + mocked Supabase         | `supabase/functions/*/test.ts`                  |
+| Web E2E        | Playwright                       | `apps/web/tests/e2e/*`                          |
+| Mobile E2E     | Maestro                          | `apps/mobile/tests/maestro/*`                   |
+| Regression     | Re-run prior phases' tests in CI | All of the above                                |
 
 **Branching:** one feature branch per phase; merge to `main` only after that phase's full test suite is green in CI.
 
@@ -783,6 +844,7 @@ Every phase enforces these gates before progressing.
 ## 9. Risks & Open Questions
 
 **Risks (known unknowns)**
+
 - **R-1: Apple Developer review.** First-time review is unpredictable; Apple Sign-In parity is enforced. Mitigation: keep Apple in the auth stack from day one (Phase 2).
 - **R-2: Supabase free-tier auto-pause.** A free Supabase project pauses after 7 days of inactivity. Mitigation: monitor; upgrade to the $25/mo plan before public launch.
 - **R-3: RLS misconfiguration leaking data.** This is the single highest-impact risk. Mitigation: pgTAP coverage on every policy in Phase 1, plus a manual pen test in Phase 9.
@@ -792,6 +854,7 @@ Every phase enforces these gates before progressing.
 - **R-7: Image moderation.** Users can upload photos. We have no moderation. Mitigation: needs a decision before launch (see open questions).
 
 **Open questions (must be answered before they become blockers)**
+
 - [x] **OQ-1: Project name.** Resolved → **Huddle**.
 - [ ] **OQ-2: Domain name.** Needed by Phase 10 at the latest.
 - [x] **OQ-3: Bundle identifiers.** Resolved → **`com.huddleapp.huddle`** (iOS + Android), set in `apps/mobile/app.json`.

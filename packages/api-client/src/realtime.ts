@@ -34,11 +34,7 @@ export interface RealtimeChange {
  * Mirrors supabase-js's subscribe() statuses, narrowed to what the UI
  * cares about.
  */
-export type RealtimeStatus =
-  | 'SUBSCRIBED'
-  | 'CHANNEL_ERROR'
-  | 'TIMED_OUT'
-  | 'CLOSED';
+export type RealtimeStatus = 'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED';
 
 function resolveGroupId(table: RealtimeTable, row: Record<string, unknown> | null): string | null {
   if (!row) return null;

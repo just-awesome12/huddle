@@ -8,9 +8,7 @@ export default async function SignInPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  const signUpHref = next
-    ? `/sign-up?next=${encodeURIComponent(next)}`
-    : '/sign-up';
+  const signUpHref = next ? `/sign-up?next=${encodeURIComponent(next)}` : '/sign-up';
 
   return (
     <div className="flex flex-col gap-4">

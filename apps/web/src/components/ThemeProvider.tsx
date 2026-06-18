@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 
 /**
  * Theme: light / dark / system, persisted in localStorage. The no-flash
@@ -28,10 +21,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function systemPrefersDark(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
 function applyClass(pref: ThemePref) {
@@ -66,9 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyClass(p);
   }, []);
 
-  return (
-    <ThemeContext.Provider value={{ pref, setPref }}>{children}</ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ pref, setPref }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): ThemeContextValue {

@@ -1,20 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
 import { useGroupIdeas } from '@huddle/api-client/ideas-hooks';
-import {
-  useRunPicker,
-  PickerError,
-} from '@huddle/api-client/decisions-hooks';
+import { useRunPicker, PickerError } from '@huddle/api-client/decisions-hooks';
 import type { IdeaCategory } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useGroupRealtime } from '@/context/RealtimeContext';
@@ -98,7 +88,7 @@ export default function PickerScreen() {
   }, [displayed, useShortlist, selected]);
 
   const canPick = candidates.length >= 2 && phase !== 'rolling';
-  const chosen = chosenId ? ideas.find((i) => i.id === chosenId) ?? null : null;
+  const chosen = chosenId ? (ideas.find((i) => i.id === chosenId) ?? null) : null;
 
   const toggleSelected = (ideaId: string) => {
     setSelected((prev) => {
@@ -168,7 +158,11 @@ export default function PickerScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.heading}>Group not found</Text>
-        <Button label="Back to groups" variant="secondary" onPress={() => router.replace('/groups')} />
+        <Button
+          label="Back to groups"
+          variant="secondary"
+          onPress={() => router.replace('/groups')}
+        />
       </View>
     );
   }
@@ -177,7 +171,11 @@ export default function PickerScreen() {
     <View style={styles.container}>
       <View style={styles.headerBar}>
         <Button label="← Back" variant="ghost" onPress={() => router.replace(`/groups/${id}`)} />
-        <Button label="History" variant="ghost" onPress={() => router.push(`/groups/${id}/history`)} />
+        <Button
+          label="History"
+          variant="ghost"
+          onPress={() => router.push(`/groups/${id}/history`)}
+        />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>

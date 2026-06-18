@@ -13,9 +13,8 @@ export default async function SignUpPage({
   if (!siteKey) {
     return (
       <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-900">
-        Sign-up is misconfigured: <code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code>{' '}
-        is not set in <code>apps/web/.env.local</code>. See the Phase 2.5
-        setup instructions.
+        Sign-up is misconfigured: <code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code> is not set in{' '}
+        <code>apps/web/.env.local</code>. See the Phase 2.5 setup instructions.
       </div>
     );
   }

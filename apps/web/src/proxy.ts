@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import {
-  createServerSupabaseClient,
-  type CookieOptions,
-} from '@huddle/api-client/server';
+import { createServerSupabaseClient, type CookieOptions } from '@huddle/api-client/server';
 
 /**
  * Auth proxy (formerly "middleware" — renamed in Next.js 16).
@@ -38,9 +35,7 @@ export async function proxy(request: NextRequest) {
 
   const supabase = createServerSupabaseClient({
     getAll: () => request.cookies.getAll(),
-    setAll: (
-      cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
-    ) => {
+    setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
       cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
       response = NextResponse.next({ request });
       cookiesToSet.forEach(({ name, value, options }) =>
@@ -76,11 +71,7 @@ export async function proxy(request: NextRequest) {
   // We only check this if the user is signed in AND not already on
   // onboarding (to avoid an infinite loop) AND not on /auth/* (the
   // OAuth callback needs to complete before we can do this check).
-  if (
-    user &&
-    pathname !== ONBOARDING_PATH &&
-    !pathname.startsWith('/auth/')
-  ) {
+  if (user && pathname !== ONBOARDING_PATH && !pathname.startsWith('/auth/')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('username')

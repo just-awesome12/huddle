@@ -32,10 +32,7 @@ const statusStyles: Record<IdeaStatus, { bg: string; fg: string }> = {
 export function StatusBadge({ status }: { status: IdeaStatus }) {
   const palette = statusStyles[status];
   return (
-    <View
-      style={[styles.badge, { backgroundColor: palette.bg }]}
-      testID={`status-badge-${status}`}
-    >
+    <View style={[styles.badge, { backgroundColor: palette.bg }]} testID={`status-badge-${status}`}>
       <Text style={[styles.label, { color: palette.fg }]}>{STATUS_LABELS[status]}</Text>
     </View>
   );

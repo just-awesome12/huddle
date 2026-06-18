@@ -38,9 +38,7 @@ function PendingInviteCard({ invite }: { invite: PendingInvite }) {
       onPress={() => router.push(`/invites/${invite.token}`)}
     >
       <View>
-        <Text style={styles.rowName}>
-          {peek.isSuccess ? peek.data.group_name : 'Group invite'}
-        </Text>
+        <Text style={styles.rowName}>{peek.isSuccess ? peek.data.group_name : 'Group invite'}</Text>
         <Text style={styles.inviteFrom}>
           Invited by {invite.inviter?.display_name ?? 'someone'}
         </Text>
@@ -54,8 +52,7 @@ export default function GroupListScreen() {
   const router = useRouter();
   const c = useColors();
   const styles = makeStyles(c);
-  const { data: groups, isPending, isError, refetch, isRefetching } =
-    useMyGroups(supabase);
+  const { data: groups, isPending, isError, refetch, isRefetching } = useMyGroups(supabase);
   const pendingInvites = useMyPendingInvites(supabase);
 
   return (
@@ -87,9 +84,7 @@ export default function GroupListScreen() {
 
       {pendingInvites.isSuccess && pendingInvites.data.length > 0 ? (
         <View style={styles.invitesBlock}>
-          <Text style={styles.invitesTitle}>
-            Invites for you ({pendingInvites.data.length})
-          </Text>
+          <Text style={styles.invitesTitle}>Invites for you ({pendingInvites.data.length})</Text>
           {pendingInvites.data.map((invite) => (
             <PendingInviteCard key={invite.id} invite={invite} />
           ))}
@@ -122,9 +117,7 @@ export default function GroupListScreen() {
           data={groups}
           keyExtractor={(g) => g.id}
           contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />
-          }
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
           renderItem={({ item }) => (
             <Pressable
               accessibilityRole="button"
@@ -141,76 +134,77 @@ export default function GroupListScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.canvas },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    backgroundColor: c.surface,
-  },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontSize: 20, fontWeight: '700', color: c.text },
-  toolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  errorText: { fontSize: 14, color: c.dangerText },
-  empty: {
-    margin: 16,
-    padding: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: c.border,
-    alignItems: 'center',
-    gap: 4,
-  },
-  emptyTitle: { fontSize: 14, fontWeight: '600', color: c.text },
-  emptyText: { fontSize: 13, color: c.muted, textAlign: 'center' },
-  list: { padding: 16, gap: 8 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  rowPressed: { backgroundColor: c.surface2 },
-  rowName: { fontSize: 14, fontWeight: '600', color: c.text },
-  invitesBlock: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
-  invitesTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: c.muted,
-  },
-  inviteCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: c.canvas,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  inviteFrom: { fontSize: 12, color: c.muted },
-  viewInvite: { fontSize: 13, fontWeight: '600', color: c.text },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.canvas },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      backgroundColor: c.surface,
+    },
+    titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    title: { fontSize: 20, fontWeight: '700', color: c.text },
+    toolbar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+    errorText: { fontSize: 14, color: c.dangerText },
+    empty: {
+      margin: 16,
+      padding: 24,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: c.border,
+      alignItems: 'center',
+      gap: 4,
+    },
+    emptyTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+    emptyText: { fontSize: 13, color: c.muted, textAlign: 'center' },
+    list: { padding: 16, gap: 8 },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    rowPressed: { backgroundColor: c.surface2 },
+    rowName: { fontSize: 14, fontWeight: '600', color: c.text },
+    invitesBlock: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
+    invitesTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    inviteCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: c.canvas,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    inviteFrom: { fontSize: 12, color: c.muted },
+    viewInvite: { fontSize: 13, fontWeight: '600', color: c.text },
+  });

@@ -142,7 +142,7 @@ export function IdeaForm({
     );
   };
 
-  const previewUri = photo?.uri ?? (removePhoto ? null : currentPhotoUrl ?? null);
+  const previewUri = photo?.uri ?? (removePhoto ? null : (currentPhotoUrl ?? null));
 
   return (
     <KeyboardAvoidingView
@@ -170,9 +170,7 @@ export function IdeaForm({
                   onPress={() => setCategory(value)}
                   style={[styles.chip, category === value && styles.chipActive]}
                 >
-                  <Text
-                    style={[styles.chipLabel, category === value && styles.chipLabelActive]}
-                  >
+                  <Text style={[styles.chipLabel, category === value && styles.chipLabelActive]}>
                     {CATEGORY_LABELS[value]}
                   </Text>
                 </Pressable>
@@ -209,9 +207,7 @@ export function IdeaForm({
 
           <View style={styles.fieldBlock}>
             <Text style={styles.label}>Photo (optional)</Text>
-            {previewUri ? (
-              <Image source={{ uri: previewUri }} style={styles.preview} />
-            ) : null}
+            {previewUri ? <Image source={{ uri: previewUri }} style={styles.preview} /> : null}
             <View style={styles.row}>
               <Button
                 label={previewUri ? 'Change photo' : 'Pick a photo'}
@@ -219,7 +215,7 @@ export function IdeaForm({
                 loading={photoBusy}
                 onPress={pickPhoto}
               />
-              {(photo || (currentPhotoUrl && !removePhoto)) ? (
+              {photo || (currentPhotoUrl && !removePhoto) ? (
                 <Button
                   label="Remove photo"
                   variant="ghost"
@@ -248,48 +244,49 @@ export function IdeaForm({
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  flex: { flex: 1, backgroundColor: c.canvas },
-  scroll: { padding: 16 },
-  card: {
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 16,
-  },
-  fieldBlock: { gap: 4 },
-  label: { fontSize: 13, fontWeight: '600', color: c.text },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: c.surface2,
-  },
-  chipActive: { backgroundColor: c.text },
-  chipLabel: { fontSize: 13, fontWeight: '600', color: c.muted },
-  chipLabelActive: { color: c.surface },
-  textarea: {
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: c.surface,
-    minHeight: 88,
-    textAlignVertical: 'top',
-  },
-  preview: {
-    width: '100%',
-    height: 160,
-    borderRadius: 8,
-    backgroundColor: c.surface2,
-  },
-  row: { flexDirection: 'row', gap: 8 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-  error: { fontSize: 12, color: c.danger },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: c.canvas },
+    scroll: { padding: 16 },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 16,
+    },
+    fieldBlock: { gap: 4 },
+    label: { fontSize: 13, fontWeight: '600', color: c.text },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chip: {
+      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.surface2,
+    },
+    chipActive: { backgroundColor: c.text },
+    chipLabel: { fontSize: 13, fontWeight: '600', color: c.muted },
+    chipLabelActive: { color: c.surface },
+    textarea: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      backgroundColor: c.surface,
+      minHeight: 88,
+      textAlignVertical: 'top',
+    },
+    preview: {
+      width: '100%',
+      height: 160,
+      borderRadius: 8,
+      backgroundColor: c.surface2,
+    },
+    row: { flexDirection: 'row', gap: 8 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+    error: { fontSize: 12, color: c.danger },
+  });

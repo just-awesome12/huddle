@@ -59,10 +59,7 @@ export interface NotificationContent {
   data?: Record<string, unknown>;
 }
 
-export function buildExpoMessages(
-  tokens: string[],
-  content: NotificationContent,
-): ExpoMessage[] {
+export function buildExpoMessages(tokens: string[], content: NotificationContent): ExpoMessage[] {
   return tokens.map((to) => ({
     to,
     title: content.title,

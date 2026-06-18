@@ -17,16 +17,12 @@ import { test, expect } from '@playwright/test';
 test.describe('Phase 2.4 — OAuth UI', () => {
   test('Google button is visible on sign-in', async ({ page }) => {
     await page.goto('/sign-in');
-    await expect(
-      page.getByRole('button', { name: /Continue with Google/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /Continue with Google/i })).toBeVisible();
   });
 
   test('Google button is visible on sign-up', async ({ page }) => {
     await page.goto('/sign-up');
-    await expect(
-      page.getByRole('button', { name: /Continue with Google/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /Continue with Google/i })).toBeVisible();
   });
 
   test('Apple button is visible but disabled', async ({ page }) => {
@@ -42,13 +38,13 @@ test.describe('Phase 2.4 — OAuth UI', () => {
     // Don't actually follow Google's full flow — just verify that the
     // browser navigates away from /sign-in toward a Supabase or Google
     // OAuth URL when the button is clicked.
-    const navigationPromise = page.waitForRequest((req) => {
-      const url = req.url();
-      return (
-        url.includes('/auth/v1/authorize') ||
-        url.includes('accounts.google.com')
-      );
-    }, { timeout: 5000 });
+    const navigationPromise = page.waitForRequest(
+      (req) => {
+        const url = req.url();
+        return url.includes('/auth/v1/authorize') || url.includes('accounts.google.com');
+      },
+      { timeout: 5000 },
+    );
 
     await page.getByRole('button', { name: /Continue with Google/i }).click();
 
@@ -59,9 +55,7 @@ test.describe('Phase 2.4 — OAuth UI', () => {
     await page.goto('/auth/error?reason=access_denied');
     await expect(page.getByRole('heading', { name: 'Sign-in failed' })).toBeVisible();
     await expect(page.getByText(/cancelled/i)).toBeVisible();
-    await expect(
-      page.getByRole('link', { name: /Back to sign in/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('link', { name: /Back to sign in/i })).toBeVisible();
   });
 
   test('error page falls back to raw reason for unknown errors', async ({ page }) => {

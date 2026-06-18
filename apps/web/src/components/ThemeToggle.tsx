@@ -32,9 +32,7 @@ export function ThemeToggle() {
             aria-pressed={active}
             title={opt.label}
             className={`flex h-6 w-6 items-center justify-center rounded-full text-xs transition-colors ${
-              active
-                ? 'bg-brand-600 text-white'
-                : 'text-muted hover:text-content'
+              active ? 'bg-brand-600 text-white' : 'text-muted hover:text-content'
             }`}
           >
             <span aria-hidden>{opt.glyph}</span>

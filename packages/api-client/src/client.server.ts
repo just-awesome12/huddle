@@ -25,9 +25,7 @@ import { resolvePublicEnv } from './env';
  */
 export interface CookieAdapter {
   getAll(): { name: string; value: string }[];
-  setAll(
-    cookies: { name: string; value: string; options?: CookieOptions }[],
-  ): void;
+  setAll(cookies: { name: string; value: string; options?: CookieOptions }[]): void;
 }
 
 export interface CookieOptions {
@@ -54,9 +52,7 @@ export interface CookieOptions {
  *     },
  *   });
  */
-export function createServerSupabaseClient(
-  cookieAdapter: CookieAdapter,
-): SupabaseClient<Database> {
+export function createServerSupabaseClient(cookieAdapter: CookieAdapter): SupabaseClient<Database> {
   const { url, publishableKey } = resolvePublicEnv();
   return createServerClient<Database>(url, publishableKey, {
     cookies: {

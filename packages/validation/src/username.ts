@@ -16,9 +16,6 @@ export const usernameSchema = z
   .toLowerCase()
   .min(3, 'Username must be at least 3 characters')
   .max(30, 'Username must be at most 30 characters')
-  .regex(
-    /^[a-z0-9_]+$/,
-    'Username can only contain lowercase letters, digits, and underscores',
-  );
+  .regex(/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, digits, and underscores');
 
 export type Username = z.infer<typeof usernameSchema>;

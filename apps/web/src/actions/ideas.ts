@@ -2,11 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import {
-  createIdeaSchema,
-  updateIdeaSchema,
-  updateIdeaStatusSchema,
-} from '@huddle/validation';
+import { createIdeaSchema, updateIdeaSchema, updateIdeaStatusSchema } from '@huddle/validation';
 import { isHuddleError } from '@huddle/api-client/errors';
 import {
   createIdea,
@@ -107,12 +103,7 @@ export async function createIdeaAction(
   }
 
   if (photo) {
-    const photoError = await handlePhotoUpload(
-      supabase,
-      parsed.data.groupId,
-      ideaId,
-      photo,
-    );
+    const photoError = await handlePhotoUpload(supabase, parsed.data.groupId, ideaId, photo);
     if (photoError) {
       // The idea exists; surface the photo problem instead of redirecting.
       revalidatePath(`/groups/${parsed.data.groupId}`);
@@ -168,13 +159,7 @@ export async function updateIdeaAction(
     }
 
     if (photo) {
-      const photoError = await handlePhotoUpload(
-        supabase,
-        groupId,
-        ideaId,
-        photo,
-        currentPath,
-      );
+      const photoError = await handlePhotoUpload(supabase, groupId, ideaId, photo, currentPath);
       if (photoError) return { formError: photoError };
     } else if (removeRequested && currentPath) {
       try {

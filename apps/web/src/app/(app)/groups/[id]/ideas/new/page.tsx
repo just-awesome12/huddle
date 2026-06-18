@@ -4,11 +4,7 @@ import { fetchGroup } from '@huddle/api-client/groups';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { IdeaForm } from '@/components/IdeaForm';
 
-export default async function NewIdeaPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function NewIdeaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await getSupabaseServerClient();
@@ -27,10 +23,7 @@ export default async function NewIdeaPage({
 
   return (
     <div className="mx-auto max-w-md">
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to {groupName}
       </Link>
       <h2 className="mt-4 text-xl font-medium">Add an idea</h2>

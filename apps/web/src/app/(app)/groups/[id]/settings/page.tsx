@@ -10,11 +10,7 @@ import { deleteGroupAction } from '@/actions/groups';
 import { RenameGroupForm } from '@/components/RenameGroupForm';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 
-export default async function GroupSettingsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function GroupSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await getSupabaseServerClient();
@@ -41,30 +37,22 @@ export default async function GroupSettingsPage({
 
   return (
     <div className="mx-auto max-w-md">
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to {group.name}
       </Link>
       <h2 className="mt-4 text-xl font-medium">Group settings</h2>
 
       <section className="mt-6">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
-          Rename
-        </h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Rename</h3>
         <div className="mt-3">
           <RenameGroupForm groupId={id} currentName={group.name} />
         </div>
       </section>
 
       <section className="mt-10 rounded-lg border border-red-200 bg-red-50/50 p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-red-700">
-          Danger zone
-        </h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-red-700">Danger zone</h3>
         <p className="mt-2 text-sm text-muted">
-          Deleting a group permanently removes its members, ideas, and
-          decision history.
+          Deleting a group permanently removes its members, ideas, and decision history.
         </p>
         <div className="mt-4">
           <ConfirmActionForm

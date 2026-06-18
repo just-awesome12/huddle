@@ -11,11 +11,11 @@
 
 Phase 4 delivers all three join paths from FR-4 on web and mobile:
 
-| Path | Created by | Accepted by |
-|---|---|---|
-| Open link | admin (plain INSERT, token from column default) | any authenticated holder of the token |
-| Email invite | admin (same, with `invited_email`) | only an account whose `auth.email()` matches (HD003 otherwise) |
-| By username | admin via search (same, with `invited_user_id`) | only that user id (HD003 otherwise); surfaced in their "Invites for you" list |
+| Path         | Created by                                      | Accepted by                                                                   |
+| ------------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| Open link    | admin (plain INSERT, token from column default) | any authenticated holder of the token                                         |
+| Email invite | admin (same, with `invited_email`)              | only an account whose `auth.email()` matches (HD003 otherwise)                |
+| By username  | admin via search (same, with `invited_user_id`) | only that user id (HD003 otherwise); surfaced in their "Invites for you" list |
 
 Tokens are 256-bit base64url strings generated **in Postgres**
 (`generate_invite_token()`, Phase 1). The planned
@@ -48,13 +48,13 @@ token — the create_group problem (D45) does not recur here.
 Invite-flow failures raise custom SQLSTATEs so clients map by code,
 never by message text:
 
-| Code | Meaning | UI copy theme |
-|---|---|---|
+| Code  | Meaning                                                        | UI copy theme                    |
+| ----- | -------------------------------------------------------------- | -------------------------------- |
 | HD000 | token not found (incl. revoked — indistinguishable on purpose) | "not valid / ask for a new link" |
-| HD001 | expired | "expired" |
-| HD002 | already used (single-use) | "already used" |
-| HD003 | addressed to a different user/email | "wrong account" |
-| HD004 | caller already a member | "you're already in" |
+| HD001 | expired                                                        | "expired"                        |
+| HD002 | already used (single-use)                                      | "already used"                   |
+| HD003 | addressed to a different user/email                            | "wrong account"                  |
+| HD004 | caller already a member                                        | "you're already in"              |
 
 `inviteErrorKind()` in `@huddle/api-client/invites` is the single
 client-side mapper. Revocation is DELETE (Phase 1 RLS design); a
@@ -100,12 +100,12 @@ when installed) are a Phase 10 item.
 
 ## 6. Decision log D48–D51
 
-| # | Decision | Rationale |
-|---|---|---|
-| D48 | Invite acceptance via `peek_invite` / `accept_invite` SECURITY DEFINER RPCs, not Edge Functions; custom HD### SQLSTATEs as the client error contract. | Atomic, pgTAP-tested, no new infra; clients map errors by code. Edge Functions start in Phase 7 where they're unavoidable. |
-| D49 | Mobile resumes deep links after auth via a module-scope pending-path stash in GatedStack. | Equivalent guarantee to the web `?next=` round-trip without inventing query-param plumbing in Expo Router. |
-| D50 | Invites are shared as web URLs built from `EXPO_PUBLIC_WEB_URL`. | Works for recipients without the app; `huddle://` covers in-app routing; universal links in Phase 10. |
-| D51 | v1 search rate limiting is an in-memory per-user sliding window in the Next route handler. | Honest stopgap: per-process, so effective limit scales with instances. The perimeter limit is Phase 9 (Cloudflare on /api/*). Never treat it as the security boundary. |
+| #   | Decision                                                                                                                                              | Rationale                                                                                                                                                               |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D48 | Invite acceptance via `peek_invite` / `accept_invite` SECURITY DEFINER RPCs, not Edge Functions; custom HD### SQLSTATEs as the client error contract. | Atomic, pgTAP-tested, no new infra; clients map errors by code. Edge Functions start in Phase 7 where they're unavoidable.                                              |
+| D49 | Mobile resumes deep links after auth via a module-scope pending-path stash in GatedStack.                                                             | Equivalent guarantee to the web `?next=` round-trip without inventing query-param plumbing in Expo Router.                                                              |
+| D50 | Invites are shared as web URLs built from `EXPO_PUBLIC_WEB_URL`.                                                                                      | Works for recipients without the app; `huddle://` covers in-app routing; universal links in Phase 10.                                                                   |
+| D51 | v1 search rate limiting is an in-memory per-user sliding window in the Next route handler.                                                            | Honest stopgap: per-process, so effective limit scales with instances. The perimeter limit is Phase 9 (Cloudflare on /api/\*). Never treat it as the security boundary. |
 
 ## 7. Phase 4 gotchas
 
