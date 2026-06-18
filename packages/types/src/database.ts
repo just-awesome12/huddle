@@ -255,6 +255,55 @@ export type Database = {
           },
         ]
       }
+      idea_comments: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          group_id: string
+          id: string
+          idea_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          group_id: string
+          id?: string
+          idea_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          idea_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_comments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_comments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_votes: {
         Row: {
           created_at: string

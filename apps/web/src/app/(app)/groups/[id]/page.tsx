@@ -7,6 +7,7 @@ import {
 } from '@huddle/api-client/groups';
 import { fetchGroupIdeas, type IdeaFilters, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
+import { fetchGroupCommentCounts } from '@huddle/api-client/comments';
 import { ideaFiltersSchema } from '@huddle/validation';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { leaveGroupAction, removeMemberAction } from '@/actions/groups';
@@ -81,10 +82,12 @@ export default async function GroupDetailPage({
   const isAdmin = myMembership?.role === 'admin';
   const hasFilters = !!(filters.status || filters.category);
 
-  // Vote counts for the list (Phase 11) — best-effort, one query.
+  // Vote + comment counts for the list (Phase 11) — best-effort.
   let voteCounts: Record<string, number> = {};
+  let commentCounts: Record<string, number> = {};
   try {
     voteCounts = (await fetchGroupVoteState(supabase, id, user.id)).countByIdea;
+    commentCounts = await fetchGroupCommentCounts(supabase, id);
   } catch {
     // leave empty
   }
@@ -213,6 +216,16 @@ export default async function GroupDetailPage({
                       >
                         <span aria-hidden>❤</span>
                         {voteCounts[idea.id]}
+                      </span>
+                    )}
+                    {(commentCounts[idea.id] ?? 0) > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted"
+                        data-testid="idea-comment-count"
+                        title={`${commentCounts[idea.id]} comment(s)`}
+                      >
+                        <span aria-hidden>💬</span>
+                        {commentCounts[idea.id]}
                       </span>
                     )}
                     <CategoryBadge category={idea.category} />

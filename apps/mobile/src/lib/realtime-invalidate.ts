@@ -50,5 +50,14 @@ export function invalidateForChange(queryClient: QueryClient, change: RealtimeCh
     case 'decisions':
       // Phase 7. No decision queries exist yet.
       break;
+
+    case 'idea_comments':
+      // Phase 11. Refresh the group's comment threads + counts.
+      if (groupId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['groups', groupId, 'comments'],
+        });
+      }
+      break;
   }
 }

@@ -65,6 +65,7 @@ describe('subscribeToGroup', () => {
       group_members: 'group_id=eq.g1',
       groups: 'id=eq.g1',
       decisions: 'group_id=eq.g1',
+      idea_comments: 'group_id=eq.g1',
     });
   });
 

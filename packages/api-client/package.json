@@ -31,6 +31,8 @@
     "./moderation-hooks": "./src/moderation-hooks.ts",
     "./votes": "./src/votes.ts",
     "./votes-hooks": "./src/votes-hooks.ts",
+    "./comments": "./src/comments.ts",
+    "./comments-hooks": "./src/comments-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

@@ -18,7 +18,7 @@ import type { HuddleClient } from './internal';
  */
 
 /** The tables whose changes a group's members care about, live. */
-export type RealtimeTable = 'ideas' | 'group_members' | 'groups' | 'decisions';
+export type RealtimeTable = 'ideas' | 'group_members' | 'groups' | 'decisions' | 'idea_comments';
 
 export interface RealtimeChange {
   table: RealtimeTable;
@@ -89,6 +89,7 @@ export function subscribeToGroup(
   bind('group_members', `group_id=eq.${groupId}`);
   bind('groups', `id=eq.${groupId}`);
   bind('decisions', `group_id=eq.${groupId}`);
+  bind('idea_comments', `group_id=eq.${groupId}`);
 
   channel.subscribe((status) => onStatus?.(status as RealtimeStatus));
 

@@ -10,6 +10,7 @@ import {
 } from '@huddle/api-client/groups-hooks';
 import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
 import { useGroupVoteState } from '@huddle/api-client/votes-hooks';
+import { useGroupCommentCounts } from '@huddle/api-client/comments-hooks';
 import type { IdeaCategory, IdeaStatus } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -76,6 +77,7 @@ export default function GroupDetailScreen() {
   const members = useGroupMembers(supabase, id);
   const ideas = useGroupIdeas(supabase, id, filters);
   const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
+  const commentCounts = useGroupCommentCounts(supabase, id);
   const leaveGroup = useLeaveGroup(supabase);
   const removeMember = useRemoveMember(supabase);
 
@@ -215,6 +217,9 @@ export default function GroupDetailScreen() {
                         <Text style={styles.voteCount}>
                           ❤ {voteState.data?.countByIdea[idea.id]}
                         </Text>
+                      ) : null}
+                      {(commentCounts.data?.[idea.id] ?? 0) > 0 ? (
+                        <Text style={styles.voteCount}>💬 {commentCounts.data?.[idea.id]}</Text>
                       ) : null}
                       <CategoryBadge category={idea.category} />
                       <StatusBadge status={idea.status} />

@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
@@ -22,6 +23,11 @@ import {
 import { isHuddleError } from '@huddle/api-client/errors';
 import { useReportIdea, useBlockUser } from '@huddle/api-client/moderation-hooks';
 import { useGroupVoteState, useVoteIdea } from '@huddle/api-client/votes-hooks';
+import {
+  useIdeaComments,
+  useAddComment,
+  useDeleteComment,
+} from '@huddle/api-client/comments-hooks';
 import type { ReportReason } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -56,9 +62,13 @@ export default function IdeaDetailScreen() {
   const blockUser = useBlockUser(supabase, myUserId ?? '');
   const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
   const vote = useVoteIdea(supabase, id);
+  const comments = useIdeaComments(supabase, id, ideaId);
+  const addComment = useAddComment(supabase, id, ideaId);
+  const deleteComment = useDeleteComment(supabase, id, ideaId);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reported, setReported] = useState(false);
+  const [commentText, setCommentText] = useState('');
 
   // Map a delete failure to friendly copy. The NO ACTION FK (migration
   // 015) rejects deleting an idea chosen in a past pick (Postgres 23503).
@@ -219,6 +229,63 @@ export default function IdeaDetailScreen() {
           </View>
         ) : null}
 
+        <View style={styles.commentsBlock}>
+          <Text style={styles.sectionLabel}>
+            Discussion{comments.isSuccess ? ` (${comments.data.length})` : ''}
+          </Text>
+          {comments.isPending ? (
+            <ActivityIndicator color={c.brand[600]} />
+          ) : comments.isError ? (
+            <Text style={styles.mutedText}>Couldn&apos;t load the discussion.</Text>
+          ) : comments.data.length === 0 ? (
+            <Text style={styles.mutedText}>No comments yet. Start the discussion.</Text>
+          ) : (
+            comments.data.map((cm) => {
+              const canDelete = cm.author?.id === myUserId || isAdmin;
+              return (
+                <View key={cm.id} style={styles.comment}>
+                  <View style={styles.commentHead}>
+                    <Text style={styles.commentAuthor}>
+                      {cm.author?.display_name ?? 'A former member'}
+                    </Text>
+                    {canDelete ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Delete comment"
+                        onPress={() => deleteComment.mutate(cm.id)}
+                      >
+                        <Text style={styles.commentDelete}>Delete</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <Text style={styles.commentBody}>{cm.body}</Text>
+                </View>
+              );
+            })
+          )}
+
+          <TextInput
+            style={styles.commentInput}
+            placeholder="Add a comment…"
+            placeholderTextColor={c.faint}
+            value={commentText}
+            onChangeText={setCommentText}
+            multiline
+            maxLength={2000}
+          />
+          <Button
+            label="Comment"
+            variant="secondary"
+            loading={addComment.isPending}
+            disabled={commentText.trim().length === 0}
+            onPress={() =>
+              addComment.mutate(commentText.trim(), {
+                onSuccess: () => setCommentText(''),
+              })
+            }
+          />
+        </View>
+
         {idea.data.proposed_by && idea.data.proposed_by !== myUserId ? (
           <View style={styles.moderation}>
             {reported ? (
@@ -346,6 +413,47 @@ const makeStyles = (c: ThemeColors) =>
       paddingTop: 12,
     },
     manageRow: { flexDirection: 'row', gap: 8 },
+    commentsBlock: {
+      marginTop: 8,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      gap: 8,
+    },
+    sectionLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    comment: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      padding: 12,
+      gap: 4,
+    },
+    commentHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    commentAuthor: { fontSize: 13, fontWeight: '600', color: c.text },
+    commentDelete: { fontSize: 12, color: c.muted },
+    commentBody: { fontSize: 14, color: c.text, lineHeight: 19 },
+    commentInput: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      backgroundColor: c.surface,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      fontSize: 14,
+      color: c.text,
+      minHeight: 44,
+    },
     moderation: {
       marginTop: 8,
       paddingTop: 16,

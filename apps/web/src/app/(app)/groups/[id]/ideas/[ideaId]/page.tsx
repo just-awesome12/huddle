@@ -3,13 +3,16 @@ import { notFound, redirect } from 'next/navigation';
 import { fetchGroupMembers } from '@huddle/api-client/groups';
 import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
+import { fetchIdeaComments, type CommentWithAuthor } from '@huddle/api-client/comments';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
 import { blockUserAction } from '@/actions/moderation';
 import { toggleVoteAction } from '@/actions/votes';
+import { deleteCommentAction } from '@/actions/comments';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { ReportIdeaForm } from '@/components/ReportIdeaForm';
+import { AddCommentForm } from '@/components/AddCommentForm';
 import { VoteButton } from '@/components/VoteButton';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
@@ -55,6 +58,14 @@ export default async function IdeaDetailPage({
     // leave defaults
   }
   const voteAction = toggleVoteAction.bind(null, id, ideaId, voted);
+
+  // Comments (Phase 11). Best-effort — empty thread if it fails.
+  let comments: CommentWithAuthor[] = [];
+  try {
+    comments = await fetchIdeaComments(supabase, ideaId);
+  } catch {
+    // leave empty
+  }
 
   // Private bucket → short-lived signed URL, minted per render.
   let photoUrl: string | null = null;
@@ -163,6 +174,51 @@ export default async function IdeaDetailPage({
           />
         </div>
       )}
+
+      <section className="mt-8" data-testid="comments">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          Discussion ({comments.length})
+        </h3>
+
+        {comments.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">No comments yet. Start the discussion.</p>
+        ) : (
+          <ul className="mt-3 flex flex-col gap-3" data-testid="comment-list">
+            {comments.map((comment) => {
+              const canDelete = comment.author?.id === user.id || isAdmin;
+              return (
+                <li key={comment.id} className="rounded-lg border border-line bg-surface px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-content">
+                      {comment.author?.display_name ?? 'A former member'}
+                    </span>
+                    <span className="text-xs text-faint">
+                      {new Date(comment.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-content">{comment.body}</p>
+                  {canDelete && (
+                    <form
+                      action={deleteCommentAction.bind(null, id, ideaId, comment.id)}
+                      className="mt-2"
+                    >
+                      <button
+                        type="submit"
+                        aria-label="Delete comment"
+                        className="text-xs font-medium text-muted hover:text-red-700"
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <AddCommentForm ideaId={ideaId} groupId={id} />
+      </section>
 
       {/* Moderation (OQ-5): report the content, or block its author.
           Only for other people's ideas. */}
