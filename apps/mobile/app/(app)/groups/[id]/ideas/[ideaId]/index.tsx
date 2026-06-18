@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Linking,
   ScrollView,
@@ -18,12 +19,21 @@ import {
   useIdeaPhotoUrl,
 } from '@huddle/api-client/ideas-hooks';
 import { isHuddleError } from '@huddle/api-client/errors';
+import { useReportIdea, useBlockUser } from '@huddle/api-client/moderation-hooks';
+import type { ReportReason } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
 import { ConfirmAction } from '@/components/ConfirmAction';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
+
+const REPORT_REASONS: { value: ReportReason; label: string }[] = [
+  { value: 'spam', label: 'Spam' },
+  { value: 'inappropriate', label: 'Inappropriate content' },
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'other', label: 'Other' },
+];
 
 export default function IdeaDetailScreen() {
   const c = useColors();
@@ -40,7 +50,11 @@ export default function IdeaDetailScreen() {
   const updateStatus = useUpdateIdeaStatus(supabase);
   const deleteIdea = useDeleteIdea(supabase, id);
   const photoUrl = useIdeaPhotoUrl(supabase, idea.data?.photo_path ?? null);
+  const reportIdea = useReportIdea(supabase, myUserId ?? '');
+  const blockUser = useBlockUser(supabase, myUserId ?? '');
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reported, setReported] = useState(false);
 
   // Map a delete failure to friendly copy. The NO ACTION FK (migration
   // 015) rejects deleting an idea chosen in a past pick (Postgres 23503).
@@ -182,6 +196,62 @@ export default function IdeaDetailScreen() {
             />
           </View>
         ) : null}
+
+        {idea.data.proposed_by && idea.data.proposed_by !== myUserId ? (
+          <View style={styles.moderation}>
+            {reported ? (
+              <Text style={styles.mutedText}>Reported — thanks, we&rsquo;ll review it.</Text>
+            ) : reportOpen ? (
+              <View style={styles.reportBox}>
+                <Text style={styles.reportTitle}>Why are you reporting this?</Text>
+                {REPORT_REASONS.map((r) => (
+                  <Button
+                    key={r.value}
+                    label={r.label}
+                    variant="secondary"
+                    disabled={reportIdea.isPending}
+                    onPress={() =>
+                      reportIdea.mutate(
+                        { ideaId, reason: r.value },
+                        {
+                          onSuccess: () => {
+                            setReported(true);
+                            setReportOpen(false);
+                          },
+                          onError: (e) => {
+                            // Already reported → treat as done; else surface.
+                            if (isHuddleError(e) && e.huddle.kind === 'conflict') {
+                              setReported(true);
+                              setReportOpen(false);
+                            } else {
+                              Alert.alert('Could not report', 'Please try again.');
+                            }
+                          },
+                        },
+                      )
+                    }
+                  />
+                ))}
+                <Button label="Cancel" variant="ghost" onPress={() => setReportOpen(false)} />
+              </View>
+            ) : (
+              <Button label="Report" variant="ghost" onPress={() => setReportOpen(true)} />
+            )}
+            <ConfirmAction
+              buttonLabel={`Block @${idea.data.proposer?.username ?? 'user'}`}
+              confirmPrompt="Block this person? You won't see their ideas anymore. Undo in Settings → Blocked users."
+              confirmLabel="Block"
+              variant="secondary"
+              pending={blockUser.isPending}
+              error={blockUser.isError ? 'Could not block this person.' : null}
+              onConfirm={() =>
+                blockUser.mutate(idea.data.proposed_by!, {
+                  onSuccess: () => router.replace(`/groups/${id}`),
+                })
+              }
+            />
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -240,6 +310,23 @@ const makeStyles = (c: ThemeColors) =>
       paddingTop: 12,
     },
     manageRow: { flexDirection: 'row', gap: 8 },
+    moderation: {
+      marginTop: 8,
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      gap: 8,
+    },
+    reportBox: {
+      gap: 8,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      padding: 12,
+    },
+    reportTitle: { fontSize: 14, fontWeight: '600', color: c.text },
+    mutedText: { fontSize: 13, color: c.muted },
     alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
     alertText: { color: c.dangerText, fontSize: 13 },
     heading: { fontSize: 18, fontWeight: '600', color: c.text },

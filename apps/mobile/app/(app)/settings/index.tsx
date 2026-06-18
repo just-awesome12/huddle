@@ -9,6 +9,11 @@ const ROWS: { href: string; title: string; subtitle: string }[] = [
     title: 'Notifications',
     subtitle: 'Choose which pushes you receive',
   },
+  {
+    href: '/settings/blocked',
+    title: 'Blocked users',
+    subtitle: 'Manage who you’ve blocked',
+  },
   { href: '/settings/account', title: 'Account', subtitle: 'Delete your account' },
 ];
 
