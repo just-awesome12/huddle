@@ -66,6 +66,7 @@ export default function PickerScreen() {
   const [phase, setPhase] = useState<Phase>('idle');
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [chosenId, setChosenId] = useState<string | null>(null);
+  const [pickCount, setPickCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -127,6 +128,7 @@ export default function PickerScreen() {
       if (tickRef.current) clearInterval(tickRef.current);
       setHighlightId(res.chosenIdeaId);
       setChosenId(res.chosenIdeaId);
+      setPickCount(pool.length);
       setPhase('done');
     } catch (e) {
       if (tickRef.current) clearInterval(tickRef.current);
@@ -270,6 +272,11 @@ export default function PickerScreen() {
               <View style={styles.resultCard}>
                 <Text style={styles.resultLabel}>The pick is</Text>
                 <Text style={styles.resultTitle}>{chosen ? chosen.title : 'an idea'}</Text>
+                {pickCount !== null ? (
+                  <Text style={styles.resultProvenance}>
+                    Chosen at random from {pickCount} option{pickCount === 1 ? '' : 's'}
+                  </Text>
+                ) : null}
                 {chosen ? (
                   <Button
                     label="View idea"
@@ -378,6 +385,7 @@ const makeStyles = (c: ThemeColors) =>
       color: c.brandInk,
     },
     resultTitle: { fontSize: 18, fontWeight: '700', color: c.text, textAlign: 'center' },
+    resultProvenance: { fontSize: 12, color: c.muted, textAlign: 'center' },
     emptyCard: {
       borderWidth: 1,
       borderStyle: 'dashed',

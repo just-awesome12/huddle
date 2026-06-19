@@ -81,6 +81,7 @@ describe('upsertNotificationPrefs', () => {
       new_idea: false,
       picker_ran: true,
       group_invite: false,
+      new_comment: true,
     });
     expect(out).toEqual(row);
     const c = chainOf(client);

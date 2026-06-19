@@ -81,8 +81,8 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
                 </div>
                 <p className="mt-2 text-xs text-muted">
                   by {d.runner?.display_name ?? 'someone'} ·{' '}
-                  {new Date(d.created_at).toLocaleString()} · from {d.candidate_idea_ids.length}{' '}
-                  option
+                  {new Date(d.created_at).toLocaleString()} · randomly from{' '}
+                  {d.candidate_idea_ids.length} option
                   {d.candidate_idea_ids.length === 1 ? '' : 's'}
                   {categoryFilter
                     ? ` · ${CATEGORY_LABELS[categoryFilter as keyof typeof CATEGORY_LABELS] ?? categoryFilter} only`

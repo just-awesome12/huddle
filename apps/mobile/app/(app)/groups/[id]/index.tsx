@@ -107,6 +107,13 @@ export default function GroupDetailScreen() {
   const myMembership = members.data.find((m) => m.userId === myUserId);
   const isAdmin = myMembership?.role === 'admin';
 
+  // "Upcoming" = on-radar ideas dated today-or-later, soonest first.
+  // event_date is YYYY-MM-DD so a string compare is chronological.
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const upcoming = (ideas.data ?? [])
+    .filter((i) => i.status === 'on_radar' && i.event_date && i.event_date >= todayStr)
+    .sort((a, b) => (a.event_date! < b.event_date! ? -1 : 1));
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -147,6 +154,30 @@ export default function GroupDetailScreen() {
                   onPress={() => router.push(`/groups/${id}/history`)}
                 />
               </View>
+
+              {upcoming.length > 0 ? (
+                <View style={styles.upcomingBlock}>
+                  <Text style={styles.sectionTitle}>Upcoming</Text>
+                  {upcoming.map((idea) => (
+                    <Pressable
+                      key={idea.id}
+                      accessibilityRole="button"
+                      style={({ pressed }) => [styles.ideaRow, pressed && styles.ideaRowPressed]}
+                      onPress={() => router.push(`/groups/${id}/ideas/${idea.id}`)}
+                    >
+                      <View style={styles.ideaInfo}>
+                        <Text style={styles.ideaTitle} numberOfLines={1}>
+                          {idea.title}
+                        </Text>
+                        <Text style={styles.ideaMeta} numberOfLines={1}>
+                          📅 {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+                          {idea.location ? `  📍 ${idea.location}` : ''}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
 
               <View style={styles.ideasHeader}>
                 <Text style={styles.sectionTitle}>
@@ -383,6 +414,7 @@ const makeStyles = (c: ThemeColors) =>
       paddingVertical: 12,
     },
     ideaRowPressed: { backgroundColor: c.surface2 },
+    upcomingBlock: { gap: 8, marginBottom: 8 },
     ideaInfo: { flexShrink: 1 },
     ideaTitle: { fontSize: 14, fontWeight: '600', color: c.text },
     ideaMeta: { fontSize: 12, color: c.muted },

@@ -80,12 +80,15 @@ test('run picker → result shown → recorded in history', async ({ page }) => 
   await expect(page.getByTestId('picker-result')).toBeVisible({ timeout: 10_000 });
   const chosen = (await page.getByTestId('picker-result-title').textContent())?.trim();
   expect(['Tacos', 'Ramen']).toContain(chosen);
+  // Provenance: the reveal states it was a random draw and from how many.
+  await expect(page.getByTestId('picker-provenance')).toContainText('at random from 2 options');
 
-  // Recorded in history.
+  // Recorded in history (with the same provenance).
   await page.getByRole('link', { name: /View history/ }).click();
   await page.waitForURL(/\/history$/);
   await expect(page.getByTestId('decision-row')).toHaveCount(1);
   await expect(page.getByTestId('decision-list')).toContainText(chosen!);
+  await expect(page.getByTestId('decision-list')).toContainText('randomly from 2 options');
 });
 
 test('a category with fewer than two ideas disables the pick', async ({ page }) => {

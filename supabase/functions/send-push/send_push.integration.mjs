@@ -137,6 +137,29 @@ try {
   assert(r2.status === 200 && r2.json?.recipientCount === 3, `picker_ran: 3 recipients, got ${r2.json?.recipientCount}`);
   assert(r2.json?.sampleMessage?.body === 'Tacos', 'picker_ran: body is the chosen idea title');
 
+  // --- new_comment: actor (a) excluded → b(2) + c(1) = 3 ---
+  // c only opted out of new_idea, so they still get comment pushes.
+  const rc = await invoke({
+    type: 'INSERT',
+    table: 'idea_comments',
+    record: {
+      id: `cm-${ts}`,
+      group_id: groupId,
+      idea_id: idea.id,
+      author_id: a.user.id,
+      body: 'Looks great',
+    },
+  });
+  assert(
+    rc.status === 200 && rc.json?.recipientCount === 3,
+    `new_comment: 3 recipients, got ${rc.json?.recipientCount}`,
+  );
+  assert(
+    rc.json?.sampleMessage?.title?.includes('New comment') &&
+      rc.json?.sampleMessage?.data?.path === `/groups/${groupId}/ideas/${idea.id}`,
+    'new_comment: message title + deep-link to the idea',
+  );
+
   // --- group_invite: only the invited user (c, 1 device) ---
   const r3 = await invoke({
     type: 'INSERT',

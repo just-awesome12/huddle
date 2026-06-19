@@ -403,6 +403,7 @@ export type Database = {
       notification_prefs: {
         Row: {
           group_invite: boolean
+          new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
           updated_at: string
@@ -410,6 +411,7 @@ export type Database = {
         }
         Insert: {
           group_invite?: boolean
+          new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
           updated_at?: string
@@ -417,6 +419,7 @@ export type Database = {
         }
         Update: {
           group_invite?: boolean
+          new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
           updated_at?: string

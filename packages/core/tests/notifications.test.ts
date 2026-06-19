@@ -10,7 +10,12 @@ import {
 } from '../src/notifications';
 import * as mirror from '../../../supabase/functions/_shared/notifications.ts';
 
-const allOff: NotificationPrefs = { new_idea: false, picker_ran: false, group_invite: false };
+const allOff: NotificationPrefs = {
+  new_idea: false,
+  picker_ran: false,
+  group_invite: false,
+  new_comment: false,
+};
 
 describe('shouldNotify', () => {
   it('treats a missing prefs row as opted-in to everything', () => {
@@ -91,11 +96,11 @@ describe('Deno mirror drift guard', () => {
     {
       userId: 'b',
       expoToken: 't-b',
-      prefs: { new_idea: false, picker_ran: true, group_invite: true },
+      prefs: { new_idea: false, picker_ran: true, group_invite: true, new_comment: false },
     },
   ];
   it('selectRecipientTokens matches the mirror', () => {
-    for (const ev of ['new_idea', 'picker_ran', 'group_invite'] as const) {
+    for (const ev of ['new_idea', 'picker_ran', 'group_invite', 'new_comment'] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),
       );

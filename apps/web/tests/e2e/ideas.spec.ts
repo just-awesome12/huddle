@@ -82,12 +82,15 @@ test('create idea → detail → appears in group list with badges', async ({ pa
 
   await expect(page.getByText('No ideas yet')).toBeVisible();
 
+  // A date ~60 days out, so the "Upcoming" assertion stays valid over time.
+  const future = new Date(Date.now() + 60 * 86400_000).toLocaleDateString('en-CA');
+
   await createIdea(page, {
     title: 'Taco Tuesday',
     category: 'food',
     description: 'That new place on 5th',
     link: 'https://example.com/tacos',
-    eventDate: '2026-07-04',
+    eventDate: future,
     location: 'Riverside Park',
   });
 
@@ -100,10 +103,12 @@ test('create idea → detail → appears in group list with badges', async ({ pa
   await expect(page.getByTestId('idea-location')).toContainText('Riverside Park');
   await expect(page.getByTestId('idea-date')).toBeVisible();
 
-  // Group list shows the idea (with its location on the row).
+  // Group list shows the idea (with its location on the row) and surfaces
+  // it in the Upcoming section (future-dated, on the radar).
   await page.goto(groupUrl);
   await expect(page.getByTestId('idea-list')).toContainText('Taco Tuesday');
   await expect(page.getByTestId('idea-list')).toContainText('Riverside Park');
+  await expect(page.getByTestId('upcoming-ideas')).toContainText('Taco Tuesday');
   await expect(page.getByText('Ideas (1)')).toBeVisible();
 });
 

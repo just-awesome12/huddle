@@ -87,8 +87,8 @@ export default function HistoryScreen() {
               </View>
               <Text style={styles.meta}>
                 by {item.runner?.display_name ?? 'someone'} ·{' '}
-                {new Date(item.created_at).toLocaleString()} · from {item.candidate_idea_ids.length}{' '}
-                option
+                {new Date(item.created_at).toLocaleString()} · randomly from{' '}
+                {item.candidate_idea_ids.length} option
                 {item.candidate_idea_ids.length === 1 ? '' : 's'}
                 {categoryFilter
                   ? ` · ${CATEGORY_LABELS[categoryFilter as keyof typeof CATEGORY_LABELS] ?? categoryFilter} only`

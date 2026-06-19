@@ -82,6 +82,15 @@ export default async function GroupDetailPage({
   const isAdmin = myMembership?.role === 'admin';
   const hasFilters = !!(filters.status || filters.category);
 
+  // "Upcoming" = on-radar ideas with a date today-or-later, soonest first.
+  // event_date is a YYYY-MM-DD string, so lexical compare == chronological.
+  // Derived from the already-fetched list (no extra query); ignores the
+  // status filter so what's coming up is always visible.
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
+  const upcoming = ideas
+    .filter((i) => i.status === 'on_radar' && i.event_date && i.event_date >= todayStr)
+    .sort((a, b) => (a.event_date! < b.event_date! ? -1 : 1));
+
   // Vote + comment counts for the list (Phase 11) — best-effort.
   let voteCounts: Record<string, number> = {};
   let commentCounts: Record<string, number> = {};
@@ -137,6 +146,35 @@ export default async function GroupDetailPage({
           History
         </Link>
       </div>
+
+      {upcoming.length > 0 && (
+        <section className="mt-8" data-testid="upcoming-ideas">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Upcoming</h3>
+          <ul className="mt-3 flex flex-col gap-2">
+            {upcoming.map((idea) => (
+              <li key={idea.id}>
+                <Link
+                  href={`/groups/${id}/ideas/${idea.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
+                  <span className="flex shrink-0 items-center gap-3 text-xs text-muted">
+                    <span>
+                      <span aria-hidden>📅</span>{' '}
+                      {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+                    </span>
+                    {idea.location && (
+                      <span className="hidden max-w-[10rem] truncate sm:inline">
+                        <span aria-hidden>📍</span> {idea.location}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-8">
         <div className="flex items-center justify-between">

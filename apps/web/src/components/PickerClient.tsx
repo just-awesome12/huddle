@@ -28,6 +28,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
   const [phase, setPhase] = useState<Phase>('idle');
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [chosenId, setChosenId] = useState<string | null>(null);
+  const [pickCount, setPickCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -96,6 +97,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
 
     setHighlightId(result.chosenIdeaId);
     setChosenId(result.chosenIdeaId);
+    setPickCount(pool.length);
     setPhase('done');
   }
 
@@ -212,6 +214,11 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
           <p className="mt-1 text-lg font-semibold text-content" data-testid="picker-result-title">
             {chosen ? chosen.title : 'an idea'}
           </p>
+          {pickCount !== null && (
+            <p className="mt-1 text-xs text-muted" data-testid="picker-provenance">
+              Chosen at random from {pickCount} option{pickCount === 1 ? '' : 's'}
+            </p>
+          )}
           {chosen && (
             <Link
               href={`/groups/${groupId}/ideas/${chosen.id}`}

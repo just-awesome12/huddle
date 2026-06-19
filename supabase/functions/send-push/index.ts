@@ -72,6 +72,7 @@ async function recipientsForUsers(service: Service, userIds: string[]): Promise<
       new_idea: p.new_idea as boolean,
       picker_ran: p.picker_ran as boolean,
       group_invite: p.group_invite as boolean,
+      new_comment: p.new_comment as boolean,
     });
   }
   return (tokens ?? []).map((t) => ({
@@ -111,6 +112,28 @@ async function resolve(
       content: {
         title: `New idea in ${name}`,
         body: str(record.title) ?? 'A new idea was added',
+        data: { path: `/groups/${groupId}/ideas/${ideaId}` },
+      },
+    };
+  }
+
+  if (table === 'idea_comments') {
+    const groupId = str(record.group_id);
+    const ideaId = str(record.idea_id);
+    if (!groupId || !ideaId) return { skip: 'missing idea_comments fields' };
+    const [name, idea] = await Promise.all([
+      groupName(service, groupId),
+      service.from('ideas').select('title').eq('id', ideaId).maybeSingle(),
+    ]);
+    const ideaTitle = (idea.data?.title as string) ?? 'an idea';
+    const body = str(record.body) ?? 'New comment';
+    return {
+      event: 'new_comment',
+      actorId: str(record.author_id),
+      recipientUserIds: await memberIds(service, groupId),
+      content: {
+        title: `New comment in ${name}`,
+        body: `${ideaTitle}: ${body}`,
         data: { path: `/groups/${groupId}/ideas/${ideaId}` },
       },
     };

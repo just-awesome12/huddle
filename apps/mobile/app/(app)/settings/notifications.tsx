@@ -6,13 +6,18 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 
-type PrefKey = 'new_idea' | 'picker_ran' | 'group_invite';
+type PrefKey = 'new_idea' | 'picker_ran' | 'group_invite' | 'new_comment';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
   {
     key: 'new_idea',
     title: 'New ideas',
     subtitle: 'When someone adds an idea to a group you’re in',
+  },
+  {
+    key: 'new_comment',
+    title: 'Comments',
+    subtitle: 'When someone comments on an idea in your group',
   },
   {
     key: 'picker_ran',
@@ -38,6 +43,7 @@ export default function NotificationSettingsScreen() {
     new_idea: row?.new_idea ?? true,
     picker_ran: row?.picker_ran ?? true,
     group_invite: row?.group_invite ?? true,
+    new_comment: row?.new_comment ?? true,
   };
 
   const toggle = (key: PrefKey) => {
