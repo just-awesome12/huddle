@@ -6,14 +6,14 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
-  weight: ['600', '700'],
+  weight: ['600', '700', '800', '900'],
   variable: '--font-montserrat',
   display: 'swap',
 });
 
 const lato = Lato({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '700', '900'],
   variable: '--font-lato',
   display: 'swap',
 });

@@ -13,8 +13,8 @@ export default async function SignInPage({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-medium">Sign in</h2>
-        <p className="text-sm text-muted">Welcome back.</p>
+        <h1 className="font-display text-[28px] font-black text-brand-ink">Welcome back</h1>
+        <p className="mt-1 text-[15px] text-muted">Your huddles are waiting.</p>
       </div>
 
       <OAuthProviderButtons />
@@ -27,12 +27,11 @@ export default async function SignInPage({
 
       <SignInForm next={next} />
 
-      <p className="text-sm text-muted">
-        New here?{' '}
-        <Link href={signUpHref} className="font-medium text-brand-ink underline">
-          Create an account
+      <p className="text-center text-sm text-muted">
+        New to Huddle?{' '}
+        <Link href={signUpHref} className="font-display font-extrabold text-brand-ink underline">
+          Create one
         </Link>
-        .
       </p>
     </div>
   );
