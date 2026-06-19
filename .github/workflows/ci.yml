@@ -85,6 +85,17 @@ jobs:
       - name: Start Supabase (migrations + seed + edge functions)
         run: supabase start
 
+      # Realtime reads the supabase_realtime publication at boot, but on a
+      # one-shot `supabase start` it can come up before the migration that
+      # adds our tables to that publication — so it delivers no events
+      # (lesson 18). Restarting just the realtime container makes it
+      # re-read the final publication; our local flow gets this for free
+      # via stop && start.
+      - name: Restart realtime so it reads the publication (lesson 18)
+        run: |
+          docker restart "$(docker ps --filter name=supabase_realtime --format '{{.Names}}')"
+          sleep 5
+
       - name: pgTAP
         run: supabase test db
 
