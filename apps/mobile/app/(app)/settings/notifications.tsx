@@ -1,26 +1,29 @@
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
-import {
-  useNotificationPrefs,
-  useUpdateNotificationPrefs,
-} from '@huddle/api-client/push-hooks';
+import { useNotificationPrefs, useUpdateNotificationPrefs } from '@huddle/api-client/push-hooks';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 
-type PrefKey = 'new_idea' | 'picker_ran' | 'group_invite';
+type PrefKey = 'new_idea' | 'picker_ran' | 'group_invite' | 'new_comment';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
-  { key: 'new_idea', title: 'New ideas', subtitle: 'When someone adds an idea to a group you’re in' },
-  { key: 'picker_ran', title: 'Picker results', subtitle: 'When the random picker chooses for your group' },
+  {
+    key: 'new_idea',
+    title: 'New ideas',
+    subtitle: 'When someone adds an idea to a group you’re in',
+  },
+  {
+    key: 'new_comment',
+    title: 'Comments',
+    subtitle: 'When someone comments on an idea in your group',
+  },
+  {
+    key: 'picker_ran',
+    title: 'Picker results',
+    subtitle: 'When the random picker chooses for your group',
+  },
   { key: 'group_invite', title: 'Group invites', subtitle: 'When someone invites you to a group' },
 ];
 
@@ -40,6 +43,7 @@ export default function NotificationSettingsScreen() {
     new_idea: row?.new_idea ?? true,
     picker_ran: row?.picker_ran ?? true,
     group_invite: row?.group_invite ?? true,
+    new_comment: row?.new_comment ?? true,
   };
 
   const toggle = (key: PrefKey) => {
@@ -54,19 +58,14 @@ export default function NotificationSettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>Notifications</Text>
-        <Text style={styles.subtitle}>
-          Choose which push notifications this account receives.
-        </Text>
+        <Text style={styles.subtitle}>Choose which push notifications this account receives.</Text>
 
         {prefsQuery.isPending ? (
           <ActivityIndicator color={c.brand[600]} style={styles.loader} />
         ) : (
           <View style={styles.card}>
             {ROWS.map((r, i) => (
-              <View
-                key={r.key}
-                style={[styles.row, i < ROWS.length - 1 && styles.rowDivider]}
-              >
+              <View key={r.key} style={[styles.row, i < ROWS.length - 1 && styles.rowDivider]}>
                 <View style={styles.rowText}>
                   <Text style={styles.rowTitle}>{r.title}</Text>
                   <Text style={styles.rowSubtitle}>{r.subtitle}</Text>

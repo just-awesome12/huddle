@@ -1,10 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  useTheme,
-  useColors,
-  type ThemePref,
-  type ThemeColors,
-} from '@/context/ThemeContext';
+import { useTheme, useColors, type ThemePref, type ThemeColors } from '@/context/ThemeContext';
 
 /** Compact 3-way theme switch (system / light / dark) for headers. */
 const OPTIONS: { value: ThemePref; glyph: string; label: string }[] = [

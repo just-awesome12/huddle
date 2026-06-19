@@ -56,9 +56,7 @@ function buildStorageAdapter(secureStore: SecureStoreLike): SupabaseStorageAdapt
   };
 }
 
-export function createNativeSupabaseClient(
-  secureStore: SecureStoreLike,
-): SupabaseClient<Database> {
+export function createNativeSupabaseClient(secureStore: SecureStoreLike): SupabaseClient<Database> {
   if (cached) return cached;
   const { url, publishableKey } = resolvePublicEnv();
   cached = createClient<Database>(url, publishableKey, {

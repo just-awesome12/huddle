@@ -135,8 +135,7 @@ export default function GroupSettingsScreen() {
         <View style={[styles.card, styles.dangerCard]}>
           <Text style={styles.dangerTitle}>Danger zone</Text>
           <Text style={styles.muted}>
-            Deleting a group permanently removes its members, ideas, and
-            decision history.
+            Deleting a group permanently removes its members, ideas, and decision history.
           </Text>
           <ConfirmAction
             buttonLabel="Delete group"
@@ -156,43 +155,44 @@ export default function GroupSettingsScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  flex: { flex: 1, backgroundColor: c.canvas },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: c.canvas,
-  },
-  scroll: { padding: 16, gap: 16 },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-  card: {
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 12,
-  },
-  dangerCard: { borderColor: '#fecaca', backgroundColor: c.dangerBg },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: c.muted,
-  },
-  dangerTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: c.dangerText,
-  },
-  muted: { color: c.muted, fontSize: 13, lineHeight: 18 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-  success: { backgroundColor: '#f0fdf4', padding: 10, borderRadius: 8 },
-  successText: { color: '#15803d', fontSize: 13 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: c.canvas },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      backgroundColor: c.canvas,
+    },
+    scroll: { padding: 16, gap: 16 },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 12,
+    },
+    dangerCard: { borderColor: '#fecaca', backgroundColor: c.dangerBg },
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    dangerTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.dangerText,
+    },
+    muted: { color: c.muted, fontSize: 13, lineHeight: 18 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+    success: { backgroundColor: '#f0fdf4', padding: 10, borderRadius: 8 },
+    successText: { color: '#15803d', fontSize: 13 },
+  });

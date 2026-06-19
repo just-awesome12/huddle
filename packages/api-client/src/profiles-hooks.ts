@@ -1,9 +1,5 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import {
-  profileQueryKeys,
-  searchProfiles,
-  type ProfileSearchResult,
-} from './profiles';
+import { profileQueryKeys, searchProfiles, type ProfileSearchResult } from './profiles';
 import type { HuddleClient } from './internal';
 
 /**

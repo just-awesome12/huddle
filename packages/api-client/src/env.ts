@@ -36,9 +36,7 @@ function readEnv(key: string): string | undefined {
 export function resolvePublicEnv(env?: Partial<Record<string, string>>): SupabaseEnv {
   const lookup = (key: string) => env?.[key] ?? readEnv(key);
 
-  const url =
-    lookup('NEXT_PUBLIC_SUPABASE_URL') ??
-    lookup('EXPO_PUBLIC_SUPABASE_URL');
+  const url = lookup('NEXT_PUBLIC_SUPABASE_URL') ?? lookup('EXPO_PUBLIC_SUPABASE_URL');
 
   const publishableKey =
     lookup('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ??
@@ -68,9 +66,7 @@ export function resolveServiceEnv(env?: Partial<Record<string, string>>): Supaba
   const pub = resolvePublicEnv(env);
   const lookup = (key: string) => env?.[key] ?? readEnv(key);
 
-  const secretKey =
-    lookup('SUPABASE_SECRET_KEY') ??
-    lookup('SUPABASE_SERVICE_ROLE_KEY');
+  const secretKey = lookup('SUPABASE_SECRET_KEY') ?? lookup('SUPABASE_SERVICE_ROLE_KEY');
 
   if (!secretKey) {
     throw new Error(

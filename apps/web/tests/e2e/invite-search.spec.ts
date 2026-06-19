@@ -26,9 +26,7 @@ function makeTestUser(tag: string): TestUser {
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -62,10 +60,7 @@ async function createGroup(page: Page, name: string) {
   await page.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
 }
 
-async function inNewContext<T>(
-  browser: Browser,
-  fn: (page: Page) => Promise<T>,
-): Promise<T> {
+async function inNewContext<T>(browser: Browser, fn: (page: Page) => Promise<T>): Promise<T> {
   const context = await browser.newContext();
   const page = await context.newPage();
   try {
@@ -75,10 +70,7 @@ async function inNewContext<T>(
   }
 }
 
-test('add by username → invitee sees pending invite → accepts', async ({
-  page,
-  browser,
-}) => {
+test('add by username → invitee sees pending invite → accepts', async ({ page, browser }) => {
   const admin = makeTestUser('adm');
   const invitee = makeTestUser('inv');
 
@@ -107,9 +99,7 @@ test('add by username → invitee sees pending invite → accepts', async ({
 
   // The addressed invite shows in the open-invites list.
   await page.reload();
-  await expect(page.getByTestId('invite-list')).toContainText(
-    `For @${invitee.username}`,
-  );
+  await expect(page.getByTestId('invite-list')).toContainText(`For @${invitee.username}`);
 
   // Invitee: pending invite on /groups → view → accept.
   await inNewContext(browser, async (p) => {

@@ -14,11 +14,6 @@
     "declarationMap": false,
     "composite": false
   },
-  "include": [
-    "app/**/*",
-    "src/**/*",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ],
+  "include": ["app/**/*", "src/**/*", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": ["node_modules", ".expo"]
 }

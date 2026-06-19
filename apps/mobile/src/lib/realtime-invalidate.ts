@@ -13,10 +13,7 @@ import type { RealtimeChange } from '@huddle/api-client/realtime';
  * safer than a stale screen. `decisions` is wired for Phase 7; until
  * then there are no decision queries to hit.
  */
-export function invalidateForChange(
-  queryClient: QueryClient,
-  change: RealtimeChange,
-): void {
+export function invalidateForChange(queryClient: QueryClient, change: RealtimeChange): void {
   const { table, groupId } = change;
 
   switch (table) {
@@ -52,6 +49,15 @@ export function invalidateForChange(
 
     case 'decisions':
       // Phase 7. No decision queries exist yet.
+      break;
+
+    case 'idea_comments':
+      // Phase 11. Refresh the group's comment threads + counts.
+      if (groupId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['groups', groupId, 'comments'],
+        });
+      }
       break;
   }
 }

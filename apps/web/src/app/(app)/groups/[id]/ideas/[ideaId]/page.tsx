@@ -1,15 +1,20 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroupMembers } from '@huddle/api-client/groups';
-import {
-  fetchIdea,
-  getIdeaPhotoUrl,
-  type IdeaWithProposer,
-} from '@huddle/api-client/ideas';
+import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
+import { fetchGroupVoteState } from '@huddle/api-client/votes';
+import { fetchIdeaComments, type CommentWithAuthor } from '@huddle/api-client/comments';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
+import { blockUserAction } from '@/actions/moderation';
+import { toggleVoteAction } from '@/actions/votes';
+import { deleteCommentAction } from '@/actions/comments';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
+import { ReportIdeaForm } from '@/components/ReportIdeaForm';
+import { AddCommentForm } from '@/components/AddCommentForm';
+import { AddToCalendar } from '@/components/AddToCalendar';
+import { VoteButton } from '@/components/VoteButton';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
 
@@ -43,6 +48,26 @@ export default async function IdeaDetailPage({
 
   const statusAction = setIdeaStatusAction.bind(null, id, ideaId);
 
+  // Vote state (Phase 11). Best-effort — render zero if it fails.
+  let voteCount = 0;
+  let voted = false;
+  try {
+    const votes = await fetchGroupVoteState(supabase, id, user.id);
+    voteCount = votes.countByIdea[ideaId] ?? 0;
+    voted = votes.myVotes.includes(ideaId);
+  } catch {
+    // leave defaults
+  }
+  const voteAction = toggleVoteAction.bind(null, id, ideaId, voted);
+
+  // Comments (Phase 11). Best-effort — empty thread if it fails.
+  let comments: CommentWithAuthor[] = [];
+  try {
+    comments = await fetchIdeaComments(supabase, ideaId);
+  } catch {
+    // leave empty
+  }
+
   // Private bucket → short-lived signed URL, minted per render.
   let photoUrl: string | null = null;
   if (idea.photo_path) {
@@ -56,10 +81,7 @@ export default async function IdeaDetailPage({
   return (
     <div className="mx-auto max-w-2xl">
       <GroupRealtime groupId={id} />
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to ideas
       </Link>
 
@@ -79,6 +101,37 @@ export default async function IdeaDetailPage({
           {new Date(idea.created_at).toLocaleDateString()}
         </p>
 
+        {(idea.event_date || idea.location) && (
+          <div className="mt-3 flex flex-col gap-1 text-sm text-content" data-testid="idea-details">
+            {idea.event_date && (
+              <p data-testid="idea-date">
+                <span aria-hidden>📅</span>{' '}
+                {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+              </p>
+            )}
+            {idea.location && (
+              <p data-testid="idea-location">
+                <span aria-hidden>📍</span> {idea.location}
+              </p>
+            )}
+          </div>
+        )}
+
+        {idea.event_date && (
+          <AddToCalendar
+            event={{
+              title: idea.title,
+              date: idea.event_date,
+              location: idea.location,
+              details: idea.description,
+            }}
+          />
+        )}
+
+        <div className="mt-4">
+          <VoteButton action={voteAction} voted={voted} count={voteCount} />
+        </div>
+
         {photoUrl && (
           <img
             src={photoUrl}
@@ -89,9 +142,7 @@ export default async function IdeaDetailPage({
         )}
 
         {idea.description && (
-          <p className="mt-4 whitespace-pre-wrap text-sm text-content">
-            {idea.description}
-          </p>
+          <p className="mt-4 whitespace-pre-wrap text-sm text-content">{idea.description}</p>
         )}
 
         {idea.link && (
@@ -147,6 +198,76 @@ export default async function IdeaDetailPage({
             buttonLabel="Delete idea"
             confirmPrompt="Delete this idea? This cannot be undone."
             confirmLabel="Delete idea"
+            variant="secondary"
+          />
+        </div>
+      )}
+
+      <section className="mt-8" data-testid="comments">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+          Discussion ({comments.length})
+        </h3>
+
+        {idea.status === 'done' && (
+          <p
+            className="mt-2 rounded-md bg-surface-2 px-3 py-2 text-sm text-content"
+            data-testid="completion-prompt"
+          >
+            How was it? Drop a quick note for the group — what to remember for next time.
+          </p>
+        )}
+
+        {comments.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">No comments yet. Start the discussion.</p>
+        ) : (
+          <ul className="mt-3 flex flex-col gap-3" data-testid="comment-list">
+            {comments.map((comment) => {
+              const canDelete = comment.author?.id === user.id || isAdmin;
+              return (
+                <li key={comment.id} className="rounded-lg border border-line bg-surface px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-content">
+                      {comment.author?.display_name ?? 'A former member'}
+                    </span>
+                    <span className="text-xs text-faint">
+                      {new Date(comment.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-content">{comment.body}</p>
+                  {canDelete && (
+                    <form
+                      action={deleteCommentAction.bind(null, id, ideaId, comment.id)}
+                      className="mt-2"
+                    >
+                      <button
+                        type="submit"
+                        aria-label="Delete comment"
+                        className="text-xs font-medium text-muted hover:text-red-700"
+                      >
+                        Delete
+                      </button>
+                    </form>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        <AddCommentForm ideaId={ideaId} groupId={id} />
+      </section>
+
+      {/* Moderation (OQ-5): report the content, or block its author.
+          Only for other people's ideas. */}
+      {idea.proposed_by && idea.proposed_by !== user.id && (
+        <div className="mt-6 flex flex-col gap-3 border-t border-line pt-6">
+          <ReportIdeaForm ideaId={ideaId} />
+          <ConfirmActionForm
+            action={blockUserAction}
+            fields={{ groupId: id, blockedId: idea.proposed_by }}
+            buttonLabel={`Block @${idea.proposer?.username ?? 'this user'}`}
+            confirmPrompt="Block this person? You won't see their ideas anymore. You can undo this in Account."
+            confirmLabel="Block"
             variant="secondary"
           />
         </div>

@@ -22,11 +22,11 @@ identically wherever possible.
 
 ### Shared packages involved
 
-| Package | Role in auth |
-|---|---|
-| `@huddle/validation` | Zod schemas for sign-up, sign-in, onboarding. Single source of truth for field rules (username pattern, password length, etc.) used by both apps. |
+| Package              | Role in auth                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@huddle/validation` | Zod schemas for sign-up, sign-in, onboarding. Single source of truth for field rules (username pattern, password length, etc.) used by both apps.                            |
 | `@huddle/api-client` | Supabase client factories (browser, server, service-role, native), error mapping (`mapSupabaseError`), and the Turnstile verifier. Apps never import `@supabase/*` directly. |
-| `@huddle/types` | The generated `Database` type that parameterises every Supabase client. |
+| `@huddle/types`      | The generated `Database` type that parameterises every Supabase client.                                                                                                      |
 
 ---
 
@@ -178,25 +178,25 @@ Requires the `huddle://` scheme registered in `app.json` and
 
 ## 4. Decision log D26–D42
 
-| # | Decision |
-|---|---|
-| D26 | Web auth uses Next.js Server Actions, not client-side Supabase calls. Keeps tokens server-set and avoids exposing logic to the client. |
-| D27 | Forms use React `useActionState` for pending/error state. |
-| D28 | In-house UI kit (Button, FormField) rather than adopting shadcn/ui yet. Revisit when component needs grow. |
-| D29 | `'use server'` files export only async functions. Shared types/constants live in a sibling `*-state.ts` file. |
-| D30 | Local dev has email confirmation off (`enable_confirmations=false`), so sign-up auto-creates a session. Production will enable confirmation. |
-| D31 | `handle_new_user` trigger creates a `profiles` row with a placeholder username `u_<12hex>` at signup; the app finalises it. |
-| D32 | Onboarding is gated at the proxy (web) / GatedStack (mobile) by detecting the placeholder username. Single source of truth. |
-| D33 | Email-signup users bypass onboarding because the server action / submit handler writes their chosen username immediately after signup. Onboarding is effectively OAuth-only. |
-| D34 | Turnstile widget uses "managed" mode (Cloudflare decides challenge vs invisible). |
-| D35 | Local dev uses Cloudflare's documented always-pass test keys so no real Cloudflare account is needed to run. |
-| D36 | The Turnstile verifier lives in `@huddle/api-client` (`turnstile.ts`) — the package is the seam between apps and external services. |
+| #   | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D26 | Web auth uses Next.js Server Actions, not client-side Supabase calls. Keeps tokens server-set and avoids exposing logic to the client.                                                                                                                                                                                                                                                                                                            |
+| D27 | Forms use React `useActionState` for pending/error state.                                                                                                                                                                                                                                                                                                                                                                                         |
+| D28 | In-house UI kit (Button, FormField) rather than adopting shadcn/ui yet. Revisit when component needs grow.                                                                                                                                                                                                                                                                                                                                        |
+| D29 | `'use server'` files export only async functions. Shared types/constants live in a sibling `*-state.ts` file.                                                                                                                                                                                                                                                                                                                                     |
+| D30 | Local dev has email confirmation off (`enable_confirmations=false`), so sign-up auto-creates a session. Production will enable confirmation.                                                                                                                                                                                                                                                                                                      |
+| D31 | `handle_new_user` trigger creates a `profiles` row with a placeholder username `u_<12hex>` at signup; the app finalises it.                                                                                                                                                                                                                                                                                                                       |
+| D32 | Onboarding is gated at the proxy (web) / GatedStack (mobile) by detecting the placeholder username. Single source of truth.                                                                                                                                                                                                                                                                                                                       |
+| D33 | Email-signup users bypass onboarding because the server action / submit handler writes their chosen username immediately after signup. Onboarding is effectively OAuth-only.                                                                                                                                                                                                                                                                      |
+| D34 | Turnstile widget uses "managed" mode (Cloudflare decides challenge vs invisible).                                                                                                                                                                                                                                                                                                                                                                 |
+| D35 | Local dev uses Cloudflare's documented always-pass test keys so no real Cloudflare account is needed to run.                                                                                                                                                                                                                                                                                                                                      |
+| D36 | The Turnstile verifier lives in `@huddle/api-client` (`turnstile.ts`) — the package is the seam between apps and external services.                                                                                                                                                                                                                                                                                                               |
 | D37 | Turnstile test mode requires BOTH `NEXT_PUBLIC_TURNSTILE_TEST_MODE=true` AND the configured secret being the documented Cloudflare test secret. Either alone is insufficient; production has neither. The client widget skips the Cloudflare challenge and the server skips verification. Note: Cloudflare's test secret only accepts tokens issued by the matching test site key — cross-pairing real and test keys fails verification silently. |
-| D38 | Phase 9 will add a startup assertion that refuses to boot in production if test mode is on, so a misconfigured deploy fails fast rather than letting bots through. |
-| D39 | Mobile auth state lives in a single React Context provider at the root layout. Every screen reads from it; nothing duplicates the session check. |
-| D40 | Mobile navigation uses Expo Router (file-based), mirroring the Next.js App Router mental model. |
-| D41 | Mobile auth errors are shown inline (no toasts/modals), matching web. |
-| D42 | Google OAuth on mobile uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` + manual `setSession`, not the older google-auth-session library or the native SDK. The native SDK (`react-native-google-signin`) is more robust on Android but needs a custom dev build; revisit in a later phase if OAuth UX needs improvement. |
+| D38 | Phase 9 will add a startup assertion that refuses to boot in production if test mode is on, so a misconfigured deploy fails fast rather than letting bots through.                                                                                                                                                                                                                                                                                |
+| D39 | Mobile auth state lives in a single React Context provider at the root layout. Every screen reads from it; nothing duplicates the session check.                                                                                                                                                                                                                                                                                                  |
+| D40 | Mobile navigation uses Expo Router (file-based), mirroring the Next.js App Router mental model.                                                                                                                                                                                                                                                                                                                                                   |
+| D41 | Mobile auth errors are shown inline (no toasts/modals), matching web.                                                                                                                                                                                                                                                                                                                                                                             |
+| D42 | Google OAuth on mobile uses `expo-auth-session` + `WebBrowser.openAuthSessionAsync` + manual `setSession`, not the older google-auth-session library or the native SDK. The native SDK (`react-native-google-signin`) is more robust on Android but needs a custom dev build; revisit in a later phase if OAuth UX needs improvement.                                                                                                             |
 
 ---
 
@@ -256,6 +256,7 @@ over hand-written versions, and ship smaller slices.
 ### Verified vs. deferred (mobile)
 
 **Verified working** (web preview, Expo SDK 55):
+
 - App loads to sign-in (Test A)
 - Email/password sign-up → lands on app shell, onboarding skipped (Test B)
 - Sign-out → returns to sign-in (Test C)
@@ -267,6 +268,7 @@ on web preview), and the profile-finalisation path — i.e. the whole auth core
 minus native-only pieces.
 
 **Verified by code review only, not yet on a device:**
+
 - Native Google OAuth and the `huddle://` deep-link round-trip. Expo Go was
   pinned to SDK 54 during the SDK 55 rollout, and the web preview can't exercise
   native deep links (the `huddle://` scheme is native-only). Full verification is
@@ -276,6 +278,7 @@ minus native-only pieces.
   localStorage fallback, so the native keychain/keystore branch is unexercised).
 
 **Not started:**
+
 - Mobile E2E (Maestro) — deferred to Phase 9 per the roadmap.
 
 ---

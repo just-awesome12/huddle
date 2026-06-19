@@ -1,9 +1,6 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-import {
-  createNativeSupabaseClient,
-  type SecureStoreLike,
-} from '@huddle/api-client/native';
+import { createNativeSupabaseClient, type SecureStoreLike } from '@huddle/api-client/native';
 
 /**
  * Mobile Supabase client.

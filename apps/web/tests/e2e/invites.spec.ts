@@ -29,9 +29,7 @@ function makeTestUser(tag: string): TestUser {
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -70,10 +68,7 @@ async function generateInviteLink(page: Page): Promise<string> {
   return url!;
 }
 
-async function inNewContext<T>(
-  browser: Browser,
-  fn: (page: Page) => Promise<T>,
-): Promise<T> {
+async function inNewContext<T>(browser: Browser, fn: (page: Page) => Promise<T>): Promise<T> {
   const context = await browser.newContext();
   const page = await context.newPage();
   try {
@@ -103,9 +98,7 @@ test('invite → accept → both see members → admin removes → access revoke
   await inNewContext(browser, async (joinerPage) => {
     await signUp(joinerPage, joiner);
     await joinerPage.goto(inviteUrl);
-    await expect(joinerPage.getByTestId('invite-group-name')).toHaveText(
-      'Invite Flow Group',
-    );
+    await expect(joinerPage.getByTestId('invite-group-name')).toHaveText('Invite Flow Group');
     await expect(joinerPage.getByText(`Invited by ${admin.displayName}`)).toBeVisible();
     await joinerPage.getByRole('button', { name: 'Accept invite' }).click();
     await joinerPage.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
@@ -171,10 +164,7 @@ test('revoked invite stops working', async ({ page, browser }) => {
   });
 });
 
-test('signed-out invite link survives the auth round-trip (?next=)', async ({
-  page,
-  browser,
-}) => {
+test('signed-out invite link survives the auth round-trip (?next=)', async ({ page, browser }) => {
   const admin = makeTestUser('adm4');
 
   await signUp(page, admin);

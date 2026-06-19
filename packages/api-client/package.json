@@ -27,6 +27,12 @@
     "./push-hooks": "./src/push-hooks.ts",
     "./account": "./src/account.ts",
     "./account-hooks": "./src/account-hooks.ts",
+    "./moderation": "./src/moderation.ts",
+    "./moderation-hooks": "./src/moderation-hooks.ts",
+    "./votes": "./src/votes.ts",
+    "./votes-hooks": "./src/votes-hooks.ts",
+    "./comments": "./src/comments.ts",
+    "./comments-hooks": "./src/comments-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

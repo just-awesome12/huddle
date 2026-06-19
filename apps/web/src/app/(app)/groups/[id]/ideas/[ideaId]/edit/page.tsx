@@ -1,11 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroupMembers } from '@huddle/api-client/groups';
-import {
-  fetchIdea,
-  getIdeaPhotoUrl,
-  type IdeaWithProposer,
-} from '@huddle/api-client/ideas';
+import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { IdeaForm } from '@/components/IdeaForm';
 
@@ -66,6 +62,8 @@ export default async function EditIdeaPage({
             description: idea.description,
             category: idea.category,
             link: idea.link,
+            eventDate: idea.event_date,
+            location: idea.location,
             photoPath: idea.photo_path,
           }}
           currentPhotoUrl={currentPhotoUrl}

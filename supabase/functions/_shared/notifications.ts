@@ -8,18 +8,20 @@
 // Edit both files together.
 // =====================================================================
 
-export type NotificationEvent = 'new_idea' | 'picker_ran' | 'group_invite';
+export type NotificationEvent = 'new_idea' | 'picker_ran' | 'group_invite' | 'new_comment';
 
 export interface NotificationPrefs {
   new_idea: boolean;
   picker_ran: boolean;
   group_invite: boolean;
+  new_comment: boolean;
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
   new_idea: true,
   picker_ran: true,
   group_invite: true,
+  new_comment: true,
 };
 
 export function shouldNotify(
@@ -59,10 +61,7 @@ export interface NotificationContent {
   data?: Record<string, unknown>;
 }
 
-export function buildExpoMessages(
-  tokens: string[],
-  content: NotificationContent,
-): ExpoMessage[] {
+export function buildExpoMessages(tokens: string[], content: NotificationContent): ExpoMessage[] {
   return tokens.map((to) => ({
     to,
     title: content.title,

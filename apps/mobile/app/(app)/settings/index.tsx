@@ -4,7 +4,16 @@ import { useRouter } from 'expo-router';
 import { Button } from '@/components/Button';
 
 const ROWS: { href: string; title: string; subtitle: string }[] = [
-  { href: '/settings/notifications', title: 'Notifications', subtitle: 'Choose which pushes you receive' },
+  {
+    href: '/settings/notifications',
+    title: 'Notifications',
+    subtitle: 'Choose which pushes you receive',
+  },
+  {
+    href: '/settings/blocked',
+    title: 'Blocked users',
+    subtitle: 'Manage who you’ve blocked',
+  },
   { href: '/settings/account', title: 'Account', subtitle: 'Delete your account' },
 ];
 

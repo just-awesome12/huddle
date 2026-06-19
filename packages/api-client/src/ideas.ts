@@ -32,6 +32,10 @@ export interface CreateIdeaParams {
   category: IdeaCategory;
   description?: string;
   link?: string;
+  /** Optional target calendar day, "YYYY-MM-DD". */
+  eventDate?: string | null;
+  /** Optional free-text place. */
+  location?: string | null;
 }
 
 export interface UpdateIdeaParams {
@@ -39,6 +43,8 @@ export interface UpdateIdeaParams {
   description?: string;
   category?: IdeaCategory;
   link?: string;
+  eventDate?: string | null;
+  location?: string | null;
 }
 
 // -----------------------------------------------------------------------
@@ -71,10 +77,7 @@ export async function fetchGroupIdeas(
   groupId: string,
   filters: IdeaFilters = {},
 ): Promise<IdeaWithProposer[]> {
-  let query = client
-    .from('ideas')
-    .select(PROPOSER_SELECT)
-    .eq('group_id', groupId);
+  let query = client.from('ideas').select(PROPOSER_SELECT).eq('group_id', groupId);
 
   if (filters.status) query = query.eq('status', filters.status);
   if (filters.category) query = query.eq('category', filters.category);
@@ -86,10 +89,7 @@ export async function fetchGroupIdeas(
 }
 
 /** Fetch a single idea with its proposer. */
-export async function fetchIdea(
-  client: HuddleClient,
-  ideaId: string,
-): Promise<IdeaWithProposer> {
+export async function fetchIdea(client: HuddleClient, ideaId: string): Promise<IdeaWithProposer> {
   const { data, error } = await client
     .from('ideas')
     .select(PROPOSER_SELECT)
@@ -109,10 +109,7 @@ export async function fetchIdea(
  * Plain INSERT…RETURNING is safe here: the proposer is already a group
  * member, so the SELECT policy passes (no D45-style trigger problem).
  */
-export async function createIdea(
-  client: HuddleClient,
-  params: CreateIdeaParams,
-): Promise<IdeaRow> {
+export async function createIdea(client: HuddleClient, params: CreateIdeaParams): Promise<IdeaRow> {
   const userId = await requireUserId(client);
 
   const { data, error } = await client
@@ -124,6 +121,8 @@ export async function createIdea(
       category: params.category,
       description: params.description ?? null,
       link: params.link ?? null,
+      event_date: params.eventDate ?? null,
+      location: params.location ?? null,
     })
     .select()
     .single();
@@ -143,6 +142,8 @@ export async function updateIdea(
   if (params.description !== undefined) patch.description = params.description;
   if (params.category !== undefined) patch.category = params.category;
   if (params.link !== undefined) patch.link = params.link;
+  if (params.eventDate !== undefined) patch.event_date = params.eventDate;
+  if (params.location !== undefined) patch.location = params.location;
 
   const { data, error } = await client
     .from('ideas')
@@ -227,11 +228,7 @@ export function isAllowedPhotoType(contentType: string): boolean {
  * folder, so a timestamp+random suffix suffices — no crypto dependency
  * (which RN lacks without a polyfill).
  */
-export function buildIdeaPhotoPath(
-  groupId: string,
-  ideaId: string,
-  contentType: string,
-): string {
+export function buildIdeaPhotoPath(groupId: string, ideaId: string, contentType: string): string {
   const ext = PHOTO_EXTENSIONS[contentType];
   if (!ext) {
     throwMapped({
@@ -292,20 +289,14 @@ export async function removeIdeaPhoto(
   ideaId: string,
   photoPath: string,
 ): Promise<void> {
-  const { error } = await client
-    .from('ideas')
-    .update({ photo_path: null })
-    .eq('id', ideaId);
+  const { error } = await client.from('ideas').update({ photo_path: null }).eq('id', ideaId);
   if (error) throwMapped(error);
 
   await client.storage.from(IDEA_PHOTOS_BUCKET).remove([photoPath]);
 }
 
 /** Create a short-lived signed URL for a photo (private bucket). */
-export async function getIdeaPhotoUrl(
-  client: HuddleClient,
-  photoPath: string,
-): Promise<string> {
+export async function getIdeaPhotoUrl(client: HuddleClient, photoPath: string): Promise<string> {
   const { data, error } = await client.storage
     .from(IDEA_PHOTOS_BUCKET)
     .createSignedUrl(photoPath, IDEA_PHOTO_URL_TTL_SECONDS);

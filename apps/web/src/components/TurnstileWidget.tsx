@@ -70,9 +70,7 @@ export function TurnstileWidget({ siteKey }: TurnstileWidgetProps) {
     // Load the Cloudflare script if it isn't already loaded. The
     // script is idempotent — Cloudflare's API tolerates duplicate
     // loads but doesn't re-run on every mount, so we guard manually.
-    const existing = document.querySelector<HTMLScriptElement>(
-      `script[src="${SCRIPT_SRC}"]`,
-    );
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`);
     if (!existing) {
       const script = document.createElement('script');
       script.src = SCRIPT_SRC;

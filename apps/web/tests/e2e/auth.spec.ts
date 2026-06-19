@@ -36,9 +36,7 @@ async function waitForTurnstileToken(page: Page) {
   // script and produce a token. Either way: wait for non-empty.
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -65,7 +63,6 @@ async function signIn(page: Page, user: TestUser) {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.waitForURL('/groups');
 }
-
 
 test('unauthenticated user is redirected from / to /sign-in', async ({ page }) => {
   await page.goto('/');

@@ -65,9 +65,7 @@ export async function fetchMyGroups(client: HuddleClient): Promise<GroupWithRole
   if (error) throwMapped(error);
 
   return (data ?? []).map((row) => {
-    const membership = Array.isArray(row.group_members)
-      ? row.group_members[0]
-      : row.group_members;
+    const membership = Array.isArray(row.group_members) ? row.group_members[0] : row.group_members;
     return {
       id: row.id,
       name: row.name,
@@ -82,11 +80,7 @@ export async function fetchMyGroups(client: HuddleClient): Promise<GroupWithRole
 
 /** Fetch a single group by ID. */
 export async function fetchGroup(client: HuddleClient, id: string): Promise<GroupRow> {
-  const { data, error } = await client
-    .from('groups')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const { data, error } = await client.from('groups').select('*').eq('id', id).single();
 
   if (error) throwMapped(error);
   return data!;

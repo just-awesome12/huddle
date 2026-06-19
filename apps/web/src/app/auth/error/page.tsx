@@ -20,9 +20,7 @@ export default async function AuthErrorPage({ searchParams }: PageProps) {
   return (
     <div className="grid min-h-dvh place-items-center px-4 py-8">
       <div className="w-full max-w-sm rounded-lg border border-line bg-surface p-6 shadow-sm">
-        <h1 className="mb-2 text-2xl font-semibold tracking-tight">
-          Sign-in failed
-        </h1>
+        <h1 className="mb-2 text-2xl font-semibold tracking-tight">Sign-in failed</h1>
         <p className="mb-6 text-sm text-muted">{message}</p>
         <Link
           href="/sign-in"

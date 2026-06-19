@@ -163,7 +163,23 @@ describe('createIdea', () => {
       category: 'food',
       description: null,
       link: null,
+      event_date: null,
+      location: null,
     });
+  });
+
+  it('passes through event_date and location when provided', async () => {
+    const client = makeClient({ queryData: makeIdea() });
+    await createIdea(client as never, {
+      groupId: 'group-1',
+      title: 'Picnic',
+      category: 'activity',
+      eventDate: '2026-07-04',
+      location: 'Riverside Park',
+    });
+    expect(client._chain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ event_date: '2026-07-04', location: 'Riverside Park' }),
+    );
   });
 
   it('throws unauthorized when not signed in', async () => {
@@ -189,6 +205,18 @@ describe('updateIdea', () => {
     const client = makeClient({ queryData: makeIdea({ title: 'New' }) });
     await updateIdea(client as never, 'idea-1', { title: 'New' });
     expect(client._chain.update).toHaveBeenCalledWith({ title: 'New' });
+  });
+
+  it('maps eventDate/location to their snake_case columns', async () => {
+    const client = makeClient({ queryData: makeIdea() });
+    await updateIdea(client as never, 'idea-1', {
+      eventDate: '2026-07-04',
+      location: 'Riverside Park',
+    });
+    expect(client._chain.update).toHaveBeenCalledWith({
+      event_date: '2026-07-04',
+      location: 'Riverside Park',
+    });
   });
 });
 
@@ -230,9 +258,7 @@ describe('deleteIdea', () => {
       queryData: null,
       queryError: { code: '42501', message: 'denied' },
     });
-    await expect(
-      deleteIdea(client as never, 'idea-1', 'g/i/photo.jpg'),
-    ).rejects.toBeTruthy();
+    await expect(deleteIdea(client as never, 'idea-1', 'g/i/photo.jpg')).rejects.toBeTruthy();
     expect(client._storage.remove).not.toHaveBeenCalled();
   });
 });
@@ -315,9 +341,7 @@ describe('removeIdeaPhoto / getIdeaPhotoUrl', () => {
 
   it('returns a signed URL', async () => {
     const client = makeClient({ queryData: null, signedUrl: 'https://s/url' });
-    await expect(getIdeaPhotoUrl(client as never, 'g1/i1/x.jpg')).resolves.toBe(
-      'https://s/url',
-    );
+    await expect(getIdeaPhotoUrl(client as never, 'g1/i1/x.jpg')).resolves.toBe('https://s/url');
     expect(client._storage.createSignedUrl).toHaveBeenCalledWith('g1/i1/x.jpg', 3600);
   });
 });

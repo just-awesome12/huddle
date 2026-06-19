@@ -15,9 +15,7 @@ export function Logo({ wordmark = true }: { wordmark?: boolean }) {
         resizeMode="contain"
         accessibilityLabel="Huddle"
       />
-      {wordmark ? (
-        <Text style={[styles.word, { color: c.brandInk }]}>HUDDLE</Text>
-      ) : null}
+      {wordmark ? <Text style={[styles.word, { color: c.brandInk }]}>HUDDLE</Text> : null}
     </View>
   );
 }

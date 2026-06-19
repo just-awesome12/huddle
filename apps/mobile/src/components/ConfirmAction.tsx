@@ -41,11 +41,7 @@ export function ConfirmAction({
   if (!confirming) {
     return (
       <View style={styles.wrap}>
-        <Button
-          label={buttonLabel}
-          variant={variant}
-          onPress={() => setConfirming(true)}
-        />
+        <Button label={buttonLabel} variant={variant} onPress={() => setConfirming(true)} />
         {error ? (
           <View style={styles.alert}>
             <Text style={styles.alertText} accessibilityRole="alert">
@@ -61,12 +57,7 @@ export function ConfirmAction({
     <View style={styles.wrap}>
       <Text style={styles.prompt}>{confirmPrompt}</Text>
       <View style={styles.row}>
-        <Button
-          label={confirmLabel}
-          variant="danger"
-          loading={pending}
-          onPress={onConfirm}
-        />
+        <Button label={confirmLabel} variant="danger" loading={pending} onPress={onConfirm} />
         <Button
           label="Cancel"
           variant="ghost"
@@ -85,10 +76,11 @@ export function ConfirmAction({
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  wrap: { gap: 8 },
-  prompt: { fontSize: 14, color: c.text },
-  row: { flexDirection: 'row', gap: 8 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrap: { gap: 8 },
+    prompt: { fontSize: 14, color: c.text },
+    row: { flexDirection: 'row', gap: 8 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+  });

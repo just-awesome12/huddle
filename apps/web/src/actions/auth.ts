@@ -5,10 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { signUpSchema, signInSchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
-import {
-  verifyTurnstileToken,
-  TURNSTILE_TEST_SECRET,
-} from '@huddle/api-client/turnstile';
+import { verifyTurnstileToken, TURNSTILE_TEST_SECRET } from '@huddle/api-client/turnstile';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import type { AuthActionState } from './auth-state';
 
@@ -19,7 +16,6 @@ import type { AuthActionState } from './auth-state';
  * with only the test secret still fails closed — and instrumentation.ts
  * refuses to boot production if either is set (D38).
  */
-
 
 // =====================================================================
 // Sign up
@@ -49,9 +45,7 @@ export async function signUpAction(
   if (!isTestMode) {
     const h = await headers();
     const clientIp =
-      h.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      h.get('x-real-ip') ??
-      undefined;
+      h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? undefined;
     const turnstile = await verifyTurnstileToken(
       parsed.data.turnstileToken,
       turnstileSecret,
@@ -59,8 +53,7 @@ export async function signUpAction(
     );
     if (!turnstile.success) {
       return {
-        formError:
-          'Human-verification check failed. Please refresh the page and try again.',
+        formError: 'Human-verification check failed. Please refresh the page and try again.',
       };
     }
   }
@@ -113,7 +106,6 @@ export async function signUpAction(
   redirect(safeNextPath(formData.get('next')));
 }
 
-
 // =====================================================================
 // Sign in
 // =====================================================================
@@ -145,7 +137,6 @@ export async function signInAction(
   redirect(safeNextPath(formData.get('next')));
 }
 
-
 // =====================================================================
 // Sign out
 // =====================================================================
@@ -156,7 +147,6 @@ export async function signOutAction(): Promise<void> {
   revalidatePath('/', 'layout');
   redirect('/sign-in');
 }
-
 
 // =====================================================================
 // Helpers
@@ -176,9 +166,7 @@ function safeNextPath(raw: unknown): string {
   return raw;
 }
 
-function friendlyAuthErrorMessage(
-  mapped: { kind: string; message: string },
-): string {
+function friendlyAuthErrorMessage(mapped: { kind: string; message: string }): string {
   const lower = mapped.message.toLowerCase();
   if (lower.includes('invalid login credentials')) {
     return 'Email or password is incorrect.';

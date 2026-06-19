@@ -1,21 +1,11 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Share, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import { createInviteSchema } from '@huddle/validation';
-import {
-  useGroup,
-  useGroupMembers,
-} from '@huddle/api-client/groups-hooks';
+import { useGroup, useGroupMembers } from '@huddle/api-client/groups-hooks';
 import {
   useGroupInvites,
   useCreateInvite,
@@ -123,8 +113,7 @@ export default function GroupInviteScreen() {
       { groupId: id, invitedEmail: parsed.data.invitedEmail },
       {
         onSuccess: (invite) => setCreatedToken(invite.token),
-        onError: () =>
-          setFormError('Could not create the invite. Please try again.'),
+        onError: () => setFormError('Could not create the invite. Please try again.'),
       },
     );
   };
@@ -266,9 +255,7 @@ export default function GroupInviteScreen() {
                 : null}
             </View>
 
-            <Text style={styles.sectionTitle}>
-              Open invites ({invites.data.length})
-            </Text>
+            <Text style={styles.sectionTitle}>Open invites ({invites.data.length})</Text>
             {invites.data.length === 0 ? (
               <Text style={styles.muted}>
                 No open invites. Generate a link above to invite someone.
@@ -306,84 +293,85 @@ export default function GroupInviteScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: c.canvas },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: c.canvas,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: c.border,
-    backgroundColor: c.surface,
-  },
-  scroll: { padding: 16, gap: 8 },
-  headerBlock: { gap: 16, marginBottom: 8 },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-  card: {
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 12,
-  },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-  linkBlock: {
-    marginTop: 4,
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: c.border,
-    paddingTop: 12,
-  },
-  linkLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: c.muted,
-  },
-  linkUrl: { fontSize: 12, color: c.text },
-  qrWrap: { alignItems: 'center', paddingVertical: 8 },
-  row: { flexDirection: 'row', gap: 8 },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: c.muted,
-  },
-  muted: { fontSize: 13, color: c.muted },
-  inviteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: c.surface,
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  inviteInfo: { flexShrink: 1 },
-  inviteKind: { fontSize: 14, fontWeight: '600', color: c.text },
-  inviteMeta: { fontSize: 12, color: c.muted },
-  expired: { color: c.danger },
-  resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: c.surface2,
-    paddingTop: 10,
-  },
-  invitedMark: { fontSize: 13, fontWeight: '600', color: '#15803d' },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.canvas },
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+      backgroundColor: c.canvas,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      backgroundColor: c.surface,
+    },
+    scroll: { padding: 16, gap: 8 },
+    headerBlock: { gap: 16, marginBottom: 8 },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 12,
+    },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+    linkBlock: {
+      marginTop: 4,
+      gap: 10,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingTop: 12,
+    },
+    linkLabel: {
+      fontSize: 11,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    linkUrl: { fontSize: 12, color: c.text },
+    qrWrap: { alignItems: 'center', paddingVertical: 8 },
+    row: { flexDirection: 'row', gap: 8 },
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    muted: { fontSize: 13, color: c.muted },
+    inviteRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    inviteInfo: { flexShrink: 1 },
+    inviteKind: { fontSize: 14, fontWeight: '600', color: c.text },
+    inviteMeta: { fontSize: 12, color: c.muted },
+    expired: { color: c.danger },
+    resultRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderTopWidth: 1,
+      borderTopColor: c.surface2,
+      paddingTop: 10,
+    },
+    invitedMark: { fontSize: 13, fontWeight: '600', color: '#15803d' },
+  });

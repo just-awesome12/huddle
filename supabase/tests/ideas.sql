@@ -20,7 +20,7 @@
 -- =====================================================================
 
 begin;
-select plan(15);
+select plan(18);
 
 
 -- ---------------------------------------------------------------------
@@ -32,9 +32,12 @@ select columns_are(
   'public', 'ideas',
   array['id', 'group_id', 'proposed_by', 'title', 'description',
         'category', 'link', 'photo_path', 'status', 'created_at',
-        'updated_at'],
+        'updated_at', 'event_date', 'location'],
   'ideas has the expected columns'
 );
+
+select col_type_is('public', 'ideas', 'event_date', 'date',
+  'event_date is a plain DATE column');
 
 
 -- ---------------------------------------------------------------------
@@ -99,6 +102,42 @@ select throws_ok(
   null,
   'whitespace-only title is rejected'
 );
+
+
+-- ---------------------------------------------------------------------
+-- event_date + location (Phase 11.3)
+-- ---------------------------------------------------------------------
+insert into public.ideas (id, group_id, proposed_by, title, category, event_date, location)
+values (
+  '1dea3333-3333-3333-3333-333333333333',
+  '1ea61111-1111-1111-1111-111111111111',
+  'decade01-1111-1111-1111-111111111111',
+  'Beach day', 'activity', date '2026-07-04', 'Riverside Park'
+);
+
+set local role postgres;
+select is(
+  (select event_date::text || '|' || location
+     from public.ideas where id = '1dea3333-3333-3333-3333-333333333333'),
+  '2026-07-04|Riverside Park',
+  'event_date and location persist on insert'
+);
+
+set local role authenticated;
+set local "request.jwt.claims" to '{"sub": "decade01-1111-1111-1111-111111111111", "role": "authenticated"}';
+
+select throws_ok(
+  $$insert into public.ideas (group_id, proposed_by, title, category, location)
+    values ('1ea61111-1111-1111-1111-111111111111',
+            'decade01-1111-1111-1111-111111111111',
+            'Too far', 'other', repeat('x', 201))$$,
+  '23514',
+  null,
+  'location over 200 characters is rejected'
+);
+
+set local role postgres;
+delete from public.ideas where id = '1dea3333-3333-3333-3333-333333333333';
 
 
 -- ---------------------------------------------------------------------

@@ -26,9 +26,7 @@ function makeTestUser(tag: string): TestUser {
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -57,7 +55,14 @@ async function createGroup(page: Page, name: string): Promise<string> {
 
 async function createIdea(
   page: Page,
-  opts: { title: string; category?: string; description?: string; link?: string },
+  opts: {
+    title: string;
+    category?: string;
+    description?: string;
+    link?: string;
+    eventDate?: string;
+    location?: string;
+  },
 ) {
   await page.getByRole('link', { name: 'New idea' }).click();
   await page.waitForURL(/\/ideas\/new$/);
@@ -65,6 +70,8 @@ async function createIdea(
   if (opts.category) await page.getByLabel('Category').selectOption(opts.category);
   if (opts.description) await page.getByLabel(/Description/).fill(opts.description);
   if (opts.link) await page.getByLabel(/Link/).fill(opts.link);
+  if (opts.eventDate) await page.getByLabel(/Date/).fill(opts.eventDate);
+  if (opts.location) await page.getByLabel(/Location/).fill(opts.location);
   await page.getByRole('button', { name: 'Add idea' }).click();
   await page.waitForURL(/\/ideas\/[0-9a-f-]{36}$/);
 }
@@ -75,11 +82,16 @@ test('create idea → detail → appears in group list with badges', async ({ pa
 
   await expect(page.getByText('No ideas yet')).toBeVisible();
 
+  // A date ~60 days out, so the "Upcoming" assertion stays valid over time.
+  const future = new Date(Date.now() + 60 * 86400_000).toLocaleDateString('en-CA');
+
   await createIdea(page, {
     title: 'Taco Tuesday',
     category: 'food',
     description: 'That new place on 5th',
     link: 'https://example.com/tacos',
+    eventDate: future,
+    location: 'Riverside Park',
   });
 
   // Detail page shows everything.
@@ -88,10 +100,20 @@ test('create idea → detail → appears in group list with badges', async ({ pa
   await expect(page.getByRole('link', { name: 'https://example.com/tacos' })).toBeVisible();
   await expect(page.getByTestId('category-badge-food')).toBeVisible();
   await expect(page.getByTestId('status-badge-on_radar')).toBeVisible();
+  await expect(page.getByTestId('idea-location')).toContainText('Riverside Park');
+  await expect(page.getByTestId('idea-date')).toBeVisible();
+  // Add-to-calendar appears for a dated idea, with a Google template link.
+  await expect(page.getByTestId('add-to-calendar')).toBeVisible();
+  const gcalHref = await page.getByTestId('calendar-google').getAttribute('href');
+  expect(gcalHref).toContain('calendar.google.com');
+  expect(gcalHref).toContain('Taco+Tuesday');
 
-  // Group list shows the idea.
+  // Group list shows the idea (with its location on the row) and surfaces
+  // it in the Upcoming section (future-dated, on the radar).
   await page.goto(groupUrl);
   await expect(page.getByTestId('idea-list')).toContainText('Taco Tuesday');
+  await expect(page.getByTestId('idea-list')).toContainText('Riverside Park');
+  await expect(page.getByTestId('upcoming-ideas')).toContainText('Taco Tuesday');
   await expect(page.getByText('Ideas (1)')).toBeVisible();
 });
 
@@ -122,6 +144,20 @@ test('status flow: done → back on the radar', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Back on the radar' }).click();
   await expect(page.getByTestId('status-badge-on_radar')).toBeVisible();
+});
+
+test('a done idea surfaces in the "Do it again?" section', async ({ page }) => {
+  await signUp(page, makeTestUser('again'));
+  const groupUrl = await createGroup(page, 'Revisit Group');
+  await createIdea(page, { title: 'Karaoke night', category: 'activity' });
+
+  await page.getByRole('button', { name: 'Mark done' }).click();
+  await expect(page.getByTestId('status-badge-done')).toBeVisible();
+  // Completion note prompt shows once an idea is done.
+  await expect(page.getByTestId('completion-prompt')).toBeVisible();
+
+  await page.goto(groupUrl);
+  await expect(page.getByTestId('do-again')).toContainText('Karaoke night');
 });
 
 test('filters by status and category', async ({ page }) => {

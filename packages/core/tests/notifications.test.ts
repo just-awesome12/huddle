@@ -10,7 +10,12 @@ import {
 } from '../src/notifications';
 import * as mirror from '../../../supabase/functions/_shared/notifications.ts';
 
-const allOff: NotificationPrefs = { new_idea: false, picker_ran: false, group_invite: false };
+const allOff: NotificationPrefs = {
+  new_idea: false,
+  picker_ran: false,
+  group_invite: false,
+  new_comment: false,
+};
 
 describe('shouldNotify', () => {
   it('treats a missing prefs row as opted-in to everything', () => {
@@ -35,10 +40,7 @@ describe('selectRecipientTokens', () => {
   ];
 
   it('excludes the actor and includes all of a recipient’s devices', () => {
-    expect(selectRecipientTokens(recipients, 'new_idea', 'actor')).toEqual([
-      'tok-u1a',
-      'tok-u1b',
-    ]); // u2 opted out of new_idea, actor excluded
+    expect(selectRecipientTokens(recipients, 'new_idea', 'actor')).toEqual(['tok-u1a', 'tok-u1b']); // u2 opted out of new_idea, actor excluded
   });
 
   it('respects per-event prefs (u2 still gets picker_ran)', () => {
@@ -91,10 +93,14 @@ describe('chunk', () => {
 describe('Deno mirror drift guard', () => {
   const recipients: Recipient[] = [
     { userId: 'a', expoToken: 't-a', prefs: null },
-    { userId: 'b', expoToken: 't-b', prefs: { new_idea: false, picker_ran: true, group_invite: true } },
+    {
+      userId: 'b',
+      expoToken: 't-b',
+      prefs: { new_idea: false, picker_ran: true, group_invite: true, new_comment: false },
+    },
   ];
   it('selectRecipientTokens matches the mirror', () => {
-    for (const ev of ['new_idea', 'picker_ran', 'group_invite'] as const) {
+    for (const ev of ['new_idea', 'picker_ran', 'group_invite', 'new_comment'] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),
       );

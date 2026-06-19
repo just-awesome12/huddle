@@ -23,9 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (error) {
     const desc = searchParams.get('error_description') ?? error;
-    return NextResponse.redirect(
-      `${origin}/auth/error?reason=${encodeURIComponent(desc)}`,
-    );
+    return NextResponse.redirect(`${origin}/auth/error?reason=${encodeURIComponent(desc)}`);
   }
 
   if (!code) {

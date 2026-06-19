@@ -26,8 +26,8 @@ export default async function OnboardingPage() {
       <div>
         <h2 className="text-lg font-medium">Pick a username</h2>
         <p className="text-sm text-muted">
-          One more step before you can start sharing ideas. Your username and
-          display name appear in every group you join.
+          One more step before you can start sharing ideas. Your username and display name appear in
+          every group you join.
         </p>
       </div>
       <OnboardingForm suggestedDisplayName={suggestedDisplayName} />

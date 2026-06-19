@@ -16,10 +16,7 @@ interface InviteCreatorProps {
  * deployment (local, preview, production) without server config.
  */
 export function InviteCreator({ groupId }: InviteCreatorProps) {
-  const [state, formAction, pending] = useActionState(
-    createInviteAction,
-    EMPTY_INVITE_STATE,
-  );
+  const [state, formAction, pending] = useActionState(createInviteAction, EMPTY_INVITE_STATE);
   const [copied, setCopied] = useState(false);
 
   const inviteUrl = state.createdToken

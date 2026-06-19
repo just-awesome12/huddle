@@ -18,6 +18,8 @@ interface IdeaFormProps {
     description: string | null;
     category: IdeaCategory;
     link: string | null;
+    eventDate: string | null;
+    location: string | null;
     photoPath: string | null;
   };
   /** Signed URL for the current photo (edit mode only). */
@@ -144,6 +146,24 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
         defaultValue={idea?.link ?? ''}
         hint="A menu, event page, map pin — anything useful."
         error={state.fieldErrors?.link?.[0]}
+      />
+
+      <FormField
+        label="Date (optional)"
+        name="eventDate"
+        type="date"
+        defaultValue={idea?.eventDate ?? ''}
+        hint="When is this happening?"
+        error={state.fieldErrors?.eventDate?.[0]}
+      />
+
+      <FormField
+        label="Location (optional)"
+        name="location"
+        placeholder="Where? A place, address, or area."
+        maxLength={200}
+        defaultValue={idea?.location ?? ''}
+        error={state.fieldErrors?.location?.[0]}
       />
 
       <div className="flex flex-col gap-1">

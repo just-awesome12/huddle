@@ -39,5 +39,4 @@ export type TablesUpdate<T extends keyof Database['public']['Tables']> =
  * Enum value type. Example: `Enums<'idea_status'>` resolves to
  * `'on_radar' | 'done' | 'dismissed'`.
  */
-export type Enums<T extends keyof Database['public']['Enums']> =
-  Database['public']['Enums'][T];
+export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T];

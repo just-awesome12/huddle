@@ -45,6 +45,47 @@ export function pickOne<T>(items: readonly T[], rand: RandomUint32 = cryptoRando
 }
 
 /**
+ * Pick one index with integer WEIGHTS (probability weights[i] / sum).
+ * Unbiased; every weight must be a positive integer. Opt-in fair picker
+ * (D77) — never the default.
+ */
+export function pickWeightedIndex(
+  weights: readonly number[],
+  rand: RandomUint32 = cryptoRandomUint32,
+): number {
+  if (weights.length === 0) {
+    throw new Error('pickWeightedIndex: cannot pick from an empty list');
+  }
+  let total = 0;
+  for (const w of weights) {
+    if (!Number.isInteger(w) || w <= 0) {
+      throw new Error(`pickWeightedIndex: weights must be positive integers, got ${w}`);
+    }
+    total += w;
+  }
+  let r = randomIndex(total, rand);
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i]!;
+    if (r < 0) return i;
+  }
+  return weights.length - 1;
+}
+
+/**
+ * Fairness weights: each candidate's weight is (max picks among these
+ * proposers) - (this proposer's picks) + 1, so the least-picked get the
+ * largest pull and everyone keeps a nonzero chance. Null proposer = 0.
+ */
+export function fairnessWeights(
+  proposerIds: readonly (string | null)[],
+  pickCountByProposer: Readonly<Record<string, number>>,
+): number[] {
+  const picks = proposerIds.map((p) => (p ? (pickCountByProposer[p] ?? 0) : 0));
+  const max = picks.reduce((m, p) => (p > m ? p : m), 0);
+  return picks.map((p) => max - p + 1);
+}
+
+/**
  * Fisher–Yates shuffle returning a NEW array (input untouched).
  */
 export function shuffle<T>(items: readonly T[], rand: RandomUint32 = cryptoRandomUint32): T[] {

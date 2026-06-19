@@ -14,8 +14,7 @@ const variantClasses: Record<Variant, string> = {
     'bg-brand-50 text-brand-800 hover:bg-brand-100 dark:bg-brand-900 dark:text-brand-100 dark:hover:bg-brand-800 disabled:bg-surface-2 disabled:text-faint disabled:cursor-not-allowed',
   ghost:
     'bg-transparent text-content hover:bg-brand-50 dark:hover:bg-brand-900 disabled:text-faint disabled:cursor-not-allowed',
-  danger:
-    'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed',
+  danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed',
 };
 
 export function Button({

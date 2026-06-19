@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,10 +12,7 @@ import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
 import { useGroupIdeas } from '@huddle/api-client/ideas-hooks';
-import {
-  useRunPicker,
-  PickerError,
-} from '@huddle/api-client/decisions-hooks';
+import { useRunPicker, PickerError } from '@huddle/api-client/decisions-hooks';
 import type { IdeaCategory } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useGroupRealtime } from '@/context/RealtimeContext';
@@ -71,13 +69,24 @@ export default function PickerScreen() {
 
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
+  const [fair, setFair] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [chosenId, setChosenId] = useState<string | null>(null);
+  const [pickCount, setPickCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Celebratory pop on the reveal (the mobile take on "confetti").
+  const popAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (phase === 'done') {
+      popAnim.setValue(0);
+      Animated.spring(popAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start();
+    }
+  }, [phase, popAnim]);
 
   const ideas = useMemo(() => ideasQuery.data ?? [], [ideasQuery.data]);
 
@@ -98,7 +107,7 @@ export default function PickerScreen() {
   }, [displayed, useShortlist, selected]);
 
   const canPick = candidates.length >= 2 && phase !== 'rolling';
-  const chosen = chosenId ? ideas.find((i) => i.id === chosenId) ?? null : null;
+  const chosen = chosenId ? (ideas.find((i) => i.id === chosenId) ?? null) : null;
 
   const toggleSelected = (ideaId: string) => {
     setSelected((prev) => {
@@ -129,6 +138,7 @@ export default function PickerScreen() {
         groupId: id,
         category: category || undefined,
         shortlist: useShortlist && selected.size > 0 ? [...selected] : undefined,
+        fair,
       });
       const elapsed = Date.now() - start;
       if (elapsed < MIN_SPIN_MS) {
@@ -137,6 +147,7 @@ export default function PickerScreen() {
       if (tickRef.current) clearInterval(tickRef.current);
       setHighlightId(res.chosenIdeaId);
       setChosenId(res.chosenIdeaId);
+      setPickCount(pool.length);
       setPhase('done');
     } catch (e) {
       if (tickRef.current) clearInterval(tickRef.current);
@@ -168,7 +179,11 @@ export default function PickerScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.heading}>Group not found</Text>
-        <Button label="Back to groups" variant="secondary" onPress={() => router.replace('/groups')} />
+        <Button
+          label="Back to groups"
+          variant="secondary"
+          onPress={() => router.replace('/groups')}
+        />
       </View>
     );
   }
@@ -177,7 +192,11 @@ export default function PickerScreen() {
     <View style={styles.container}>
       <View style={styles.headerBar}>
         <Button label="← Back" variant="ghost" onPress={() => router.replace(`/groups/${id}`)} />
-        <Button label="History" variant="ghost" onPress={() => router.push(`/groups/${id}/history`)} />
+        <Button
+          label="History"
+          variant="ghost"
+          onPress={() => router.push(`/groups/${id}/history`)}
+        />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -226,6 +245,24 @@ export default function PickerScreen() {
               </Text>
             ) : null}
 
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: fair }}
+              style={styles.shortlistToggle}
+              onPress={() => setFair((v) => !v)}
+            >
+              <View style={[styles.checkbox, fair && styles.checkboxOn]}>
+                {fair ? <Text style={styles.checkmark}>✓</Text> : null}
+              </View>
+              <Text style={styles.shortlistLabel}>Give everyone a fair shot</Text>
+            </Pressable>
+            {fair ? (
+              <Text style={styles.mutedText}>
+                Leans toward people whose ideas haven’t been picked yet. Still random — just
+                weighted.
+              </Text>
+            ) : null}
+
             <View style={styles.candidateList}>
               {displayed.map((idea) => {
                 const inPool = candidates.some((p) => p.id === idea.id);
@@ -270,8 +307,16 @@ export default function PickerScreen() {
 
             {phase === 'done' ? (
               <View style={styles.resultCard}>
+                <Animated.Text style={[styles.celebrate, { transform: [{ scale: popAnim }] }]}>
+                  🎉
+                </Animated.Text>
                 <Text style={styles.resultLabel}>The pick is</Text>
                 <Text style={styles.resultTitle}>{chosen ? chosen.title : 'an idea'}</Text>
+                {pickCount !== null ? (
+                  <Text style={styles.resultProvenance}>
+                    Chosen at random from {pickCount} option{pickCount === 1 ? '' : 's'}
+                  </Text>
+                ) : null}
                 {chosen ? (
                   <Button
                     label="View idea"
@@ -380,6 +425,8 @@ const makeStyles = (c: ThemeColors) =>
       color: c.brandInk,
     },
     resultTitle: { fontSize: 18, fontWeight: '700', color: c.text, textAlign: 'center' },
+    resultProvenance: { fontSize: 12, color: c.muted, textAlign: 'center' },
+    celebrate: { fontSize: 32, textAlign: 'center' },
     emptyCard: {
       borderWidth: 1,
       borderStyle: 'dashed',

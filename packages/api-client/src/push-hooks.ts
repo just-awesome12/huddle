@@ -1,9 +1,4 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import {
   notificationQueryKeys,
   fetchNotificationPrefs,
@@ -43,8 +38,7 @@ export function useNotificationPrefs(
 export function useUpdateNotificationPrefs(client: HuddleClient, userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (prefs: NotificationPrefsInput) =>
-      upsertNotificationPrefs(client, prefs),
+    mutationFn: (prefs: NotificationPrefsInput) => upsertNotificationPrefs(client, prefs),
     onSuccess: (row) => {
       queryClient.setQueryData(notificationQueryKeys.prefs(userId), row);
     },

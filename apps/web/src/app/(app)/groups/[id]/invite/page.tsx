@@ -5,10 +5,7 @@ import {
   fetchGroupMembers,
   type GroupMemberWithProfile,
 } from '@huddle/api-client/groups';
-import {
-  fetchGroupInvites,
-  type GroupInviteWithInvitee,
-} from '@huddle/api-client/invites';
+import { fetchGroupInvites, type GroupInviteWithInvitee } from '@huddle/api-client/invites';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { revokeInviteAction } from '@/actions/invites';
 import { InviteCreator } from '@/components/InviteCreator';
@@ -22,11 +19,7 @@ function describeInvite(invite: GroupInviteWithInvitee): string {
   return 'Open link';
 }
 
-export default async function GroupInvitePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function GroupInvitePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await getSupabaseServerClient();
@@ -57,10 +50,7 @@ export default async function GroupInvitePage({
 
   return (
     <div className="mx-auto max-w-md">
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to {groupName}
       </Link>
       <h2 className="mt-4 text-xl font-medium">Invite people</h2>

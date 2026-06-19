@@ -27,9 +27,7 @@ let cached: SupabaseClient<Database> | null = null;
  *   bundles, so the dynamic lookup inside resolvePublicEnv() yields
  *   undefined in the browser. Server/native callers can omit it.
  */
-export function createBrowserSupabaseClient(
-  env?: SupabaseEnv,
-): SupabaseClient<Database> {
+export function createBrowserSupabaseClient(env?: SupabaseEnv): SupabaseClient<Database> {
   if (cached) return cached;
   const { url, publishableKey } = env ?? resolvePublicEnv();
   cached = createBrowserClient<Database>(url, publishableKey);

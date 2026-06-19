@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  type TextInputProps,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 
 interface FormFieldProps extends TextInputProps {
@@ -13,13 +7,7 @@ interface FormFieldProps extends TextInputProps {
   error?: string;
 }
 
-export function FormField({
-  label,
-  hint,
-  error,
-  style,
-  ...rest
-}: FormFieldProps) {
+export function FormField({ label, hint, error, style, ...rest }: FormFieldProps) {
   const c = useColors();
   const styles = makeStyles(c);
   return (
@@ -44,20 +32,21 @@ export function FormField({
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  wrap: { gap: 4 },
-  label: { fontSize: 13, fontWeight: '600', color: c.text },
-  input: {
-    borderWidth: 1,
-    borderColor: c.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: c.surface,
-    minHeight: 44,
-  },
-  inputError: { borderColor: '#ef4444', backgroundColor: c.dangerBg },
-  hint: { fontSize: 12, color: c.muted },
-  error: { fontSize: 12, color: c.danger },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    wrap: { gap: 4 },
+    label: { fontSize: 13, fontWeight: '600', color: c.text },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      backgroundColor: c.surface,
+      minHeight: 44,
+    },
+    inputError: { borderColor: '#ef4444', backgroundColor: c.dangerBg },
+    hint: { fontSize: 12, color: c.muted },
+    error: { fontSize: 12, color: c.danger },
+  });

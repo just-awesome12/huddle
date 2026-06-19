@@ -27,9 +27,7 @@ function makeTestUser(tag: string): TestUser {
 async function waitForTurnstileToken(page: Page) {
   await page.waitForFunction(
     () => {
-      const el = document.querySelector<HTMLInputElement>(
-        'input[name="turnstileToken"]',
-      );
+      const el = document.querySelector<HTMLInputElement>('input[name="turnstileToken"]');
       return !!el && el.value.length > 0;
     },
     null,
@@ -56,11 +54,7 @@ async function createGroup(page: Page, name: string): Promise<string> {
   return page.url();
 }
 
-async function createIdea(
-  page: Page,
-  groupUrl: string,
-  opts: { title: string; category: string },
-) {
+async function createIdea(page: Page, groupUrl: string, opts: { title: string; category: string }) {
   await page.goto(groupUrl);
   await page.getByRole('link', { name: 'New idea' }).click();
   await page.waitForURL(/\/ideas\/new$/);
@@ -84,14 +78,27 @@ test('run picker → result shown → recorded in history', async ({ page }) => 
 
   await page.getByTestId('picker-run').click();
   await expect(page.getByTestId('picker-result')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('confetti')).toBeAttached();
   const chosen = (await page.getByTestId('picker-result-title').textContent())?.trim();
   expect(['Tacos', 'Ramen']).toContain(chosen);
+  // Provenance: the reveal states it was a random draw and from how many.
+  await expect(page.getByTestId('picker-provenance')).toContainText('at random from 2 options');
 
-  // Recorded in history.
+  // Recorded in history (with the same provenance).
   await page.getByRole('link', { name: /View history/ }).click();
   await page.waitForURL(/\/history$/);
   await expect(page.getByTestId('decision-row')).toHaveCount(1);
   await expect(page.getByTestId('decision-list')).toContainText(chosen!);
+  await expect(page.getByTestId('decision-list')).toContainText('randomly from 2 options');
+
+  // Fairness: the proposer of the 2 ideas now shows 1 pick.
+  await expect(page.getByTestId('fairness')).toContainText('proposed 2 · picked 1');
+
+  // Recap reflects the activity (2 ideas proposed, 1 picker run).
+  await page.getByTestId('recap-link').click();
+  await page.waitForURL(/\/recap$/);
+  await expect(page.getByTestId('recap-stats')).toContainText('2');
+  await expect(page.getByTestId('recap-top-proposer')).toBeVisible();
 });
 
 test('a category with fewer than two ideas disables the pick', async ({ page }) => {
@@ -106,23 +113,15 @@ test('a category with fewer than two ideas disables the pick', async ({ page }) 
   await expect(page.getByTestId('picker-run')).toBeEnabled();
 
   // Activity has only 1 → disabled.
-  await page
-    .getByTestId('picker-categories')
-    .getByRole('button', { name: 'Activity' })
-    .click();
+  await page.getByTestId('picker-categories').getByRole('button', { name: 'Activity' }).click();
   await expect(page.getByTestId('picker-run')).toBeDisabled();
 
   // Food has 2 → enabled again.
-  await page
-    .getByTestId('picker-categories')
-    .getByRole('button', { name: 'Food' })
-    .click();
+  await page.getByTestId('picker-categories').getByRole('button', { name: 'Food' }).click();
   await expect(page.getByTestId('picker-run')).toBeEnabled();
 });
 
-test('a chosen idea cannot be hard-deleted — user is told to dismiss', async ({
-  page,
-}) => {
+test('a chosen idea cannot be hard-deleted — user is told to dismiss', async ({ page }) => {
   await signUp(page, makeTestUser('fk'));
   const groupUrl = await createGroup(page, 'FK Group');
   await createIdea(page, groupUrl, { title: 'Tacos', category: 'food' });

@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  subscribeToGroup,
-  subscribeToMyGroups,
-  type RealtimeChange,
-} from '../src/realtime';
+import { subscribeToGroup, subscribeToMyGroups, type RealtimeChange } from '../src/realtime';
 
 /**
  * Unit tests for the framework-free realtime helper: channel/binding
@@ -69,6 +65,7 @@ describe('subscribeToGroup', () => {
       group_members: 'group_id=eq.g1',
       groups: 'id=eq.g1',
       decisions: 'group_id=eq.g1',
+      idea_comments: 'group_id=eq.g1',
     });
   });
 
@@ -117,7 +114,11 @@ describe('subscribeToGroup', () => {
     subscribeToGroup(client as never, 'g1', (c) => changes.push(c));
 
     const groupsBinding = client._channels[0]!.bindings.find((b) => b.config.table === 'groups')!;
-    groupsBinding.cb({ eventType: 'UPDATE', new: { id: 'g1', name: 'Renamed' }, old: { id: 'g1', name: 'Old' } });
+    groupsBinding.cb({
+      eventType: 'UPDATE',
+      new: { id: 'g1', name: 'Renamed' },
+      old: { id: 'g1', name: 'Old' },
+    });
 
     expect(changes[0]).toMatchObject({ table: 'groups', groupId: 'g1' });
   });
@@ -132,7 +133,12 @@ describe('subscribeToGroup', () => {
   it('forwards the subscribe status to onStatus', () => {
     const client = makeClient();
     const statuses: string[] = [];
-    subscribeToGroup(client as never, 'g1', () => {}, (s) => statuses.push(s));
+    subscribeToGroup(
+      client as never,
+      'g1',
+      () => {},
+      (s) => statuses.push(s),
+    );
     expect(statuses).toEqual(['SUBSCRIBED']);
   });
 });
@@ -159,6 +165,10 @@ describe('subscribeToMyGroups', () => {
     const members = client._channels[0]!.bindings.find((b) => b.config.table === 'group_members')!;
     members.cb({ eventType: 'DELETE', new: {}, old: { group_id: 'g9', user_id: 'u1' } });
 
-    expect(changes[0]).toMatchObject({ table: 'group_members', eventType: 'DELETE', groupId: 'g9' });
+    expect(changes[0]).toMatchObject({
+      table: 'group_members',
+      eventType: 'DELETE',
+      groupId: 'g9',
+    });
   });
 });

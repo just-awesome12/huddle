@@ -3,11 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { acceptInviteSchema } from '@huddle/validation';
-import {
-  usePeekInvite,
-  useAcceptInvite,
-  inviteErrorKind,
-} from '@huddle/api-client/invites-hooks';
+import { usePeekInvite, useAcceptInvite, inviteErrorKind } from '@huddle/api-client/invites-hooks';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
 
@@ -28,15 +24,7 @@ function inviteErrorMessage(e: unknown): string {
   }
 }
 
-function StatusCard({
-  title,
-  body,
-  onHome,
-}: {
-  title: string;
-  body: string;
-  onHome: () => void;
-}) {
+function StatusCard({ title, body, onHome }: { title: string; body: string; onHome: () => void }) {
   const c = useColors();
   const styles = makeStyles(c);
   return (
@@ -88,7 +76,9 @@ export default function AcceptInviteScreen() {
   if (peek.isError) {
     return (
       <StatusCard
-        title={inviteErrorKind(peek.error) === 'not_found' ? 'Invite not found' : 'Something went wrong'}
+        title={
+          inviteErrorKind(peek.error) === 'not_found' ? 'Invite not found' : 'Something went wrong'
+        }
         body={
           inviteErrorKind(peek.error) === 'not_found'
             ? "This invite doesn't exist — it may have been revoked. Ask for a new link."
@@ -166,27 +156,28 @@ export default function AcceptInviteScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    backgroundColor: c.canvas,
-  },
-  card: {
-    alignSelf: 'stretch',
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 10,
-  },
-  kicker: { fontSize: 13, color: c.muted },
-  groupName: { fontSize: 20, fontWeight: '700', color: c.text },
-  heading: { fontSize: 18, fontWeight: '600', color: c.text },
-  body: { fontSize: 14, color: c.muted, lineHeight: 20 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    center: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 16,
+      backgroundColor: c.canvas,
+    },
+    card: {
+      alignSelf: 'stretch',
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 10,
+    },
+    kicker: { fontSize: 13, color: c.muted },
+    groupName: { fontSize: 20, fontWeight: '700', color: c.text },
+    heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    body: { fontSize: 14, color: c.muted, lineHeight: 20 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+  });

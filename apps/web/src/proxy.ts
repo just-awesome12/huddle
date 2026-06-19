@@ -1,8 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import {
-  createServerSupabaseClient,
-  type CookieOptions,
-} from '@huddle/api-client/server';
+import { createServerSupabaseClient, type CookieOptions } from '@huddle/api-client/server';
 
 /**
  * Auth proxy (formerly "middleware" — renamed in Next.js 16).
@@ -23,12 +20,17 @@ import {
  *   reachable in both signed-in and signed-out states.
  */
 
+// Auth pages: reachable signed-out; signed-in users get bounced home.
 const PUBLIC_PATHS = new Set(['/sign-in', '/sign-up']);
+// Legal pages: reachable in BOTH states (no redirect either way) — also
+// needed as public URLs for the app stores.
+const ALWAYS_PUBLIC_PATHS = new Set(['/terms', '/privacy']);
 const ONBOARDING_PATH = '/onboarding';
 const PLACEHOLDER_USERNAME_RE = /^u_[0-9a-f]{12}$/;
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true;
+  if (ALWAYS_PUBLIC_PATHS.has(pathname)) return true;
   if (pathname.startsWith('/auth/')) return true;
   return false;
 }
@@ -38,9 +40,7 @@ export async function proxy(request: NextRequest) {
 
   const supabase = createServerSupabaseClient({
     getAll: () => request.cookies.getAll(),
-    setAll: (
-      cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
-    ) => {
+    setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
       cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
       response = NextResponse.next({ request });
       cookiesToSet.forEach(({ name, value, options }) =>
@@ -76,11 +76,7 @@ export async function proxy(request: NextRequest) {
   // We only check this if the user is signed in AND not already on
   // onboarding (to avoid an infinite loop) AND not on /auth/* (the
   // OAuth callback needs to complete before we can do this check).
-  if (
-    user &&
-    pathname !== ONBOARDING_PATH &&
-    !pathname.startsWith('/auth/')
-  ) {
+  if (user && pathname !== ONBOARDING_PATH && !pathname.startsWith('/auth/')) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('username')

@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_users_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decisions: {
         Row: {
           candidate_idea_ids: string[]
@@ -222,14 +255,98 @@ export type Database = {
           },
         ]
       }
+      idea_comments: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          group_id: string
+          id: string
+          idea_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          group_id: string
+          id?: string
+          idea_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          idea_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_comments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_comments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idea_votes: {
+        Row: {
+          created_at: string
+          idea_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          idea_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          idea_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_votes_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ideas: {
         Row: {
           category: Database["public"]["Enums"]["idea_category"]
           created_at: string
           description: string | null
+          event_date: string | null
           group_id: string
           id: string
           link: string | null
+          location: string | null
           photo_path: string | null
           proposed_by: string | null
           status: Database["public"]["Enums"]["idea_status"]
@@ -240,9 +357,11 @@ export type Database = {
           category: Database["public"]["Enums"]["idea_category"]
           created_at?: string
           description?: string | null
+          event_date?: string | null
           group_id: string
           id?: string
           link?: string | null
+          location?: string | null
           photo_path?: string | null
           proposed_by?: string | null
           status?: Database["public"]["Enums"]["idea_status"]
@@ -253,9 +372,11 @@ export type Database = {
           category?: Database["public"]["Enums"]["idea_category"]
           created_at?: string
           description?: string | null
+          event_date?: string | null
           group_id?: string
           id?: string
           link?: string | null
+          location?: string | null
           photo_path?: string | null
           proposed_by?: string | null
           status?: Database["public"]["Enums"]["idea_status"]
@@ -282,6 +403,7 @@ export type Database = {
       notification_prefs: {
         Row: {
           group_invite: boolean
+          new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
           updated_at: string
@@ -289,6 +411,7 @@ export type Database = {
         }
         Insert: {
           group_invite?: boolean
+          new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
           updated_at?: string
@@ -296,6 +419,7 @@ export type Database = {
         }
         Update: {
           group_invite?: boolean
+          new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
           updated_at?: string
@@ -373,6 +497,54 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          idea_id: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reporter_id: string
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["report_status"]
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          idea_id: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reporter_id: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          idea_id?: string
+          reason?: Database["public"]["Enums"]["report_reason"]
+          reporter_id?: string
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -430,6 +602,8 @@ export type Database = {
       idea_category: "food" | "activity" | "place" | "event" | "other"
       idea_status: "on_radar" | "done" | "dismissed"
       push_platform: "ios" | "android"
+      report_reason: "spam" | "inappropriate" | "harassment" | "other"
+      report_status: "open" | "reviewed" | "dismissed" | "actioned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -564,6 +738,8 @@ export const Constants = {
       idea_category: ["food", "activity", "place", "event", "other"],
       idea_status: ["on_radar", "done", "dismissed"],
       push_platform: ["ios", "android"],
+      report_reason: ["spam", "inappropriate", "harassment", "other"],
+      report_status: ["open", "reviewed", "dismissed", "actioned"],
     },
   },
 } as const

@@ -25,9 +25,7 @@ export async function getSupabaseServerClient(): Promise<SupabaseClient<Database
   const cookieStore = await cookies();
   return createServerSupabaseClient({
     getAll: () => cookieStore.getAll(),
-    setAll: (
-      toSet: { name: string; value: string; options?: CookieOptions }[],
-    ) => {
+    setAll: (toSet: { name: string; value: string; options?: CookieOptions }[]) => {
       try {
         toSet.forEach(({ name, value, options }) => {
           cookieStore.set(name, value, options);

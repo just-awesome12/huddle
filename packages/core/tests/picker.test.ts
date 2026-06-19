@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { randomIndex, pickOne, shuffle } from '../src/picker';
+import { randomIndex, pickOne, shuffle, pickWeightedIndex, fairnessWeights } from '../src/picker';
 // Drift guard: the Deno mirror the Edge Function imports must behave
 // identically. We import it here and run both through the same RNG.
 import * as mirror from '../../../supabase/functions/_shared/picker.ts';
@@ -59,6 +59,38 @@ describe('pickOne', () => {
   });
 });
 
+describe('pickWeightedIndex', () => {
+  it('maps the drawn uniform onto cumulative weight buckets', () => {
+    // weights [1,2,3] → total 6, buckets: 0→i0, 1..2→i1, 3..5→i2.
+    expect(pickWeightedIndex([1, 2, 3], seqRand([0]))).toBe(0);
+    expect(pickWeightedIndex([1, 2, 3], seqRand([1]))).toBe(1);
+    expect(pickWeightedIndex([1, 2, 3], seqRand([2]))).toBe(1);
+    expect(pickWeightedIndex([1, 2, 3], seqRand([3]))).toBe(2);
+    expect(pickWeightedIndex([1, 2, 3], seqRand([5]))).toBe(2);
+  });
+
+  it('rejects empty lists and non-positive / non-integer weights', () => {
+    expect(() => pickWeightedIndex([], seqRand([]))).toThrow();
+    expect(() => pickWeightedIndex([1, 0], seqRand([]))).toThrow();
+    expect(() => pickWeightedIndex([1, 1.5], seqRand([]))).toThrow();
+  });
+});
+
+describe('fairnessWeights', () => {
+  it('favours less-picked proposers, keeps everyone nonzero', () => {
+    // u1 picked 3×, u2 0×, u3 1× → max 3 → weights 1, 4, 3.
+    expect(fairnessWeights(['u1', 'u2', 'u3'], { u1: 3, u3: 1 })).toEqual([1, 4, 3]);
+  });
+
+  it('treats a null/unknown proposer as zero picks (most favoured)', () => {
+    expect(fairnessWeights([null, 'u1'], { u1: 2 })).toEqual([3, 1]);
+  });
+
+  it('is all-equal when nobody has been picked', () => {
+    expect(fairnessWeights(['a', 'b', 'c'], {})).toEqual([1, 1, 1]);
+  });
+});
+
 describe('shuffle', () => {
   it('produces a permutation and leaves the input untouched', () => {
     const input = [1, 2, 3, 4, 5];
@@ -83,9 +115,7 @@ describe('Deno mirror drift guard', () => {
       for (const v of [0, 1, 7, 100, 99999, TWO_POW_32 - 1]) {
         // Use enough repeats in the sequence to satisfy any re-draws.
         const draws = [v, 3, 5, 9];
-        expect(randomIndex(n, seqRand(draws))).toBe(
-          mirror.randomIndex(n, seqRand(draws)),
-        );
+        expect(randomIndex(n, seqRand(draws))).toBe(mirror.randomIndex(n, seqRand(draws)));
       }
     }
   });
@@ -94,8 +124,18 @@ describe('Deno mirror drift guard', () => {
     const items = ['p', 'q', 'r', 's', 't'];
     expect(pickOne(items, seqRand([42]))).toBe(mirror.pickOne(items, seqRand([42])));
     const draws = [4, 3, 2, 1];
-    expect(shuffle(items, seqRand(draws))).toEqual(
-      mirror.shuffle(items, seqRand(draws)),
-    );
+    expect(shuffle(items, seqRand(draws))).toEqual(mirror.shuffle(items, seqRand(draws)));
+  });
+
+  it('pickWeightedIndex and fairnessWeights match the mirror', () => {
+    const weights = [2, 5, 1, 4];
+    for (const v of [0, 3, 7, 11]) {
+      expect(pickWeightedIndex(weights, seqRand([v]))).toBe(
+        mirror.pickWeightedIndex(weights, seqRand([v])),
+      );
+    }
+    const proposers = ['u1', null, 'u2'];
+    const counts = { u1: 4, u2: 1 };
+    expect(fairnessWeights(proposers, counts)).toEqual(mirror.fairnessWeights(proposers, counts));
   });
 });

@@ -52,7 +52,7 @@ routing, and Realtime can evaluate the SELECT policy against the old row
 on DELETE.
 
 **Gotcha (lesson 18):** Realtime reads publication membership at boot.
-Adding tables via migration *after* `supabase start` delivered no events
+Adding tables via migration _after_ `supabase start` delivered no events
 until a clean stack restart. Verify with a real subscriber after
 changing the publication.
 
@@ -84,7 +84,7 @@ changing the publication.
 **Bug found + fixed (lesson 19):** `RealtimeProvider` was web's first
 client-side use of the browser Supabase client, and it threw "URL not
 configured." The api-client env helper reads `process.env[key]`
-*dynamically*; Next only inlines *static* `process.env.NEXT_PUBLIC_*`
+_dynamically_; Next only inlines _static_ `process.env.NEXT_PUBLIC_*`
 into client bundles, so the values were undefined in the browser
 (server-side was fine — Node has the full env). Fix:
 `createBrowserSupabaseClient` accepts a resolved env, and
@@ -108,12 +108,12 @@ values.
 
 ## 7. Decision log D56–D59
 
-| # | Decision | Rationale |
-|---|---|---|
-| D56 | Realtime uses plain Postgres Changes channels (not private-channel broadcast). RLS enforcement on Postgres Changes verified empirically (R-4). | A member receives, a non-member receives nothing — proven by integration test. Simpler than the broadcast pattern, no extra RLS-on-`realtime.messages` policies. |
-| D57 | One framework-free realtime helper; platform providers invalidate differently — web `router.refresh()` (no client cache, D43), mobile TanStack Query invalidation. | Keeps the subscription logic shared and react-free; each platform applies its own cache model. |
-| D58 | Invalidations are throttled (web: 500ms leading+trailing) and subscriptions are scoped (per-group channel + a my-groups channel), never a blanket "refetch everything on any change." | Prevents refetch storms from bursts; keeps live updates targeted. |
-| D59 | `createBrowserSupabaseClient` accepts a resolved env; the web app passes statically-referenced `NEXT_PUBLIC_*` so Next inlines them into the client bundle. | The dynamic `process.env[key]` helper yields undefined in browser bundles; static refs are the only values Next inlines. |
+| #   | Decision                                                                                                                                                                              | Rationale                                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D56 | Realtime uses plain Postgres Changes channels (not private-channel broadcast). RLS enforcement on Postgres Changes verified empirically (R-4).                                        | A member receives, a non-member receives nothing — proven by integration test. Simpler than the broadcast pattern, no extra RLS-on-`realtime.messages` policies. |
+| D57 | One framework-free realtime helper; platform providers invalidate differently — web `router.refresh()` (no client cache, D43), mobile TanStack Query invalidation.                    | Keeps the subscription logic shared and react-free; each platform applies its own cache model.                                                                   |
+| D58 | Invalidations are throttled (web: 500ms leading+trailing) and subscriptions are scoped (per-group channel + a my-groups channel), never a blanket "refetch everything on any change." | Prevents refetch storms from bursts; keeps live updates targeted.                                                                                                |
+| D59 | `createBrowserSupabaseClient` accepts a resolved env; the web app passes statically-referenced `NEXT_PUBLIC_*` so Next inlines them into the client bundle.                           | The dynamic `process.env[key]` helper yields undefined in browser bundles; static refs are the only values Next inlines.                                         |
 
 ## 8. Lessons added this phase
 
@@ -121,7 +121,7 @@ values.
   `supabase_realtime` after the stack is up delivers no events until a
   clean restart. Re-verify with a live subscriber after publication
   changes.
-- **19 — Next inlines only *static* `process.env.NEXT_PUBLIC_*`.** A
+- **19 — Next inlines only _static_ `process.env.NEXT_PUBLIC_*`.** A
   dynamic `process.env[key]` lookup is undefined in the browser bundle
   (fine server-side, where Node has the full env). Client components
   must reference the vars statically or be handed resolved values.

@@ -16,6 +16,7 @@
     "@huddle/api-client": "workspace:*",
     "@huddle/types": "workspace:*",
     "@huddle/validation": "workspace:*",
+    "@sentry/nextjs": "^10.58.0",
     "@tanstack/react-query": "^5.101.0",
     "browser-image-compression": "^2.0.2",
     "next": "16.2.6",

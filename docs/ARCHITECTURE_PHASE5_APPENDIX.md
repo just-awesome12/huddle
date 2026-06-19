@@ -86,12 +86,12 @@ Rekognition) stays on the table if the calculus changes at launch.
 
 ## 5. Decision log D52–D55
 
-| # | Decision | Rationale |
-|---|---|---|
+| #   | Decision                                                                                                                                                                         | Rationale                                                                                                                                      |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | D52 | Idea edit permissions keep the Phase 1 model: any member may update any field at the DB; the UI gates edit/delete controls to proposer/admin as UX only. Delete is RLS-enforced. | The trust boundary is the group (logged in Phase 1). Column-level enforcement would need triggers for marginal benefit inside a private group. |
-| D53 | OQ-5: report-and-review moderation policy for v1; no automated scanning; report button lands in Phase 10 store prep. | Member-only visibility bounds the risk; zero cost; Apple requires the report mechanism anyway. |
-| D54 | Web photo uploads travel through Server Actions as FormData with client-side compression; `bodySizeLimit: 4mb`. | Upholds D26/D43 (no browser Supabase client). Compression keeps bodies ~1MB; 4mb is headroom, not an invitation. |
-| D55 | Photo objects are managed manually in upload→point→cleanup order with orphan rollback; `deleteIdea` removes the object; filenames are non-crypto unique. | Storage doesn't cascade; ordering guarantees the row never points at a missing object; no RN crypto polyfill. |
+| D53 | OQ-5: report-and-review moderation policy for v1; no automated scanning; report button lands in Phase 10 store prep.                                                             | Member-only visibility bounds the risk; zero cost; Apple requires the report mechanism anyway.                                                 |
+| D54 | Web photo uploads travel through Server Actions as FormData with client-side compression; `bodySizeLimit: 4mb`.                                                                  | Upholds D26/D43 (no browser Supabase client). Compression keeps bodies ~1MB; 4mb is headroom, not an invitation.                               |
+| D55 | Photo objects are managed manually in upload→point→cleanup order with orphan rollback; `deleteIdea` removes the object; filenames are non-crypto unique.                         | Storage doesn't cascade; ordering guarantees the row never points at a missing object; no RN crypto polyfill.                                  |
 
 ## 6. Phase 7 flag (repeated from 5.1, on purpose)
 

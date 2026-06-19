@@ -6,6 +6,7 @@ animated reveal on both apps, and a permanent decision history. It also
 stands up **Huddle's first Edge Function** (`run_picker`).
 
 Shipped as three slices on branch `phase-7-picker`:
+
 - **7.1** — FK migration, pure picker logic, `run_picker` Edge Function,
   decisions data layer, tests.
 - **7.2** — web picker UI + decision history.
@@ -56,6 +57,7 @@ run.
 
 We chose an **Edge Function** over a SECURITY DEFINER RPC (the D45/D48
 pattern), even though both could satisfy the security property:
+
 - The roadmap and D48 both earmarked the picker as the first Edge
   Function, and **Phase 8 (push) needs Edge Function infra regardless** —
   so this stands up the toolchain where it's first useful instead of
@@ -66,11 +68,12 @@ pattern), even though both could satisfy the security property:
   edge runtime to serve the function.
 
 Flow inside the function:
+
 1. Authenticate the caller from the forwarded `Authorization` header
    (a **user-scoped** supabase-js client).
 2. Confirm membership explicitly (→ `403 forbidden` for non-members,
    distinct from "no candidates").
-3. Read candidate ideas through the *user-scoped* client so RLS bounds
+3. Read candidate ideas through the _user-scoped_ client so RLS bounds
    the pool to what the caller can already see; filter to `on_radar`,
    then by category, then intersect with the optional shortlist.
 4. Pick one with the shared unbiased picker.
@@ -84,12 +87,13 @@ Error contract is a JSON `{ error }` body, mapped by the client:
 Carried flag from Phase 1/5: the FK was `ON DELETE CASCADE`, so hard-
 deleting a chosen idea would silently erase the history row.
 
-We needed two things at once: (a) a *direct* hard-delete of a chosen idea
+We needed two things at once: (a) a _direct_ hard-delete of a chosen idea
 must fail (preserve history → "dismiss instead"), and (b) deleting the
-whole *group* must still cascade everything away.
+whole _group_ must still cascade everything away.
 
 `NO ACTION` — not the roadmap-suggested `RESTRICT` — is the correct tool.
 Both raise SQLSTATE 23503 for (a), but they differ on (b):
+
 - `RESTRICT` checks **immediately** when the idea row is deleted. During
   a group-delete cascade the idea can be removed before the decision that
   references it, so `RESTRICT` would abort the whole group delete.
@@ -126,7 +130,7 @@ The roadmap's validation list says "1 candidate → that one is picked." We
 instead require at least two candidates after filtering; a single
 candidate returns `422 too_few_candidates`. Running a random picker over
 one option is a meaningless no-op that would only confuse ("why did it
-make me *pick* the only idea?"). Both clients mirror the server's
+make me _pick_ the only idea?"). Both clients mirror the server's
 candidate computation to **disable the run button** below the threshold,
 so the 422 is a backstop, not the primary UX. The server remains
 authoritative.

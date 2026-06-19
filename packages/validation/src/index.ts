@@ -17,3 +17,5 @@ export * from './groups';
 export * from './invites';
 export * from './ideas';
 export * from './picker';
+export * from './moderation';
+export * from './comments';

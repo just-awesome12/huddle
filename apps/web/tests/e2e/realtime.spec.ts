@@ -73,14 +73,12 @@ async function acceptInvite(page: Page, inviteUrl: string): Promise<string> {
 test('connection indicator reaches Live', async ({ page }) => {
   await signUp(page, makeTestUser('dot'));
   // The provider mounts in the app shell; the dot should go SUBSCRIBED.
-  await expect(page.getByTestId('realtime-status')).toHaveAttribute(
-    'data-status',
-    'SUBSCRIBED',
-    { timeout: 15_000 },
-  );
+  await expect(page.getByTestId('realtime-status')).toHaveAttribute('data-status', 'SUBSCRIBED', {
+    timeout: 15_000,
+  });
 });
 
-test("A adds an idea → B sees it live without reloading", async ({ browser }) => {
+test('A adds an idea → B sees it live without reloading', async ({ browser }) => {
   const admin = makeTestUser('a');
   const member = makeTestUser('b');
 
@@ -99,11 +97,9 @@ test("A adds an idea → B sees it live without reloading", async ({ browser }) 
 
     // B is parked on the group page. Wait for B's group channel to be
     // live before A mutates, so we don't race the subscription.
-    await expect(b.getByTestId('realtime-status')).toHaveAttribute(
-      'data-status',
-      'SUBSCRIBED',
-      { timeout: 15_000 },
-    );
+    await expect(b.getByTestId('realtime-status')).toHaveAttribute('data-status', 'SUBSCRIBED', {
+      timeout: 15_000,
+    });
     await expect(b.getByText('No ideas yet')).toBeVisible();
 
     // A adds an idea from its own context.
@@ -124,9 +120,7 @@ test("A adds an idea → B sees it live without reloading", async ({ browser }) 
   }
 });
 
-test('removed member loses access live (membership event → refresh → 404)', async ({
-  browser,
-}) => {
+test('removed member loses access live (membership event → refresh → 404)', async ({ browser }) => {
   const admin = makeTestUser('ra');
   const member = makeTestUser('rb');
 
@@ -141,11 +135,9 @@ test('removed member loses access live (membership event → refresh → 404)', 
 
     await signUp(b, member);
     await acceptInvite(b, inviteUrl);
-    await expect(b.getByTestId('realtime-status')).toHaveAttribute(
-      'data-status',
-      'SUBSCRIBED',
-      { timeout: 15_000 },
-    );
+    await expect(b.getByTestId('realtime-status')).toHaveAttribute('data-status', 'SUBSCRIBED', {
+      timeout: 15_000,
+    });
 
     // A removes B.
     await a.goto(groupUrl);

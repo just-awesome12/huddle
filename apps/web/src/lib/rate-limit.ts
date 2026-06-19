@@ -27,11 +27,7 @@ function sweep(windowMs: number) {
  * Record a hit for `key` and report whether it is within the limit.
  * Default: 10 requests per 60s window.
  */
-export function rateLimitAllow(
-  key: string,
-  limit = 10,
-  windowMs = 60_000,
-): boolean {
+export function rateLimitAllow(key: string, limit = 10, windowMs = 60_000): boolean {
   const now = Date.now();
   const cutoff = now - windowMs;
   sweep(windowMs);

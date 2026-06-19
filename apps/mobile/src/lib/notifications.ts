@@ -62,9 +62,7 @@ export async function registerForPush(): Promise<void> {
   let token: string;
   try {
     const projectId = resolveProjectId();
-    const result = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined,
-    );
+    const result = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
     token = result.data;
   } catch (e) {
     // No projectId / not a real build — nothing to register. Expected
@@ -107,9 +105,7 @@ export function pathFromResponse(
  * Subscribe to taps on delivered notifications. Returns an unsubscribe.
  * No-op on web.
  */
-export function addNotificationResponseListener(
-  onPath: (path: string) => void,
-): () => void {
+export function addNotificationResponseListener(onPath: (path: string) => void): () => void {
   if (Platform.OS === 'web') return () => {};
   const sub = Notifications.addNotificationResponseReceivedListener((response) => {
     const path = pathFromResponse(response);

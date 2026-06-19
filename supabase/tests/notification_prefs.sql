@@ -48,7 +48,7 @@ insert into public.notification_prefs (user_id) values
 
 set local role postgres;
 select is(
-  (select (new_idea and picker_ran and group_invite)
+  (select (new_idea and picker_ran and group_invite and new_comment)
    from public.notification_prefs
    where user_id = 'decade01-1111-1111-1111-111111111111'),
   true,

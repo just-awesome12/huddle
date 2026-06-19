@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform, useColorScheme } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { darkColors, lightColors, type ThemeColors } from '@/lib/theme';
@@ -27,7 +20,9 @@ async function readPref(): Promise<ThemePref | null> {
   try {
     const v =
       Platform.OS === 'web'
-        ? (typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null)
+        ? typeof localStorage !== 'undefined'
+          ? localStorage.getItem(STORAGE_KEY)
+          : null
         : await SecureStore.getItemAsync(STORAGE_KEY);
     return v === 'light' || v === 'dark' || v === 'system' ? v : null;
   } catch {

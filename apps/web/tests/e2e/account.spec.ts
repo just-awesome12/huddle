@@ -56,10 +56,7 @@ test('a user with no groups can delete their account', async ({ page }) => {
   await expect(page).toHaveURL(/deleted=1/);
 });
 
-test('sole admin of a shared group is blocked with a clear message', async ({
-  page,
-  browser,
-}) => {
+test('sole admin of a shared group is blocked with a clear message', async ({ page, browser }) => {
   const admin = makeTestUser('adm');
   await signUp(page, admin);
   await page.goto('/groups/new');

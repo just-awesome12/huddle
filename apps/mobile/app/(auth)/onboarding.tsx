@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { onboardingSchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
@@ -97,8 +90,8 @@ export default function OnboardingScreen() {
         <View style={styles.card}>
           <Text style={styles.title}>Pick a username</Text>
           <Text style={styles.muted}>
-            One more step before you can start sharing ideas. Your username and
-            display name appear in every group you join.
+            One more step before you can start sharing ideas. Your username and display name appear
+            in every group you join.
           </Text>
 
           <FormField
@@ -131,19 +124,20 @@ export default function OnboardingScreen() {
   );
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  flex: { flex: 1, backgroundColor: c.canvas },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
-  card: {
-    backgroundColor: c.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: c.border,
-    padding: 20,
-    gap: 14,
-  },
-  title: { fontSize: 22, fontWeight: '700', color: c.text },
-  muted: { color: c.muted, fontSize: 14 },
-  alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
-  alertText: { color: c.dangerText, fontSize: 13 },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: c.canvas },
+    scroll: { flexGrow: 1, justifyContent: 'center', padding: 16 },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: 20,
+      gap: 14,
+    },
+    title: { fontSize: 22, fontWeight: '700', color: c.text },
+    muted: { color: c.muted, fontSize: 14 },
+    alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
+    alertText: { color: c.dangerText, fontSize: 13 },
+  });

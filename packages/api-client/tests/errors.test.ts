@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  mapSupabaseError,
-  unwrap,
-  isHuddleError,
-  type HuddleError,
-} from '../src/errors';
+import { mapSupabaseError, unwrap, isHuddleError, type HuddleError } from '../src/errors';
 
 describe('mapSupabaseError', () => {
   it('maps RLS denial (42501) to unauthorized', () => {
@@ -72,9 +67,9 @@ describe('unwrap', () => {
   });
 
   it('throws a HuddleError-tagged error when result has error', () => {
-    expect(() =>
-      unwrap({ data: null, error: { code: '23505', message: 'dup' } }),
-    ).toThrowError(/dup/);
+    expect(() => unwrap({ data: null, error: { code: '23505', message: 'dup' } })).toThrowError(
+      /dup/,
+    );
   });
 
   it('throws with the right kind attached', () => {

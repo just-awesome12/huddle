@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  createBrowserSupabaseClient,
-  __resetBrowserClientForTests,
-} from '../src/client.browser';
+import { createBrowserSupabaseClient, __resetBrowserClientForTests } from '../src/client.browser';
 
 const ORIGINAL_ENV = { ...process.env };
 

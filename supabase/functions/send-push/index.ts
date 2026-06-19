@@ -55,19 +55,12 @@ function str(v: unknown): string | null {
 
 /** Group-name lookup (used in two event types). */
 async function groupName(service: Service, groupId: string): Promise<string> {
-  const { data } = await service
-    .from('groups')
-    .select('name')
-    .eq('id', groupId)
-    .maybeSingle();
+  const { data } = await service.from('groups').select('name').eq('id', groupId).maybeSingle();
   return (data?.name as string) ?? 'your group';
 }
 
 /** Build Recipient[] for a set of user ids (their tokens × their prefs). */
-async function recipientsForUsers(
-  service: Service,
-  userIds: string[],
-): Promise<Recipient[]> {
+async function recipientsForUsers(service: Service, userIds: string[]): Promise<Recipient[]> {
   if (userIds.length === 0) return [];
   const [{ data: tokens }, { data: prefs }] = await Promise.all([
     service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
@@ -79,6 +72,7 @@ async function recipientsForUsers(
       new_idea: p.new_idea as boolean,
       picker_ran: p.picker_ran as boolean,
       group_invite: p.group_invite as boolean,
+      new_comment: p.new_comment as boolean,
     });
   }
   return (tokens ?? []).map((t) => ({
@@ -89,10 +83,7 @@ async function recipientsForUsers(
 }
 
 async function memberIds(service: Service, groupId: string): Promise<string[]> {
-  const { data } = await service
-    .from('group_members')
-    .select('user_id')
-    .eq('group_id', groupId);
+  const { data } = await service.from('group_members').select('user_id').eq('group_id', groupId);
   return (data ?? []).map((m) => m.user_id as string);
 }
 
@@ -121,6 +112,28 @@ async function resolve(
       content: {
         title: `New idea in ${name}`,
         body: str(record.title) ?? 'A new idea was added',
+        data: { path: `/groups/${groupId}/ideas/${ideaId}` },
+      },
+    };
+  }
+
+  if (table === 'idea_comments') {
+    const groupId = str(record.group_id);
+    const ideaId = str(record.idea_id);
+    if (!groupId || !ideaId) return { skip: 'missing idea_comments fields' };
+    const [name, idea] = await Promise.all([
+      groupName(service, groupId),
+      service.from('ideas').select('title').eq('id', ideaId).maybeSingle(),
+    ]);
+    const ideaTitle = (idea.data?.title as string) ?? 'an idea';
+    const body = str(record.body) ?? 'New comment';
+    return {
+      event: 'new_comment',
+      actorId: str(record.author_id),
+      recipientUserIds: await memberIds(service, groupId),
+      content: {
+        title: `New comment in ${name}`,
+        body: `${ideaTitle}: ${body}`,
         data: { path: `/groups/${groupId}/ideas/${ideaId}` },
       },
     };

@@ -12,10 +12,7 @@ interface RenameGroupFormProps {
 }
 
 export function RenameGroupForm({ groupId, currentName }: RenameGroupFormProps) {
-  const [state, formAction, pending] = useActionState(
-    renameGroupAction,
-    EMPTY_GROUP_STATE,
-  );
+  const [state, formAction, pending] = useActionState(renameGroupAction, EMPTY_GROUP_STATE);
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-3">

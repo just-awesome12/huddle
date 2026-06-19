@@ -93,25 +93,14 @@ export function UsernameSearch({ groupId }: UsernameSearchProps) {
   );
 }
 
-function SearchResultRow({
-  groupId,
-  profile,
-}: {
-  groupId: string;
-  profile: ProfileSearchResult;
-}) {
-  const [state, formAction, pending] = useActionState(
-    createInviteAction,
-    EMPTY_INVITE_STATE,
-  );
+function SearchResultRow({ groupId, profile }: { groupId: string; profile: ProfileSearchResult }) {
+  const [state, formAction, pending] = useActionState(createInviteAction, EMPTY_INVITE_STATE);
   const invited = !!state.createdToken;
 
   return (
     <li className="flex items-center justify-between rounded-lg border border-line bg-surface px-4 py-3">
       <div className="flex flex-col">
-        <span className="text-sm font-medium text-content">
-          {profile.display_name}
-        </span>
+        <span className="text-sm font-medium text-content">{profile.display_name}</span>
         <span className="text-xs text-muted">@{profile.username}</span>
       </div>
       <form action={formAction} className="flex flex-col items-end gap-1">

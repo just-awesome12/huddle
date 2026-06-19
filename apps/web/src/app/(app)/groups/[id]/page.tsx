@@ -5,11 +5,9 @@ import {
   fetchGroupMembers,
   type GroupMemberWithProfile,
 } from '@huddle/api-client/groups';
-import {
-  fetchGroupIdeas,
-  type IdeaFilters,
-  type IdeaWithProposer,
-} from '@huddle/api-client/ideas';
+import { fetchGroupIdeas, type IdeaFilters, type IdeaWithProposer } from '@huddle/api-client/ideas';
+import { fetchGroupVoteState } from '@huddle/api-client/votes';
+import { fetchGroupCommentCounts } from '@huddle/api-client/comments';
 import { ideaFiltersSchema } from '@huddle/validation';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { leaveGroupAction, removeMemberAction } from '@/actions/groups';
@@ -32,22 +30,12 @@ function filterHref(groupId: string, filters: IdeaFilters): string {
   return `/groups/${groupId}${qs ? `?${qs}` : ''}`;
 }
 
-function FilterChip({
-  href,
-  active,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-}) {
+function FilterChip({ href, active, label }: { href: string; active: boolean; label: string }) {
   return (
     <Link
       href={href}
       className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-        active
-          ? 'bg-brand-600 text-white'
-          : 'bg-surface-2 text-muted hover:bg-line'
+        active ? 'bg-brand-600 text-white' : 'bg-surface-2 text-muted hover:bg-line'
       }`}
     >
       {label}
@@ -93,6 +81,39 @@ export default async function GroupDetailPage({
   const myMembership = members.find((m) => m.userId === user.id);
   const isAdmin = myMembership?.role === 'admin';
   const hasFilters = !!(filters.status || filters.category);
+
+  // Vote + comment counts for the list (Phase 11) — best-effort.
+  let voteCounts: Record<string, number> = {};
+  let commentCounts: Record<string, number> = {};
+  try {
+    voteCounts = (await fetchGroupVoteState(supabase, id, user.id)).countByIdea;
+    commentCounts = await fetchGroupCommentCounts(supabase, id);
+  } catch {
+    // leave empty
+  }
+
+  // "Upcoming" = on-radar ideas with a date today-or-later, soonest first.
+  // event_date is a YYYY-MM-DD string, so lexical compare == chronological.
+  // Derived from the already-fetched list (no extra query); ignores the
+  // status filter so what's coming up is always visible.
+  const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD, local
+  const upcoming = ideas
+    .filter((i) => i.status === 'on_radar' && i.event_date && i.event_date >= todayStr)
+    .sort((a, b) => (a.event_date! < b.event_date! ? -1 : 1));
+
+  // "Do it again?" = previously-done ideas, oldest first (the ones it's
+  // been longest since), capped — a nostalgia nudge to revive a past hit.
+  const doAgain = ideas
+    .filter((i) => i.status === 'done')
+    .sort((a, b) => (a.updated_at < b.updated_at ? -1 : 1))
+    .slice(0, 3);
+
+  // "Unfinished business" = on-radar ideas the group has upvoted but
+  // never acted on, most-loved first — a nudge to revive a popular idea.
+  const reignite = ideas
+    .filter((i) => i.status === 'on_radar' && (voteCounts[i.id] ?? 0) > 0)
+    .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0))
+    .slice(0, 3);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -140,6 +161,35 @@ export default async function GroupDetailPage({
         </Link>
       </div>
 
+      {upcoming.length > 0 && (
+        <section className="mt-8" data-testid="upcoming-ideas">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Upcoming</h3>
+          <ul className="mt-3 flex flex-col gap-2">
+            {upcoming.map((idea) => (
+              <li key={idea.id}>
+                <Link
+                  href={`/groups/${id}/ideas/${idea.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
+                  <span className="flex shrink-0 items-center gap-3 text-xs text-muted">
+                    <span>
+                      <span aria-hidden>📅</span>{' '}
+                      {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+                    </span>
+                    {idea.location && (
+                      <span className="hidden max-w-[10rem] truncate sm:inline">
+                        <span aria-hidden>📍</span> {idea.location}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
@@ -159,32 +209,28 @@ export default async function GroupDetailPage({
             active={!filters.status}
             label="Any status"
           />
-          {(Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[]).map(
-            (status) => (
-              <FilterChip
-                key={status}
-                href={filterHref(id, { status, category: filters.category })}
-                active={filters.status === status}
-                label={STATUS_LABELS[status]}
-              />
-            ),
-          )}
+          {(Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[]).map((status) => (
+            <FilterChip
+              key={status}
+              href={filterHref(id, { status, category: filters.category })}
+              active={filters.status === status}
+              label={STATUS_LABELS[status]}
+            />
+          ))}
           <span className="mx-1 h-4 w-px bg-line" />
           <FilterChip
             href={filterHref(id, { status: filters.status })}
             active={!filters.category}
             label="Any category"
           />
-          {(Object.keys(CATEGORY_LABELS) as (keyof typeof CATEGORY_LABELS)[]).map(
-            (category) => (
-              <FilterChip
-                key={category}
-                href={filterHref(id, { status: filters.status, category })}
-                active={filters.category === category}
-                label={CATEGORY_LABELS[category]}
-              />
-            ),
-          )}
+          {(Object.keys(CATEGORY_LABELS) as (keyof typeof CATEGORY_LABELS)[]).map((category) => (
+            <FilterChip
+              key={category}
+              href={filterHref(id, { status: filters.status, category })}
+              active={filters.category === category}
+              label={CATEGORY_LABELS[category]}
+            />
+          ))}
         </div>
 
         {ideas.length === 0 ? (
@@ -207,15 +253,48 @@ export default async function GroupDetailPage({
                   className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:border-line hover:bg-surface-2"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium text-content">
-                      {idea.title}
-                    </span>
+                    <span className="truncate text-sm font-medium text-content">{idea.title}</span>
                     <span className="text-xs text-muted">
                       by {idea.proposer?.display_name ?? 'someone'} ·{' '}
                       {new Date(idea.created_at).toLocaleDateString()}
                     </span>
+                    {(idea.event_date || idea.location) && (
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-muted">
+                        {idea.event_date && (
+                          <span>
+                            <span aria-hidden>📅</span>{' '}
+                            {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+                          </span>
+                        )}
+                        {idea.location && (
+                          <span className="truncate">
+                            <span aria-hidden>📍</span> {idea.location}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
+                    {(voteCounts[idea.id] ?? 0) > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted"
+                        data-testid="idea-vote-count"
+                        title={`${voteCounts[idea.id]} upvote(s)`}
+                      >
+                        <span aria-hidden>❤</span>
+                        {voteCounts[idea.id]}
+                      </span>
+                    )}
+                    {(commentCounts[idea.id] ?? 0) > 0 && (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted"
+                        data-testid="idea-comment-count"
+                        title={`${commentCounts[idea.id]} comment(s)`}
+                      >
+                        <span aria-hidden>💬</span>
+                        {commentCounts[idea.id]}
+                      </span>
+                    )}
                     <CategoryBadge category={idea.category} />
                     <StatusBadge status={idea.status} />
                   </div>
@@ -225,6 +304,52 @@ export default async function GroupDetailPage({
           </ul>
         )}
       </section>
+
+      {doAgain.length > 0 && (
+        <section className="mt-10" data-testid="do-again">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Do it again?</h3>
+          <p className="mt-1 text-sm text-muted">Good times worth a repeat.</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {doAgain.map((idea) => (
+              <li key={idea.id}>
+                <Link
+                  href={`/groups/${id}/ideas/${idea.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
+                  <span className="shrink-0 text-xs text-muted">
+                    done {new Date(idea.updated_at).toLocaleDateString()}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {reignite.length > 0 && (
+        <section className="mt-10" data-testid="reignite">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Unfinished business
+          </h3>
+          <p className="mt-1 text-sm text-muted">Loved, but never done. Bump one back up?</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {reignite.map((idea) => (
+              <li key={idea.id}>
+                <Link
+                  href={`/groups/${id}/ideas/${idea.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
+                  <span className="shrink-0 text-xs font-medium text-muted">
+                    <span aria-hidden>❤</span> {voteCounts[idea.id]}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-10">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
@@ -239,13 +364,9 @@ export default async function GroupDetailPage({
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-content">
                   {member.profile.display_name}
-                  {member.userId === user.id && (
-                    <span className="ml-1 text-faint">(you)</span>
-                  )}
+                  {member.userId === user.id && <span className="ml-1 text-faint">(you)</span>}
                 </span>
-                <span className="text-xs text-muted">
-                  @{member.profile.username}
-                </span>
+                <span className="text-xs text-muted">@{member.profile.username}</span>
               </div>
               <div className="flex items-center gap-3">
                 <RoleBadge role={member.role} />

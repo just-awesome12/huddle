@@ -56,7 +56,8 @@ export function assertTurnstileProductionSafe(opts: {
   if (opts.nodeEnv !== 'production') return;
   const reasons: string[] = [];
   if (opts.testModeFlag === 'true') reasons.push('NEXT_PUBLIC_TURNSTILE_TEST_MODE=true');
-  if (opts.secret === TURNSTILE_TEST_SECRET) reasons.push('TURNSTILE_SECRET_KEY is the test secret');
+  if (opts.secret === TURNSTILE_TEST_SECRET)
+    reasons.push('TURNSTILE_SECRET_KEY is the test secret');
   if (reasons.length > 0) {
     throw new Error(
       `Refusing to boot: Turnstile bypass is active in production (${reasons.join('; ')}). ` +

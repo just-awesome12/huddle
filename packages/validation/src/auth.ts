@@ -54,9 +54,7 @@ export type SignUpInput = z.infer<typeof signUpSchema>;
  */
 export const signInSchema = z.object({
   email: emailSchema,
-  password: z
-    .string({ required_error: 'Password is required' })
-    .min(1, 'Password is required'),
+  password: z.string({ required_error: 'Password is required' }).min(1, 'Password is required'),
   // No min length on sign-in — if the user has an existing weak password
   // we still let them sign in. Length policy is enforced at sign-up.
 });

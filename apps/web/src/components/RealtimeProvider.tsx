@@ -10,10 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  subscribeToMyGroups,
-  type RealtimeStatus,
-} from '@huddle/api-client/realtime';
+import { subscribeToMyGroups, type RealtimeStatus } from '@huddle/api-client/realtime';
 import { getBrowserSupabaseClient } from '@/lib/supabase-browser';
 
 /**
@@ -42,13 +39,7 @@ const RealtimeContext = createContext<RealtimeContextValue | null>(null);
 
 const THROTTLE_MS = 500;
 
-export function RealtimeProvider({
-  userId,
-  children,
-}: {
-  userId: string;
-  children: ReactNode;
-}) {
+export function RealtimeProvider({ userId, children }: { userId: string; children: ReactNode }) {
   const router = useRouter();
   const client = useMemo(() => getBrowserSupabaseClient(), []);
   const [status, setStatus] = useState<RealtimeStatus | 'CONNECTING'>('CONNECTING');

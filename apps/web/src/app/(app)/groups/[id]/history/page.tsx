@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroup } from '@huddle/api-client/groups';
-import { fetchGroupDecisions } from '@huddle/api-client/decisions';
+import {
+  fetchGroupDecisions,
+  fetchGroupFairness,
+  type MemberFairness,
+} from '@huddle/api-client/decisions';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { CategoryBadge, CATEGORY_LABELS } from '@/components/IdeaBadges';
 
-export default async function HistoryPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function HistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await getSupabaseServerClient();
@@ -21,31 +21,42 @@ export default async function HistoryPage({
 
   let group;
   let decisions;
+  let fairness: MemberFairness[] = [];
   try {
     group = await fetchGroup(supabase, id);
     decisions = await fetchGroupDecisions(supabase, id);
+    fairness = await fetchGroupFairness(supabase, id);
   } catch {
     notFound();
   }
 
+  // Surface members who've put ideas forward but never had one picked.
+  const dueForAWin = fairness.filter((m) => m.proposed > 0 && m.picked === 0);
+
   return (
     <div className="mx-auto max-w-2xl">
       <GroupRealtime groupId={id} />
-      <Link
-        href={`/groups/${id}`}
-        className="text-sm text-muted hover:text-content"
-      >
+      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
         &larr; Back to {group.name}
       </Link>
 
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-xl font-medium">Decision history</h2>
-        <Link
-          href={`/groups/${id}/picker`}
-          className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-        >
-          Run the picker
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/groups/${id}/recap`}
+            className="text-sm font-medium text-muted hover:text-brand-ink"
+            data-testid="recap-link"
+          >
+            Recap
+          </Link>
+          <Link
+            href={`/groups/${id}/picker`}
+            className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+          >
+            Run the picker
+          </Link>
+        </div>
       </div>
 
       {decisions.length === 0 ? (
@@ -59,9 +70,7 @@ export default async function HistoryPage({
         <ul className="mt-6 flex flex-col gap-3" data-testid="decision-list">
           {decisions.map((d) => {
             const categoryFilter =
-              d.filters &&
-              typeof d.filters === 'object' &&
-              'category' in d.filters
+              d.filters && typeof d.filters === 'object' && 'category' in d.filters
                 ? (d.filters as { category?: string | null }).category
                 : null;
             return (
@@ -83,16 +92,14 @@ export default async function HistoryPage({
                         {d.chosen.title}
                       </Link>
                     ) : (
-                      <span className="text-sm font-medium text-faint italic">
-                        (idea removed)
-                      </span>
+                      <span className="text-sm font-medium text-faint italic">(idea removed)</span>
                     )}
                   </div>
                   {d.chosen && <CategoryBadge category={d.chosen.category} />}
                 </div>
                 <p className="mt-2 text-xs text-muted">
                   by {d.runner?.display_name ?? 'someone'} ·{' '}
-                  {new Date(d.created_at).toLocaleString()} · from{' '}
+                  {new Date(d.created_at).toLocaleString()} · randomly from{' '}
                   {d.candidate_idea_ids.length} option
                   {d.candidate_idea_ids.length === 1 ? '' : 's'}
                   {categoryFilter
@@ -103,6 +110,36 @@ export default async function HistoryPage({
             );
           })}
         </ul>
+      )}
+
+      {fairness.length > 0 && (
+        <section className="mt-10" data-testid="fairness">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Who gets picked
+          </h3>
+          {dueForAWin.length > 0 && (
+            <p className="mt-1 text-sm text-muted" data-testid="fairness-due">
+              Due for a win:{' '}
+              <span className="font-medium text-content">
+                {dueForAWin.map((m) => m.displayName).join(', ')}
+              </span>{' '}
+              — proposed ideas, never picked.
+            </p>
+          )}
+          <ul className="mt-3 flex flex-col gap-2">
+            {fairness.map((m) => (
+              <li
+                key={m.userId}
+                className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3"
+              >
+                <span className="truncate text-sm font-medium text-content">{m.displayName}</span>
+                <span className="shrink-0 text-xs text-muted">
+                  proposed {m.proposed} · picked {m.picked}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

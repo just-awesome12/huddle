@@ -112,9 +112,9 @@ describe('createInvite', () => {
       queryData: null,
       queryError: { code: '42501', message: 'denied' },
     });
-    await expect(
-      createInvite(client as never, { groupId: 'group-1' }),
-    ).rejects.toMatchObject({ huddle: { kind: 'unauthorized' } });
+    await expect(createInvite(client as never, { groupId: 'group-1' })).rejects.toMatchObject({
+      huddle: { kind: 'unauthorized' },
+    });
   });
 
   it('maps the already-a-member trigger (unique_violation) to conflict', async () => {
