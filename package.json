@@ -20,6 +20,7 @@
     "types:generate": "pnpm --filter @huddle/types run types:generate"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "2.47.10",
     "prettier": "3.4.2",
     "turbo": "2.9.12",
     "typescript": "5.7.3"

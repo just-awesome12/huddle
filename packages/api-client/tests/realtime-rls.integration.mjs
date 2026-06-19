@@ -94,17 +94,31 @@ try {
   const bHits = collectInserts(bChan, group.id);
   await Promise.all([awaitSubscribed(aChan), awaitSubscribed(bChan)]);
 
-  const { error: iErr } = await A.from('ideas').insert({
-    group_id: group.id,
-    proposed_by: aSign.user.id,
-    title: 'SECRET idea',
-    category: 'food',
-  });
-  if (iErr) throw new Error(`insert idea: ${iErr.message}`);
+  // A channel reports SUBSCRIBED as soon as it JOINS, but the server-side
+  // postgres_changes replication takes a moment more to actually start
+  // flowing — and a row inserted before it's ready is missed entirely, not
+  // buffered. So insert in a retry loop until the member sees one (this is
+  // pronounced right after a cold `supabase start`). The non-member must
+  // still receive nothing throughout — that's the RLS property under test.
+  let delivered = false;
+  const deadline = Date.now() + 30000;
+  let n = 0;
+  while (!delivered && Date.now() < deadline) {
+    n += 1;
+    const { error: iErr } = await A.from('ideas').insert({
+      group_id: group.id,
+      proposed_by: aSign.user.id,
+      title: `SECRET idea ${n}`,
+      category: 'food',
+    });
+    if (iErr) throw new Error(`insert idea: ${iErr.message}`);
+    await new Promise((r) => setTimeout(r, WINDOW_MS));
+    delivered = aHits.length > 0;
+  }
+  // Give any (incorrect) leak to the non-member a beat to surface too.
+  await new Promise((r) => setTimeout(r, 500));
 
-  await new Promise((r) => setTimeout(r, WINDOW_MS));
-
-  assert(aHits.length === 1, 'member receives their group’s INSERT (delivery works)');
+  assert(delivered, 'member receives their group’s INSERT (delivery works)');
   assert(bHits.length === 0, 'authenticated NON-member receives nothing (RLS enforced, no leak)');
 
   await A.removeAllChannels();
