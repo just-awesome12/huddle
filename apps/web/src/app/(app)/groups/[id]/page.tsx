@@ -206,6 +206,21 @@ export default async function GroupDetailPage({
                       by {idea.proposer?.display_name ?? 'someone'} ·{' '}
                       {new Date(idea.created_at).toLocaleDateString()}
                     </span>
+                    {(idea.event_date || idea.location) && (
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-muted">
+                        {idea.event_date && (
+                          <span>
+                            <span aria-hidden>📅</span>{' '}
+                            {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+                          </span>
+                        )}
+                        {idea.location && (
+                          <span className="truncate">
+                            <span aria-hidden>📍</span> {idea.location}
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {(voteCounts[idea.id] ?? 0) > 0 && (

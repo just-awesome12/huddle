@@ -62,6 +62,8 @@ export default async function EditIdeaPage({
             description: idea.description,
             category: idea.category,
             link: idea.link,
+            eventDate: idea.event_date,
+            location: idea.location,
             photoPath: idea.photo_path,
           }}
           currentPhotoUrl={currentPhotoUrl}

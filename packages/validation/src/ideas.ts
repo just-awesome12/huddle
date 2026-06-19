@@ -51,12 +51,39 @@ const ideaLinkSchema = z
     { message: 'Enter a valid http(s) link' },
   );
 
+// A plain calendar day, "YYYY-MM-DD" — matches the DB `date` column and
+// the native <input type="date"> value. Empty → "no date".
+const ideaEventDateSchema = z
+  .string()
+  .trim()
+  .transform((v) => (v === '' ? undefined : v))
+  .optional()
+  .refine(
+    (v) => {
+      if (v === undefined) return true;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+      // Reject impossible dates (e.g. 2026-02-31) by round-tripping.
+      const d = new Date(`${v}T00:00:00Z`);
+      return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+    },
+    { message: 'Enter a valid date' },
+  );
+
+const ideaLocationSchema = z
+  .string()
+  .trim()
+  .max(200, 'Location must be at most 200 characters')
+  .transform((v) => (v === '' ? undefined : v))
+  .optional();
+
 export const createIdeaSchema = z.object({
   groupId: z.string().uuid('Invalid group id'),
   title: ideaTitleSchema,
   description: ideaDescriptionSchema,
   category: ideaCategorySchema,
   link: ideaLinkSchema,
+  eventDate: ideaEventDateSchema,
+  location: ideaLocationSchema,
 });
 
 export type CreateIdeaInput = z.infer<typeof createIdeaSchema>;
@@ -67,6 +94,8 @@ export const updateIdeaSchema = z.object({
   description: ideaDescriptionSchema,
   category: ideaCategorySchema.optional(),
   link: ideaLinkSchema,
+  eventDate: ideaEventDateSchema,
+  location: ideaLocationSchema,
 });
 
 export type UpdateIdeaInput = z.infer<typeof updateIdeaSchema>;

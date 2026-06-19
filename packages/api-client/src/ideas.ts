@@ -32,6 +32,10 @@ export interface CreateIdeaParams {
   category: IdeaCategory;
   description?: string;
   link?: string;
+  /** Optional target calendar day, "YYYY-MM-DD". */
+  eventDate?: string | null;
+  /** Optional free-text place. */
+  location?: string | null;
 }
 
 export interface UpdateIdeaParams {
@@ -39,6 +43,8 @@ export interface UpdateIdeaParams {
   description?: string;
   category?: IdeaCategory;
   link?: string;
+  eventDate?: string | null;
+  location?: string | null;
 }
 
 // -----------------------------------------------------------------------
@@ -115,6 +121,8 @@ export async function createIdea(client: HuddleClient, params: CreateIdeaParams)
       category: params.category,
       description: params.description ?? null,
       link: params.link ?? null,
+      event_date: params.eventDate ?? null,
+      location: params.location ?? null,
     })
     .select()
     .single();
@@ -134,6 +142,8 @@ export async function updateIdea(
   if (params.description !== undefined) patch.description = params.description;
   if (params.category !== undefined) patch.category = params.category;
   if (params.link !== undefined) patch.link = params.link;
+  if (params.eventDate !== undefined) patch.event_date = params.eventDate;
+  if (params.location !== undefined) patch.location = params.location;
 
   const { data, error } = await client
     .from('ideas')

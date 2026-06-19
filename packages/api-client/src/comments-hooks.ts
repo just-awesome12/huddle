@@ -6,7 +6,6 @@ import {
   addComment,
   deleteComment,
   type CommentWithAuthor,
-  type AddCommentParams,
 } from './comments';
 import type { HuddleClient } from './internal';
 

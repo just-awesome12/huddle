@@ -138,6 +138,17 @@ export default function IdeaDetailScreen() {
             {new Date(idea.data.created_at).toLocaleDateString()}
           </Text>
 
+          {idea.data.event_date ? (
+            <Text style={styles.detailLine} testID="idea-date">
+              📅 {new Date(`${idea.data.event_date}T00:00:00`).toLocaleDateString()}
+            </Text>
+          ) : null}
+          {idea.data.location ? (
+            <Text style={styles.detailLine} testID="idea-location">
+              📍 {idea.data.location}
+            </Text>
+          ) : null}
+
           {(() => {
             const voted = voteState.data?.myVotes.includes(ideaId) ?? false;
             const count = voteState.data?.countByIdea[ideaId] ?? 0;
@@ -377,6 +388,7 @@ const makeStyles = (c: ThemeColors) =>
     title: { fontSize: 20, fontWeight: '700', color: c.text },
     badges: { flexDirection: 'row', gap: 8 },
     meta: { fontSize: 12, color: c.muted },
+    detailLine: { fontSize: 14, color: c.text },
     voteBtn: {
       alignSelf: 'flex-start',
       flexDirection: 'row',

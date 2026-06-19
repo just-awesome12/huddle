@@ -105,6 +105,8 @@ export default function EditIdeaScreen() {
           description: idea.data.description ?? undefined,
           category: idea.data.category,
           link: idea.data.link ?? undefined,
+          eventDate: idea.data.event_date ?? undefined,
+          location: idea.data.location ?? undefined,
         }}
         currentPhotoUrl={photoUrl.data ?? null}
         onSubmit={onSubmit}

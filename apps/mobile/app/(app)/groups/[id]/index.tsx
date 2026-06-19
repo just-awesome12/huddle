@@ -211,6 +211,15 @@ export default function GroupDetailScreen() {
                       <Text style={styles.ideaMeta}>
                         by {idea.proposer?.display_name ?? 'someone'}
                       </Text>
+                      {idea.event_date || idea.location ? (
+                        <Text style={styles.ideaMeta} numberOfLines={1}>
+                          {idea.event_date
+                            ? `📅 ${new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}`
+                            : ''}
+                          {idea.event_date && idea.location ? '  ' : ''}
+                          {idea.location ? `📍 ${idea.location}` : ''}
+                        </Text>
+                      ) : null}
                     </View>
                     <View style={styles.ideaBadges}>
                       {(voteState.data?.countByIdea[idea.id] ?? 0) > 0 ? (

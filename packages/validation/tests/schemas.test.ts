@@ -481,6 +481,32 @@ describe('createIdeaSchema', () => {
     );
     expect(() => createIdeaSchema.parse({ ...base, link: 'not a url' })).toThrow(/valid http/);
   });
+
+  it('accepts a valid event date and clears an empty one', () => {
+    expect(createIdeaSchema.parse({ ...base, eventDate: '2026-07-04' }).eventDate).toBe(
+      '2026-07-04',
+    );
+    expect(createIdeaSchema.parse({ ...base, eventDate: '' }).eventDate).toBeUndefined();
+  });
+
+  it('rejects malformed and impossible dates', () => {
+    expect(() => createIdeaSchema.parse({ ...base, eventDate: '07/04/2026' })).toThrow(
+      /valid date/,
+    );
+    expect(() => createIdeaSchema.parse({ ...base, eventDate: '2026-02-31' })).toThrow(
+      /valid date/,
+    );
+  });
+
+  it('trims location, clears empty, and caps at 200 chars', () => {
+    expect(createIdeaSchema.parse({ ...base, location: '  Joe’s Diner  ' }).location).toBe(
+      'Joe’s Diner',
+    );
+    expect(createIdeaSchema.parse({ ...base, location: '' }).location).toBeUndefined();
+    expect(() => createIdeaSchema.parse({ ...base, location: 'a'.repeat(201) })).toThrow(
+      /at most 200/,
+    );
+  });
 });
 
 describe('updateIdeaSchema', () => {

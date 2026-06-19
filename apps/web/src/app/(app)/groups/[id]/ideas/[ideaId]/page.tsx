@@ -100,6 +100,22 @@ export default async function IdeaDetailPage({
           {new Date(idea.created_at).toLocaleDateString()}
         </p>
 
+        {(idea.event_date || idea.location) && (
+          <div className="mt-3 flex flex-col gap-1 text-sm text-content" data-testid="idea-details">
+            {idea.event_date && (
+              <p data-testid="idea-date">
+                <span aria-hidden>📅</span>{' '}
+                {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+              </p>
+            )}
+            {idea.location && (
+              <p data-testid="idea-location">
+                <span aria-hidden>📍</span> {idea.location}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="mt-4">
           <VoteButton action={voteAction} voted={voted} count={voteCount} />
         </div>

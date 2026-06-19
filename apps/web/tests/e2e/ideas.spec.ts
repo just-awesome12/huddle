@@ -55,7 +55,14 @@ async function createGroup(page: Page, name: string): Promise<string> {
 
 async function createIdea(
   page: Page,
-  opts: { title: string; category?: string; description?: string; link?: string },
+  opts: {
+    title: string;
+    category?: string;
+    description?: string;
+    link?: string;
+    eventDate?: string;
+    location?: string;
+  },
 ) {
   await page.getByRole('link', { name: 'New idea' }).click();
   await page.waitForURL(/\/ideas\/new$/);
@@ -63,6 +70,8 @@ async function createIdea(
   if (opts.category) await page.getByLabel('Category').selectOption(opts.category);
   if (opts.description) await page.getByLabel(/Description/).fill(opts.description);
   if (opts.link) await page.getByLabel(/Link/).fill(opts.link);
+  if (opts.eventDate) await page.getByLabel(/Date/).fill(opts.eventDate);
+  if (opts.location) await page.getByLabel(/Location/).fill(opts.location);
   await page.getByRole('button', { name: 'Add idea' }).click();
   await page.waitForURL(/\/ideas\/[0-9a-f-]{36}$/);
 }
@@ -78,6 +87,8 @@ test('create idea → detail → appears in group list with badges', async ({ pa
     category: 'food',
     description: 'That new place on 5th',
     link: 'https://example.com/tacos',
+    eventDate: '2026-07-04',
+    location: 'Riverside Park',
   });
 
   // Detail page shows everything.
@@ -86,10 +97,13 @@ test('create idea → detail → appears in group list with badges', async ({ pa
   await expect(page.getByRole('link', { name: 'https://example.com/tacos' })).toBeVisible();
   await expect(page.getByTestId('category-badge-food')).toBeVisible();
   await expect(page.getByTestId('status-badge-on_radar')).toBeVisible();
+  await expect(page.getByTestId('idea-location')).toContainText('Riverside Park');
+  await expect(page.getByTestId('idea-date')).toBeVisible();
 
-  // Group list shows the idea.
+  // Group list shows the idea (with its location on the row).
   await page.goto(groupUrl);
   await expect(page.getByTestId('idea-list')).toContainText('Taco Tuesday');
+  await expect(page.getByTestId('idea-list')).toContainText('Riverside Park');
   await expect(page.getByText('Ideas (1)')).toBeVisible();
 });
 

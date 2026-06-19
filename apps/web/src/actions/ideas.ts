@@ -70,6 +70,8 @@ export async function createIdeaAction(
     description: formData.get('description') ?? '',
     category: formData.get('category'),
     link: formData.get('link') ?? '',
+    eventDate: formData.get('eventDate') ?? '',
+    location: formData.get('location') ?? '',
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
@@ -96,6 +98,8 @@ export async function createIdeaAction(
       category: parsed.data.category,
       description: parsed.data.description,
       link: parsed.data.link,
+      eventDate: parsed.data.eventDate,
+      location: parsed.data.location,
     });
     ideaId = idea.id;
   } catch {
@@ -127,6 +131,8 @@ export async function updateIdeaAction(
     description: formData.get('description') ?? '',
     category: formData.get('category'),
     link: formData.get('link') ?? '',
+    eventDate: formData.get('eventDate') ?? '',
+    location: formData.get('location') ?? '',
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
@@ -136,11 +142,13 @@ export async function updateIdeaAction(
   try {
     await updateIdea(supabase, ideaId, {
       title: parsed.data.title,
-      // description/link: undefined here means "cleared", so write null
-      // explicitly via empty-string → undefined normalisation upstream.
+      // Cleared optional fields normalise to undefined upstream; the
+      // data layer skips undefined keys (matches the rest of the form).
       description: parsed.data.description,
       category: parsed.data.category,
       link: parsed.data.link,
+      eventDate: parsed.data.eventDate,
+      location: parsed.data.location,
     });
   } catch {
     return { formError: 'Could not save the idea. Please try again.' };

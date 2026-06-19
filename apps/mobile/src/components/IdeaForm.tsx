@@ -23,6 +23,8 @@ export interface IdeaFormValues {
   description?: string;
   category: IdeaCategory;
   link?: string;
+  eventDate?: string;
+  location?: string;
 }
 
 /** A picked-and-compressed photo ready for upload. */
@@ -67,6 +69,8 @@ export function IdeaForm({
   const [description, setDescription] = useState(initial?.description ?? '');
   const [category, setCategory] = useState<IdeaCategory>(initial?.category ?? 'food');
   const [link, setLink] = useState(initial?.link ?? '');
+  const [eventDate, setEventDate] = useState(initial?.eventDate ?? '');
+  const [location, setLocation] = useState(initial?.location ?? '');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | undefined>>({});
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [removePhoto, setRemovePhoto] = useState(false);
@@ -120,6 +124,8 @@ export function IdeaForm({
       description,
       category,
       link,
+      eventDate,
+      location,
     });
     if (!parsed.success) {
       const flat = parsed.error.flatten().fieldErrors;
@@ -127,6 +133,8 @@ export function IdeaForm({
         title: flat.title?.[0],
         description: flat.description?.[0],
         link: flat.link?.[0],
+        eventDate: flat.eventDate?.[0],
+        location: flat.location?.[0],
       });
       return;
     }
@@ -136,6 +144,8 @@ export function IdeaForm({
         description: parsed.data.description,
         category: parsed.data.category,
         link: parsed.data.link,
+        eventDate: parsed.data.eventDate,
+        location: parsed.data.location,
       },
       photo,
       removePhoto,
@@ -203,6 +213,26 @@ export function IdeaForm({
             placeholder="https://…"
             hint="A menu, event page, map pin — anything useful."
             error={fieldErrors.link}
+          />
+
+          <FormField
+            label="Date (optional)"
+            value={eventDate}
+            onChangeText={setEventDate}
+            placeholder="YYYY-MM-DD"
+            autoCapitalize="none"
+            hint="When is this happening?"
+            error={fieldErrors.eventDate}
+          />
+
+          <FormField
+            label="Location (optional)"
+            value={location}
+            onChangeText={setLocation}
+            maxLength={200}
+            placeholder="Where? A place, address, or area."
+            autoCapitalize="sentences"
+            error={fieldErrors.location}
           />
 
           <View style={styles.fieldBlock}>

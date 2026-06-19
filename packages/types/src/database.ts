@@ -342,9 +342,11 @@ export type Database = {
           category: Database["public"]["Enums"]["idea_category"]
           created_at: string
           description: string | null
+          event_date: string | null
           group_id: string
           id: string
           link: string | null
+          location: string | null
           photo_path: string | null
           proposed_by: string | null
           status: Database["public"]["Enums"]["idea_status"]
@@ -355,9 +357,11 @@ export type Database = {
           category: Database["public"]["Enums"]["idea_category"]
           created_at?: string
           description?: string | null
+          event_date?: string | null
           group_id: string
           id?: string
           link?: string | null
+          location?: string | null
           photo_path?: string | null
           proposed_by?: string | null
           status?: Database["public"]["Enums"]["idea_status"]
@@ -368,9 +372,11 @@ export type Database = {
           category?: Database["public"]["Enums"]["idea_category"]
           created_at?: string
           description?: string | null
+          event_date?: string | null
           group_id?: string
           id?: string
           link?: string | null
+          location?: string | null
           photo_path?: string | null
           proposed_by?: string | null
           status?: Database["public"]["Enums"]["idea_status"]
