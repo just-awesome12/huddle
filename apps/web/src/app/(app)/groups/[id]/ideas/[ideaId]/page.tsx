@@ -13,6 +13,7 @@ import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { ReportIdeaForm } from '@/components/ReportIdeaForm';
 import { AddCommentForm } from '@/components/AddCommentForm';
+import { AddToCalendar } from '@/components/AddToCalendar';
 import { VoteButton } from '@/components/VoteButton';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
@@ -116,6 +117,17 @@ export default async function IdeaDetailPage({
           </div>
         )}
 
+        {idea.event_date && (
+          <AddToCalendar
+            event={{
+              title: idea.title,
+              date: idea.event_date,
+              location: idea.location,
+              details: idea.description,
+            }}
+          />
+        )}
+
         <div className="mt-4">
           <VoteButton action={voteAction} voted={voted} count={voteCount} />
         </div>
@@ -195,6 +207,15 @@ export default async function IdeaDetailPage({
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
           Discussion ({comments.length})
         </h3>
+
+        {idea.status === 'done' && (
+          <p
+            className="mt-2 rounded-md bg-surface-2 px-3 py-2 text-sm text-content"
+            data-testid="completion-prompt"
+          >
+            How was it? Drop a quick note for the group — what to remember for next time.
+          </p>
+        )}
 
         {comments.length === 0 ? (
           <p className="mt-3 text-sm text-muted">No comments yet. Start the discussion.</p>

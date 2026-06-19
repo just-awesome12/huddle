@@ -42,12 +42,21 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
 
       <div className="mt-4 flex items-center justify-between">
         <h2 className="text-xl font-medium">Decision history</h2>
-        <Link
-          href={`/groups/${id}/picker`}
-          className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
-        >
-          Run the picker
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/groups/${id}/recap`}
+            className="text-sm font-medium text-muted hover:text-brand-ink"
+            data-testid="recap-link"
+          >
+            Recap
+          </Link>
+          <Link
+            href={`/groups/${id}/picker`}
+            className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+          >
+            Run the picker
+          </Link>
+        </div>
       </div>
 
       {decisions.length === 0 ? (

@@ -30,6 +30,7 @@ import {
 } from '@huddle/api-client/comments-hooks';
 import type { ReportReason } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
+import { googleCalendarUrl } from '@/lib/calendar';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
@@ -148,6 +149,22 @@ export default function IdeaDetailScreen() {
               📍 {idea.data.location}
             </Text>
           ) : null}
+          {idea.data.event_date ? (
+            <Button
+              label="📅 Add to calendar"
+              variant="secondary"
+              onPress={() =>
+                Linking.openURL(
+                  googleCalendarUrl({
+                    title: idea.data.title,
+                    date: idea.data.event_date!,
+                    location: idea.data.location,
+                    details: idea.data.description,
+                  }),
+                )
+              }
+            />
+          ) : null}
 
           {(() => {
             const voted = voteState.data?.myVotes.includes(ideaId) ?? false;
@@ -244,6 +261,11 @@ export default function IdeaDetailScreen() {
           <Text style={styles.sectionLabel}>
             Discussion{comments.isSuccess ? ` (${comments.data.length})` : ''}
           </Text>
+          {idea.data.status === 'done' ? (
+            <Text style={styles.completionPrompt}>
+              How was it? Drop a quick note for the group — what to remember for next time.
+            </Text>
+          ) : null}
           {comments.isPending ? (
             <ActivityIndicator color={c.brand[600]} />
           ) : comments.isError ? (
@@ -455,6 +477,14 @@ const makeStyles = (c: ThemeColors) =>
     commentAuthor: { fontSize: 13, fontWeight: '600', color: c.text },
     commentDelete: { fontSize: 12, color: c.muted },
     commentBody: { fontSize: 14, color: c.text, lineHeight: 19 },
+    completionPrompt: {
+      fontSize: 13,
+      color: c.text,
+      backgroundColor: c.surface2,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
     commentInput: {
       borderWidth: 1,
       borderColor: c.border,

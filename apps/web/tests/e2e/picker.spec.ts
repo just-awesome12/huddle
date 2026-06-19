@@ -93,6 +93,12 @@ test('run picker → result shown → recorded in history', async ({ page }) => 
 
   // Fairness: the proposer of the 2 ideas now shows 1 pick.
   await expect(page.getByTestId('fairness')).toContainText('proposed 2 · picked 1');
+
+  // Recap reflects the activity (2 ideas proposed, 1 picker run).
+  await page.getByTestId('recap-link').click();
+  await page.waitForURL(/\/recap$/);
+  await expect(page.getByTestId('recap-stats')).toContainText('2');
+  await expect(page.getByTestId('recap-top-proposer')).toBeVisible();
 });
 
 test('a category with fewer than two ideas disables the pick', async ({ page }) => {

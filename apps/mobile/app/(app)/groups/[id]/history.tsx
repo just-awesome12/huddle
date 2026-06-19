@@ -45,7 +45,14 @@ export default function HistoryScreen() {
     <View style={styles.container}>
       <View style={styles.headerBar}>
         <Button label="← Back" variant="ghost" onPress={() => router.replace(`/groups/${id}`)} />
-        <Button label="Run picker" onPress={() => router.push(`/groups/${id}/picker`)} />
+        <View style={styles.headerActions}>
+          <Button
+            label="Recap"
+            variant="ghost"
+            onPress={() => router.push(`/groups/${id}/recap`)}
+          />
+          <Button label="Run picker" onPress={() => router.push(`/groups/${id}/picker`)} />
+        </View>
       </View>
 
       <FlatList
@@ -147,6 +154,7 @@ const makeStyles = (c: ThemeColors) =>
       borderBottomColor: c.border,
       backgroundColor: c.surface,
     },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     list: { padding: 16, gap: 12 },
     title: { fontSize: 20, fontWeight: '700', color: c.text, marginBottom: 4 },
     heading: { fontSize: 18, fontWeight: '600', color: c.text },

@@ -69,9 +69,11 @@ test('upvote an idea → count increments, persists, and shows on the list', asy
   await expect(page.getByTestId('vote-count')).toHaveText('1');
   await expect(page.getByTestId('vote-button')).toHaveAttribute('aria-pressed', 'true');
 
-  // Shows on the group list.
+  // Shows on the group list, and an upvoted on-radar idea surfaces in
+  // the "Unfinished business" (reignite) section.
   await page.goto(groupUrl);
   await expect(page.getByTestId('idea-vote-count')).toContainText('1');
+  await expect(page.getByTestId('reignite')).toContainText('Tacos');
 
   // Toggle off → back to 0.
   await page.getByTestId('idea-list').getByRole('link').first().click();

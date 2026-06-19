@@ -120,6 +120,13 @@ export default function GroupDetailScreen() {
     .sort((a, b) => (a.updated_at < b.updated_at ? -1 : 1))
     .slice(0, 3);
 
+  // "Unfinished business" = upvoted on-radar ideas, most-loved first.
+  const voteCounts = voteState.data?.countByIdea ?? {};
+  const reignite = (ideas.data ?? [])
+    .filter((i) => i.status === 'on_radar' && (voteCounts[i.id] ?? 0) > 0)
+    .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0))
+    .slice(0, 3);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -290,6 +297,29 @@ export default function GroupDetailScreen() {
                         </Text>
                         <Text style={styles.ideaMeta}>
                           done {new Date(idea.updated_at).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+
+              {reignite.length > 0 ? (
+                <View style={styles.upcomingBlock}>
+                  <Text style={styles.sectionTitle}>Unfinished business</Text>
+                  {reignite.map((idea) => (
+                    <Pressable
+                      key={idea.id}
+                      accessibilityRole="button"
+                      style={({ pressed }) => [styles.ideaRow, pressed && styles.ideaRowPressed]}
+                      onPress={() => router.push(`/groups/${id}/ideas/${idea.id}`)}
+                    >
+                      <View style={styles.ideaInfo}>
+                        <Text style={styles.ideaTitle} numberOfLines={1}>
+                          {idea.title}
+                        </Text>
+                        <Text style={styles.ideaMeta}>
+                          ❤ {voteCounts[idea.id]} · still on the radar
                         </Text>
                       </View>
                     </Pressable>

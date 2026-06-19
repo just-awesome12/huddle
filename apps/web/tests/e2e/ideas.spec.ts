@@ -102,6 +102,11 @@ test('create idea → detail → appears in group list with badges', async ({ pa
   await expect(page.getByTestId('status-badge-on_radar')).toBeVisible();
   await expect(page.getByTestId('idea-location')).toContainText('Riverside Park');
   await expect(page.getByTestId('idea-date')).toBeVisible();
+  // Add-to-calendar appears for a dated idea, with a Google template link.
+  await expect(page.getByTestId('add-to-calendar')).toBeVisible();
+  const gcalHref = await page.getByTestId('calendar-google').getAttribute('href');
+  expect(gcalHref).toContain('calendar.google.com');
+  expect(gcalHref).toContain('Taco+Tuesday');
 
   // Group list shows the idea (with its location on the row) and surfaces
   // it in the Upcoming section (future-dated, on the radar).
@@ -148,6 +153,8 @@ test('a done idea surfaces in the "Do it again?" section', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Mark done' }).click();
   await expect(page.getByTestId('status-badge-done')).toBeVisible();
+  // Completion note prompt shows once an idea is done.
+  await expect(page.getByTestId('completion-prompt')).toBeVisible();
 
   await page.goto(groupUrl);
   await expect(page.getByTestId('do-again')).toContainText('Karaoke night');

@@ -82,6 +82,16 @@ export default async function GroupDetailPage({
   const isAdmin = myMembership?.role === 'admin';
   const hasFilters = !!(filters.status || filters.category);
 
+  // Vote + comment counts for the list (Phase 11) — best-effort.
+  let voteCounts: Record<string, number> = {};
+  let commentCounts: Record<string, number> = {};
+  try {
+    voteCounts = (await fetchGroupVoteState(supabase, id, user.id)).countByIdea;
+    commentCounts = await fetchGroupCommentCounts(supabase, id);
+  } catch {
+    // leave empty
+  }
+
   // "Upcoming" = on-radar ideas with a date today-or-later, soonest first.
   // event_date is a YYYY-MM-DD string, so lexical compare == chronological.
   // Derived from the already-fetched list (no extra query); ignores the
@@ -98,15 +108,12 @@ export default async function GroupDetailPage({
     .sort((a, b) => (a.updated_at < b.updated_at ? -1 : 1))
     .slice(0, 3);
 
-  // Vote + comment counts for the list (Phase 11) — best-effort.
-  let voteCounts: Record<string, number> = {};
-  let commentCounts: Record<string, number> = {};
-  try {
-    voteCounts = (await fetchGroupVoteState(supabase, id, user.id)).countByIdea;
-    commentCounts = await fetchGroupCommentCounts(supabase, id);
-  } catch {
-    // leave empty
-  }
+  // "Unfinished business" = on-radar ideas the group has upvoted but
+  // never acted on, most-loved first — a nudge to revive a popular idea.
+  const reignite = ideas
+    .filter((i) => i.status === 'on_radar' && (voteCounts[i.id] ?? 0) > 0)
+    .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0))
+    .slice(0, 3);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -312,6 +319,30 @@ export default async function GroupDetailPage({
                   <span className="truncate text-sm font-medium text-content">{idea.title}</span>
                   <span className="shrink-0 text-xs text-muted">
                     done {new Date(idea.updated_at).toLocaleDateString()}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {reignite.length > 0 && (
+        <section className="mt-10" data-testid="reignite">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Unfinished business
+          </h3>
+          <p className="mt-1 text-sm text-muted">Loved, but never done. Bump one back up?</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {reignite.map((idea) => (
+              <li key={idea.id}>
+                <Link
+                  href={`/groups/${id}/ideas/${idea.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
+                  <span className="shrink-0 text-xs font-medium text-muted">
+                    <span aria-hidden>❤</span> {voteCounts[idea.id]}
                   </span>
                 </Link>
               </li>
