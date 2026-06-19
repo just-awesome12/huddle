@@ -20,11 +20,13 @@ export async function runPickerAction(input: {
   groupId: string;
   category?: string | null;
   shortlist?: string[] | null;
+  fair?: boolean;
 }): Promise<PickerActionResult> {
   const parsed = runPickerSchema.safeParse({
     groupId: input.groupId,
     category: input.category ?? undefined,
     shortlist: input.shortlist && input.shortlist.length > 0 ? input.shortlist : undefined,
+    fair: input.fair ?? false,
   });
   if (!parsed.success) return { ok: false, error: 'generic' };
 
@@ -39,6 +41,7 @@ export async function runPickerAction(input: {
       groupId: parsed.data.groupId,
       category: parsed.data.category,
       shortlist: parsed.data.shortlist,
+      fair: parsed.data.fair,
     });
 
     // History goes live for members via realtime, but revalidate so the

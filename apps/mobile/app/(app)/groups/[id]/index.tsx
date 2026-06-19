@@ -114,6 +114,12 @@ export default function GroupDetailScreen() {
     .filter((i) => i.status === 'on_radar' && i.event_date && i.event_date >= todayStr)
     .sort((a, b) => (a.event_date! < b.event_date! ? -1 : 1));
 
+  // "Do it again?" = done ideas, oldest first, capped — a revive nudge.
+  const doAgain = (ideas.data ?? [])
+    .filter((i) => i.status === 'done')
+    .sort((a, b) => (a.updated_at < b.updated_at ? -1 : 1))
+    .slice(0, 3);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -267,6 +273,29 @@ export default function GroupDetailScreen() {
                   </Pressable>
                 ))
               )}
+
+              {doAgain.length > 0 ? (
+                <View style={styles.upcomingBlock}>
+                  <Text style={styles.sectionTitle}>Do it again?</Text>
+                  {doAgain.map((idea) => (
+                    <Pressable
+                      key={idea.id}
+                      accessibilityRole="button"
+                      style={({ pressed }) => [styles.ideaRow, pressed && styles.ideaRowPressed]}
+                      onPress={() => router.push(`/groups/${id}/ideas/${idea.id}`)}
+                    >
+                      <View style={styles.ideaInfo}>
+                        <Text style={styles.ideaTitle} numberOfLines={1}>
+                          {idea.title}
+                        </Text>
+                        <Text style={styles.ideaMeta}>
+                          done {new Date(idea.updated_at).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
 
               <Text style={[styles.sectionTitle, styles.membersTitle]}>
                 Members ({members.data.length})

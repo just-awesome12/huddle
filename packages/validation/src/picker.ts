@@ -17,6 +17,8 @@ export const runPickerSchema = z.object({
   groupId: z.string().uuid('Invalid group id'),
   category: ideaCategorySchema.optional(),
   shortlist: z.array(z.string().uuid('Invalid idea id')).optional(),
+  // Opt-in fair mode: weight toward members picked least (D77).
+  fair: z.boolean().optional(),
 });
 
 export type RunPickerInput = z.infer<typeof runPickerSchema>;

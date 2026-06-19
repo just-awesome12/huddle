@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { IdeaCategory } from '@huddle/validation';
 import { runPickerAction } from '@/actions/picker';
 import { Button } from './Button';
+import { Confetti } from './Confetti';
 import { CategoryBadge, CATEGORY_LABELS } from './IdeaBadges';
 
 /** Minimal idea shape the picker needs (on-radar ideas only). */
@@ -23,6 +24,7 @@ const TICK_MS = 90;
 export function PickerClient({ groupId, ideas }: { groupId: string; ideas: PickableIdea[] }) {
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
+  const [fair, setFair] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const [phase, setPhase] = useState<Phase>('idle');
@@ -74,6 +76,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
       groupId,
       category: category || null,
       shortlist: useShortlist && selected.size > 0 ? [...selected] : null,
+      fair,
     });
 
     const elapsed = Date.now() - start;
@@ -155,6 +158,23 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
         )}
       </div>
 
+      {/* Fair mode (opt-in): weights toward members picked least. */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium text-content">
+          <input
+            type="checkbox"
+            checked={fair}
+            onChange={(e) => setFair(e.target.checked)}
+            className="h-4 w-4 rounded border-line text-brand-600 focus:ring-brand-500"
+            data-testid="picker-fair-toggle"
+          />
+          Give everyone a fair shot
+        </label>
+        <p className="mt-1 text-xs text-muted">
+          Leans toward people whose ideas haven’t been picked yet. Still random — just weighted.
+        </p>
+      </div>
+
       {/* Candidate list (with shortlist checkboxes + spin highlight) */}
       <ul className="flex flex-col gap-2" data-testid="picker-candidates">
         {pickableForDisplay(ideas, category).map((idea) => {
@@ -205,9 +225,10 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
       {/* Result */}
       {phase === 'done' && (
         <div
-          className="rounded-lg border border-brand-500 bg-brand-50 p-5 text-center dark:bg-brand-900"
+          className="relative overflow-hidden rounded-lg border border-brand-500 bg-brand-50 p-5 text-center dark:bg-brand-900"
           data-testid="picker-result"
         >
+          <Confetti />
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink">
             The pick is
           </p>

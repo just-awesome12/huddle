@@ -78,6 +78,7 @@ test('run picker → result shown → recorded in history', async ({ page }) => 
 
   await page.getByTestId('picker-run').click();
   await expect(page.getByTestId('picker-result')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('confetti')).toBeAttached();
   const chosen = (await page.getByTestId('picker-result-title').textContent())?.trim();
   expect(['Tacos', 'Ramen']).toContain(chosen);
   // Provenance: the reveal states it was a random draw and from how many.
@@ -89,6 +90,9 @@ test('run picker → result shown → recorded in history', async ({ page }) => 
   await expect(page.getByTestId('decision-row')).toHaveCount(1);
   await expect(page.getByTestId('decision-list')).toContainText(chosen!);
   await expect(page.getByTestId('decision-list')).toContainText('randomly from 2 options');
+
+  // Fairness: the proposer of the 2 ideas now shows 1 pick.
+  await expect(page.getByTestId('fairness')).toContainText('proposed 2 · picked 1');
 });
 
 test('a category with fewer than two ideas disables the pick', async ({ page }) => {

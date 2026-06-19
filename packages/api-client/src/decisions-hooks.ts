@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import {
   decisionQueryKeys,
+  fairnessQueryKeys,
   fetchGroupDecisions,
+  fetchGroupFairness,
   runPicker,
   type DecisionWithDetails,
+  type MemberFairness,
   type RunPickerParams,
   type RunPickerResult,
 } from './decisions';
@@ -17,12 +20,26 @@ import type { HuddleClient } from './internal';
 
 export {
   decisionQueryKeys,
+  fairnessQueryKeys,
   PickerError,
   type DecisionWithDetails,
+  type MemberFairness,
   type RunPickerParams,
   type RunPickerResult,
   type PickerErrorCode,
 } from './decisions';
+
+export function useGroupFairness(
+  client: HuddleClient,
+  groupId: string,
+  options?: Omit<UseQueryOptions<MemberFairness[], Error>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery({
+    queryKey: fairnessQueryKeys.forGroup(groupId),
+    queryFn: () => fetchGroupFairness(client, groupId),
+    ...options,
+  });
+}
 
 export function useGroupDecisions(
   client: HuddleClient,

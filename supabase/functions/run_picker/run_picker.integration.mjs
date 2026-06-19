@@ -132,6 +132,20 @@ try {
     'shortlist narrows candidates to the 2 listed ideas',
   );
 
+  // (5) Fair mode runs, returns a valid pick, and records the flag. (The
+  // weighting math itself is unit-tested deterministically in @huddle/core;
+  // here we just verify the Edge Function wiring.)
+  const r5 = await invoke(A, {
+    groupId: group.id,
+    fair: true,
+    filters: { category: null, shortlist: null, fair: true },
+  });
+  assert(
+    r5.status === 200 && allIds.includes(r5.body?.chosenIdeaId),
+    'fair mode returns 200 with a valid pick',
+  );
+  assert(r5.body?.decision?.filters?.fair === true, 'fair mode records filters.fair = true');
+
   // The chosen idea now has history → it cannot be hard-deleted (NO ACTION).
   const { error: delErr } = await A.from('ideas').delete().eq('id', r1.body.chosenIdeaId);
   assert(

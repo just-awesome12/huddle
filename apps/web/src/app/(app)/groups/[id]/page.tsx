@@ -91,6 +91,13 @@ export default async function GroupDetailPage({
     .filter((i) => i.status === 'on_radar' && i.event_date && i.event_date >= todayStr)
     .sort((a, b) => (a.event_date! < b.event_date! ? -1 : 1));
 
+  // "Do it again?" = previously-done ideas, oldest first (the ones it's
+  // been longest since), capped — a nostalgia nudge to revive a past hit.
+  const doAgain = ideas
+    .filter((i) => i.status === 'done')
+    .sort((a, b) => (a.updated_at < b.updated_at ? -1 : 1))
+    .slice(0, 3);
+
   // Vote + comment counts for the list (Phase 11) — best-effort.
   let voteCounts: Record<string, number> = {};
   let commentCounts: Record<string, number> = {};
@@ -290,6 +297,28 @@ export default async function GroupDetailPage({
           </ul>
         )}
       </section>
+
+      {doAgain.length > 0 && (
+        <section className="mt-10" data-testid="do-again">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Do it again?</h3>
+          <p className="mt-1 text-sm text-muted">Good times worth a repeat.</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {doAgain.map((idea) => (
+              <li key={idea.id}>
+                <Link
+                  href={`/groups/${id}/ideas/${idea.id}`}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
+                  <span className="shrink-0 text-xs text-muted">
+                    done {new Date(idea.updated_at).toLocaleDateString()}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-10">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">

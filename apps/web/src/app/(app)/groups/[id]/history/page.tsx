@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroup } from '@huddle/api-client/groups';
-import { fetchGroupDecisions } from '@huddle/api-client/decisions';
+import {
+  fetchGroupDecisions,
+  fetchGroupFairness,
+  type MemberFairness,
+} from '@huddle/api-client/decisions';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { CategoryBadge, CATEGORY_LABELS } from '@/components/IdeaBadges';
@@ -17,12 +21,17 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
 
   let group;
   let decisions;
+  let fairness: MemberFairness[] = [];
   try {
     group = await fetchGroup(supabase, id);
     decisions = await fetchGroupDecisions(supabase, id);
+    fairness = await fetchGroupFairness(supabase, id);
   } catch {
     notFound();
   }
+
+  // Surface members who've put ideas forward but never had one picked.
+  const dueForAWin = fairness.filter((m) => m.proposed > 0 && m.picked === 0);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -92,6 +101,36 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
             );
           })}
         </ul>
+      )}
+
+      {fairness.length > 0 && (
+        <section className="mt-10" data-testid="fairness">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Who gets picked
+          </h3>
+          {dueForAWin.length > 0 && (
+            <p className="mt-1 text-sm text-muted" data-testid="fairness-due">
+              Due for a win:{' '}
+              <span className="font-medium text-content">
+                {dueForAWin.map((m) => m.displayName).join(', ')}
+              </span>{' '}
+              — proposed ideas, never picked.
+            </p>
+          )}
+          <ul className="mt-3 flex flex-col gap-2">
+            {fairness.map((m) => (
+              <li
+                key={m.userId}
+                className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3"
+              >
+                <span className="truncate text-sm font-medium text-content">{m.displayName}</span>
+                <span className="shrink-0 text-xs text-muted">
+                  proposed {m.proposed} · picked {m.picked}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

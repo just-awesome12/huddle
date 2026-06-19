@@ -141,6 +141,18 @@ test('status flow: done → back on the radar', async ({ page }) => {
   await expect(page.getByTestId('status-badge-on_radar')).toBeVisible();
 });
 
+test('a done idea surfaces in the "Do it again?" section', async ({ page }) => {
+  await signUp(page, makeTestUser('again'));
+  const groupUrl = await createGroup(page, 'Revisit Group');
+  await createIdea(page, { title: 'Karaoke night', category: 'activity' });
+
+  await page.getByRole('button', { name: 'Mark done' }).click();
+  await expect(page.getByTestId('status-badge-done')).toBeVisible();
+
+  await page.goto(groupUrl);
+  await expect(page.getByTestId('do-again')).toContainText('Karaoke night');
+});
+
 test('filters by status and category', async ({ page }) => {
   await signUp(page, makeTestUser('flt'));
   const groupUrl = await createGroup(page, 'Filter Group');

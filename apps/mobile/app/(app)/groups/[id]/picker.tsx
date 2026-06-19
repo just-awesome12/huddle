@@ -1,5 +1,13 @@
-import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
@@ -61,6 +69,7 @@ export default function PickerScreen() {
 
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
+  const [fair, setFair] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const [phase, setPhase] = useState<Phase>('idle');
@@ -69,6 +78,15 @@ export default function PickerScreen() {
   const [pickCount, setPickCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Celebratory pop on the reveal (the mobile take on "confetti").
+  const popAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (phase === 'done') {
+      popAnim.setValue(0);
+      Animated.spring(popAnim, { toValue: 1, friction: 4, useNativeDriver: true }).start();
+    }
+  }, [phase, popAnim]);
 
   const ideas = useMemo(() => ideasQuery.data ?? [], [ideasQuery.data]);
 
@@ -120,6 +138,7 @@ export default function PickerScreen() {
         groupId: id,
         category: category || undefined,
         shortlist: useShortlist && selected.size > 0 ? [...selected] : undefined,
+        fair,
       });
       const elapsed = Date.now() - start;
       if (elapsed < MIN_SPIN_MS) {
@@ -226,6 +245,24 @@ export default function PickerScreen() {
               </Text>
             ) : null}
 
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: fair }}
+              style={styles.shortlistToggle}
+              onPress={() => setFair((v) => !v)}
+            >
+              <View style={[styles.checkbox, fair && styles.checkboxOn]}>
+                {fair ? <Text style={styles.checkmark}>✓</Text> : null}
+              </View>
+              <Text style={styles.shortlistLabel}>Give everyone a fair shot</Text>
+            </Pressable>
+            {fair ? (
+              <Text style={styles.mutedText}>
+                Leans toward people whose ideas haven’t been picked yet. Still random — just
+                weighted.
+              </Text>
+            ) : null}
+
             <View style={styles.candidateList}>
               {displayed.map((idea) => {
                 const inPool = candidates.some((p) => p.id === idea.id);
@@ -270,6 +307,9 @@ export default function PickerScreen() {
 
             {phase === 'done' ? (
               <View style={styles.resultCard}>
+                <Animated.Text style={[styles.celebrate, { transform: [{ scale: popAnim }] }]}>
+                  🎉
+                </Animated.Text>
                 <Text style={styles.resultLabel}>The pick is</Text>
                 <Text style={styles.resultTitle}>{chosen ? chosen.title : 'an idea'}</Text>
                 {pickCount !== null ? (
@@ -386,6 +426,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     resultTitle: { fontSize: 18, fontWeight: '700', color: c.text, textAlign: 'center' },
     resultProvenance: { fontSize: 12, color: c.muted, textAlign: 'center' },
+    celebrate: { fontSize: 32, textAlign: 'center' },
     emptyCard: {
       borderWidth: 1,
       borderStyle: 'dashed',

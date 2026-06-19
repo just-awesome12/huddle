@@ -23,14 +23,20 @@
 //   bad_request | unauthorized | forbidden | too_few_candidates | internal
 // =====================================================================
 import { createClient } from 'npm:@supabase/supabase-js@2.47.10';
-import { cryptoRandomUint32, pickOne } from '../_shared/picker.ts';
+import {
+  cryptoRandomUint32,
+  pickOne,
+  pickWeightedIndex,
+  fairnessWeights,
+} from '../_shared/picker.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface PickerBody {
   groupId?: unknown;
-  filters?: { category?: unknown; shortlist?: unknown } | null;
+  fair?: unknown;
+  filters?: { category?: unknown; shortlist?: unknown; fair?: unknown } | null;
 }
 
 function json(body: unknown, status: number): Response {
@@ -70,6 +76,9 @@ Deno.serve(async (req) => {
       body.filters.shortlist.every((v) => typeof v === 'string')
         ? (body.filters.shortlist as string[])
         : null;
+    // Opt-in "fair" mode: weight the pick toward members whose ideas
+    // have been chosen least (D77). Default stays uniform (D60).
+    const fair = body.fair === true || body.filters?.fair === true;
 
     const url = Deno.env.get('SUPABASE_URL');
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -106,10 +115,10 @@ Deno.serve(async (req) => {
     if (!membership) return json({ error: 'forbidden' }, 403);
 
     // Candidate pool: on-radar ideas in the group, RLS-scoped, optionally
-    // narrowed by category.
+    // narrowed by category. proposed_by is needed for fair weighting.
     let query = userClient
       .from('ideas')
-      .select('id')
+      .select('id, proposed_by')
       .eq('group_id', groupId)
       .eq('status', 'on_radar');
     if (category) query = query.eq('category', category);
@@ -120,7 +129,11 @@ Deno.serve(async (req) => {
       return json({ error: 'internal' }, 500);
     }
 
-    let candidateIds = (ideas ?? []).map((i) => i.id as string);
+    const proposerById = new Map<string, string | null>();
+    for (const i of ideas ?? []) {
+      proposerById.set(i.id as string, (i.proposed_by as string | null) ?? null);
+    }
+    let candidateIds = [...proposerById.keys()];
     if (shortlist && shortlist.length > 0) {
       const allowed = new Set(shortlist);
       candidateIds = candidateIds.filter((id) => allowed.has(id));
@@ -130,7 +143,31 @@ Deno.serve(async (req) => {
       return json({ error: 'too_few_candidates', count: candidateIds.length }, 422);
     }
 
-    const chosenIdeaId = pickOne(candidateIds, cryptoRandomUint32);
+    let chosenIdeaId: string;
+    if (fair) {
+      // Pick counts per proposer across the group's decision history.
+      const { data: decs, error: decErr } = await userClient
+        .from('decisions')
+        .select('chosen:ideas!decisions_chosen_idea_id_fkey(proposed_by)')
+        .eq('group_id', groupId);
+      if (decErr) {
+        console.error('run_picker: decisions query failed', decErr.message);
+        return json({ error: 'internal' }, 500);
+      }
+      const pickCount: Record<string, number> = {};
+      for (const d of decs ?? []) {
+        const chosen = (d as { chosen?: { proposed_by?: string | null } | null }).chosen;
+        const proposer = chosen?.proposed_by ?? null;
+        if (proposer) pickCount[proposer] = (pickCount[proposer] ?? 0) + 1;
+      }
+      const weights = fairnessWeights(
+        candidateIds.map((id) => proposerById.get(id) ?? null),
+        pickCount,
+      );
+      chosenIdeaId = candidateIds[pickWeightedIndex(weights, cryptoRandomUint32)]!;
+    } else {
+      chosenIdeaId = pickOne(candidateIds, cryptoRandomUint32);
+    }
 
     // Record the run with service_role (decisions has no INSERT policy).
     const adminClient = createClient(url, serviceKey, {
@@ -144,7 +181,7 @@ Deno.serve(async (req) => {
         run_by: user.id,
         chosen_idea_id: chosenIdeaId,
         candidate_idea_ids: candidateIds,
-        filters: { category, shortlist: shortlist ?? null },
+        filters: { category, shortlist: shortlist ?? null, fair },
       })
       .select()
       .single();

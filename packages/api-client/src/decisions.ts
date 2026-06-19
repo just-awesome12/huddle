@@ -24,6 +24,8 @@ export interface RunPickerParams {
   category?: IdeaCategory;
   /** Explicit subset of idea ids; omit to draw from the whole pool. */
   shortlist?: string[];
+  /** Opt-in: weight the pick toward members picked least (D77). */
+  fair?: boolean;
 }
 
 export interface RunPickerResult {
@@ -88,6 +90,80 @@ export async function fetchGroupDecisions(
 }
 
 // -----------------------------------------------------------------------
+// Fairness insights ("who gets picked")
+// -----------------------------------------------------------------------
+
+/** Per-member tally: how many ideas they proposed vs. how many got picked. */
+export interface MemberFairness {
+  userId: string;
+  displayName: string;
+  username: string;
+  proposed: number;
+  picked: number;
+}
+
+export const fairnessQueryKeys = {
+  forGroup: (groupId: string) => ['groups', groupId, 'fairness'] as const,
+};
+
+/**
+ * Fairness stats for a group: for each member, how many ideas they've
+ * proposed and how many of their ideas the picker has chosen. Derived
+ * entirely from existing rows (no new table) — RLS scopes all three
+ * reads to members. Sorted most-picked first.
+ *
+ * "picked" attributes each decision to the proposer of its chosen idea.
+ * A chosen idea whose proposer has been de-attributed (account deletion,
+ * D71) contributes to nobody — and that ex-member isn't listed anyway.
+ */
+export async function fetchGroupFairness(
+  client: HuddleClient,
+  groupId: string,
+): Promise<MemberFairness[]> {
+  const [membersRes, ideasRes, decisionsRes] = await Promise.all([
+    client
+      .from('group_members')
+      .select('user_id, profiles(id, username, display_name)')
+      .eq('group_id', groupId),
+    client.from('ideas').select('id, proposed_by').eq('group_id', groupId),
+    client.from('decisions').select('chosen_idea_id').eq('group_id', groupId),
+  ]);
+  if (membersRes.error) throwMapped(membersRes.error);
+  if (ideasRes.error) throwMapped(ideasRes.error);
+  if (decisionsRes.error) throwMapped(decisionsRes.error);
+
+  const proposerOfIdea = new Map<string, string | null>();
+  const proposed = new Map<string, number>();
+  for (const i of ideasRes.data ?? []) {
+    const idea = i as { id: string; proposed_by: string | null };
+    proposerOfIdea.set(idea.id, idea.proposed_by);
+    if (idea.proposed_by) proposed.set(idea.proposed_by, (proposed.get(idea.proposed_by) ?? 0) + 1);
+  }
+
+  const picked = new Map<string, number>();
+  for (const d of decisionsRes.data ?? []) {
+    const proposer = proposerOfIdea.get((d as { chosen_idea_id: string }).chosen_idea_id);
+    if (proposer) picked.set(proposer, (picked.get(proposer) ?? 0) + 1);
+  }
+
+  return (membersRes.data ?? [])
+    .map((m) => {
+      const row = m as {
+        user_id: string;
+        profiles: { username: string; display_name: string } | null;
+      };
+      return {
+        userId: row.user_id,
+        displayName: row.profiles?.display_name ?? 'A member',
+        username: row.profiles?.username ?? '',
+        proposed: proposed.get(row.user_id) ?? 0,
+        picked: picked.get(row.user_id) ?? 0,
+      };
+    })
+    .sort((a, b) => b.picked - a.picked || b.proposed - a.proposed);
+}
+
+// -----------------------------------------------------------------------
 // The pick (Edge Function)
 // -----------------------------------------------------------------------
 
@@ -104,9 +180,11 @@ export async function runPicker(
   const { data, error } = await client.functions.invoke('run_picker', {
     body: {
       groupId: params.groupId,
+      fair: params.fair ?? false,
       filters: {
         category: params.category ?? null,
         shortlist: params.shortlist ?? null,
+        fair: params.fair ?? false,
       },
     },
   });

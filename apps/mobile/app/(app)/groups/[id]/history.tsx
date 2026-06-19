@@ -2,7 +2,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
-import { useGroupDecisions } from '@huddle/api-client/decisions-hooks';
+import { useGroupDecisions, useGroupFairness } from '@huddle/api-client/decisions-hooks';
 import { supabase } from '@/lib/supabase';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
@@ -18,6 +18,7 @@ export default function HistoryScreen() {
 
   const group = useGroup(supabase, id);
   const decisions = useGroupDecisions(supabase, id);
+  const fairness = useGroupFairness(supabase, id);
 
   if (group.isPending || decisions.isPending) {
     return (
@@ -52,6 +53,30 @@ export default function HistoryScreen() {
         keyExtractor={(d) => d.id}
         contentContainerStyle={styles.list}
         ListHeaderComponent={<Text style={styles.title}>Decision history</Text>}
+        ListFooterComponent={(() => {
+          const members = fairness.data ?? [];
+          if (members.length === 0) return null;
+          const due = members.filter((m) => m.proposed > 0 && m.picked === 0);
+          return (
+            <View style={styles.fairnessBlock}>
+              <Text style={styles.fairnessTitle}>Who gets picked</Text>
+              {due.length > 0 ? (
+                <Text style={styles.mutedText}>
+                  Due for a win: {due.map((m) => m.displayName).join(', ')} — proposed ideas, never
+                  picked.
+                </Text>
+              ) : null}
+              {members.map((m) => (
+                <View key={m.userId} style={styles.fairnessRow}>
+                  <Text style={styles.fairnessName}>{m.displayName}</Text>
+                  <Text style={styles.mutedText}>
+                    proposed {m.proposed} · picked {m.picked}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
         ListEmptyComponent={
           decisions.isError ? (
             <Text style={styles.mutedText}>Couldn&apos;t load history.</Text>
@@ -126,6 +151,27 @@ const makeStyles = (c: ThemeColors) =>
     title: { fontSize: 20, fontWeight: '700', color: c.text, marginBottom: 4 },
     heading: { fontSize: 18, fontWeight: '600', color: c.text },
     mutedText: { fontSize: 13, color: c.muted },
+    fairnessBlock: { marginTop: 24, gap: 8 },
+    fairnessTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    fairnessRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    fairnessName: { fontSize: 14, fontWeight: '600', color: c.text },
     emptyCard: {
       borderWidth: 1,
       borderStyle: 'dashed',
