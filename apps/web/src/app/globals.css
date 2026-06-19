@@ -47,6 +47,15 @@
   --color-line: #e6e3f5;
   /* Brand text (links/wordmark) — readable stop per mode. */
   --color-brand-ink: #473e9f;
+
+  /*
+   * One-off decorative colours for the onboarding/landing redesign that
+   * aren't part of the brand/accent ramps: a "live/online" pulse dot and
+   * a teal avatar/accent. Same value in both modes (used on dark violet
+   * panels and light cards alike).
+   */
+  --color-online: #7ce3b3;
+  --color-teal: #2f9e8f;
 }
 
 .dark {
@@ -66,5 +75,65 @@
   h2,
   h3 {
     font-family: var(--font-display);
+  }
+}
+
+/*
+ * Onboarding/landing motion (the redesign). Bespoke keyframes used by the
+ * landing hero, the split-screen auth panel, and the PickerDemo:
+ *   hud-float    — ambient floating blobs
+ *   hud-pulse    — "live" status dots
+ *   hud-rise     — auth form rise-in on mount
+ *   hud-confetti — picker "landed" burst (uses --drift per piece)
+ * All are paused under prefers-reduced-motion (the PickerDemo also pauses
+ * its JS loop). Applied via inline `style={{ animation }}` at call sites.
+ */
+@keyframes hud-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-22px) rotate(8deg);
+  }
+}
+@keyframes hud-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+@keyframes hud-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes hud-confetti {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift, 0px), 320px) rotate(560deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*='hud-float'],
+  [style*='hud-pulse'],
+  [style*='hud-rise'],
+  [style*='hud-confetti'] {
+    animation: none !important;
   }
 }

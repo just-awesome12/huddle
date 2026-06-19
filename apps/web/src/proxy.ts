@@ -22,9 +22,11 @@ import { createServerSupabaseClient, type CookieOptions } from '@huddle/api-clie
 
 // Auth pages: reachable signed-out; signed-in users get bounced home.
 const PUBLIC_PATHS = new Set(['/sign-in', '/sign-up']);
-// Legal pages: reachable in BOTH states (no redirect either way) — also
-// needed as public URLs for the app stores.
-const ALWAYS_PUBLIC_PATHS = new Set(['/terms', '/privacy']);
+// Reachable in BOTH states (no auth redirect either way): the public
+// marketing landing ("/") and the legal pages (also needed as public
+// URLs for the app stores). Signed-in visitors to "/" still get the
+// onboarding check below, then the page itself forwards them to /groups.
+const ALWAYS_PUBLIC_PATHS = new Set(['/', '/terms', '/privacy']);
 const ONBOARDING_PATH = '/onboarding';
 const PLACEHOLDER_USERNAME_RE = /^u_[0-9a-f]{12}$/;
 

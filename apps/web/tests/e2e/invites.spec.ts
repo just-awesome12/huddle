@@ -176,8 +176,8 @@ test('signed-out invite link survives the auth round-trip (?next=)', async ({ pa
     await p.goto(inviteUrl);
     await p.waitForURL(/\/sign-in\?next=%2Finvites%2F/);
 
-    // New user follows "Create an account" (next is carried along).
-    await p.getByRole('link', { name: 'Create an account' }).click();
+    // New user follows the "Create one" switch link (next is carried along).
+    await p.getByRole('link', { name: 'Create one' }).click();
     await p.waitForURL(/\/sign-up\?next=%2Finvites%2F/);
     await fillSignUpFormAndSubmit(p, makeTestUser('jnr5'));
 

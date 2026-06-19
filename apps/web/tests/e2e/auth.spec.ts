@@ -64,10 +64,18 @@ async function signIn(page: Page, user: TestUser) {
   await page.waitForURL('/groups');
 }
 
-test('unauthenticated user is redirected from / to /sign-in', async ({ page }) => {
+test('unauthenticated / shows the public landing (not a redirect)', async ({ page }) => {
   await page.goto('/');
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Stop the');
+  // The landing CTAs route into auth.
+  await expect(page.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/sign-up');
+});
+
+test('protected routes still redirect to /sign-in when signed out', async ({ page }) => {
+  await page.goto('/groups');
+  await expect(page).toHaveURL(/\/sign-in/);
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
 
 test('sign-up creates an account and lands on the app shell', async ({ page }) => {
@@ -90,7 +98,7 @@ test('sign-out returns to /sign-in', async ({ page }) => {
   await signUp(page, user);
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.waitForURL('/sign-in');
-  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
 
 test('sign-in after sign-out lands on the app shell again', async ({ page }) => {

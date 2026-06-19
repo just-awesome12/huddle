@@ -62,6 +62,12 @@ async function expectNoSeriousA11y(page: Page, label: string) {
 }
 
 test('signed-out pages have no serious a11y violations', async ({ page }) => {
+  // Scan the settled (resting) state: the auth panel's rise-in fade
+  // momentarily blends text over its background, which axe would flag as
+  // low-contrast mid-animation. Emulating reduced motion disables the
+  // bespoke hud-* animations (see globals.css) so we assess final colours
+  // — and confirms reduced-motion users get accessible contrast.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/sign-in');
   await expectNoSeriousA11y(page, '/sign-in');
   await page.goto('/sign-up');
