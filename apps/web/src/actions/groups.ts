@@ -2,23 +2,37 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { createGroupSchema } from '@huddle/validation';
+import { createGroupSchema, updateGroupSchema } from '@huddle/validation';
 import { isHuddleError } from '@huddle/api-client/errors';
 import {
   createGroup,
-  renameGroup,
+  updateGroup,
   deleteGroup,
   leaveGroup,
   removeMember,
+  requestToJoin,
+  respondToJoinRequest,
+  withdrawJoinRequest,
 } from '@huddle/api-client/groups';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import type { GroupActionState } from './groups-state';
+
+/** Parse the create/edit group form fields into the schema shape. */
+function parseGroupForm(formData: FormData) {
+  return {
+    name: formData.get('name') ?? undefined,
+    description: (formData.get('description') as string | null) ?? undefined,
+    location: (formData.get('location') as string | null) ?? undefined,
+    tags: String(formData.get('tags') ?? '').split(','),
+    visibility: (formData.get('visibility') as string | null) ?? undefined,
+  };
+}
 
 export async function createGroupAction(
   _prev: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
-  const parsed = createGroupSchema.safeParse({ name: formData.get('name') });
+  const parsed = createGroupSchema.safeParse(parseGroupForm(formData));
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
@@ -26,7 +40,12 @@ export async function createGroupAction(
   const supabase = await getSupabaseServerClient();
   let groupId: string;
   try {
-    const group = await createGroup(supabase, parsed.data.name);
+    const group = await createGroup(supabase, parsed.data.name, {
+      description: parsed.data.description,
+      location: parsed.data.location,
+      tags: parsed.data.tags,
+      visibility: parsed.data.visibility,
+    });
     groupId = group.id;
   } catch {
     return { formError: 'Could not create the group. Please try again.' };
@@ -36,29 +55,70 @@ export async function createGroupAction(
   redirect(`/groups/${groupId}`);
 }
 
-export async function renameGroupAction(
+export async function updateGroupAction(
   _prev: GroupActionState,
   formData: FormData,
 ): Promise<GroupActionState> {
   const groupId = String(formData.get('groupId') ?? '');
-  const parsed = createGroupSchema.safeParse({ name: formData.get('name') });
+  const parsed = updateGroupSchema.safeParse(parseGroupForm(formData));
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
   const supabase = await getSupabaseServerClient();
   try {
-    await renameGroup(supabase, groupId, parsed.data.name);
+    await updateGroup(supabase, groupId, parsed.data);
   } catch (e) {
     if (isHuddleError(e) && e.huddle.kind === 'unauthorized') {
-      return { formError: 'Only group admins can rename a group.' };
+      return { formError: 'Only group admins can edit a group.' };
     }
-    return { formError: 'Could not rename the group. Please try again.' };
+    return { formError: 'Could not save changes. Please try again.' };
   }
 
   revalidatePath('/groups');
   revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/settings`);
   return { success: true };
+}
+
+/** Discovery: request to join a public group (plain action). */
+export async function requestJoinAction(formData: FormData): Promise<void> {
+  const groupId = String(formData.get('groupId') ?? '');
+  const supabase = await getSupabaseServerClient();
+  try {
+    await requestToJoin(supabase, groupId);
+  } catch {
+    // Already a member / already pending / not public — the recomputed
+    // page state reflects the correct button on revalidate.
+  }
+  revalidatePath('/discover');
+}
+
+/** Discovery: withdraw the caller's own pending request (plain action). */
+export async function withdrawJoinAction(formData: FormData): Promise<void> {
+  const requestId = String(formData.get('requestId') ?? '');
+  const supabase = await getSupabaseServerClient();
+  try {
+    await withdrawJoinRequest(supabase, requestId);
+  } catch {
+    // ignore — revalidate reflects the truth
+  }
+  revalidatePath('/discover');
+}
+
+/** Admin: approve or reject a join request (plain action). */
+export async function respondJoinRequestAction(formData: FormData): Promise<void> {
+  const requestId = String(formData.get('requestId') ?? '');
+  const groupId = String(formData.get('groupId') ?? '');
+  const approve = String(formData.get('approve') ?? '') === 'true';
+  const supabase = await getSupabaseServerClient();
+  try {
+    await respondToJoinRequest(supabase, requestId, approve);
+  } catch {
+    // ignore — admin-only; revalidate reflects the result
+  }
+  revalidatePath(`/groups/${groupId}/settings`);
+  revalidatePath(`/groups/${groupId}`);
 }
 
 export async function deleteGroupAction(

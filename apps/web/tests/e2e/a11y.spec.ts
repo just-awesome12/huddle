@@ -102,4 +102,7 @@ test('signed-in pages have no serious a11y violations', async ({ page }) => {
 
   await page.goto('/account');
   await expectNoSeriousA11y(page, '/account');
+
+  await page.goto('/discover');
+  await expectNoSeriousA11y(page, '/discover');
 });

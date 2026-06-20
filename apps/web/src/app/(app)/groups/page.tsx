@@ -84,13 +84,21 @@ export default async function GroupsPage() {
           </h1>
           <p className="mt-2 text-[16px] text-muted">{subBits.join(' · ')}</p>
         </div>
-        <Link
-          href="/groups/new"
-          className="inline-flex items-center gap-2 rounded-full bg-accent-600 px-5 py-3 font-display text-[14.5px] font-extrabold text-white transition-transform hover:-translate-y-0.5"
-          style={{ boxShadow: '0 14px 26px -12px var(--color-accent-600)' }}
-        >
-          Start a huddle
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/discover"
+            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-3 font-display text-[14.5px] font-extrabold text-content transition-colors hover:bg-surface-2"
+          >
+            🧭 Discover
+          </Link>
+          <Link
+            href="/groups/new"
+            className="inline-flex items-center gap-2 rounded-full bg-accent-600 px-5 py-3 font-display text-[14.5px] font-extrabold text-white transition-transform hover:-translate-y-0.5"
+            style={{ boxShadow: '0 14px 26px -12px var(--color-accent-600)' }}
+          >
+            Start a huddle
+          </Link>
+        </div>
       </div>
 
       {/* Invites */}

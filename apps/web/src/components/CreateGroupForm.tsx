@@ -5,6 +5,7 @@ import { createGroupAction } from '@/actions/groups';
 import { EMPTY_GROUP_STATE } from '@/actions/groups-state';
 import { Button } from './Button';
 import { FormField } from './FormField';
+import { GroupFormFields } from './GroupFormFields';
 
 export function CreateGroupForm() {
   const [state, formAction, pending] = useActionState(createGroupAction, EMPTY_GROUP_STATE);
@@ -19,6 +20,7 @@ export function CreateGroupForm() {
         hint="Up to 80 characters. You can rename it later."
         error={state.fieldErrors?.name?.[0]}
       />
+      <GroupFormFields errors={state.fieldErrors} />
       {state.formError && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.formError}
