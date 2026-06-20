@@ -65,13 +65,10 @@ export async function fetchMyGroups(client: HuddleClient): Promise<GroupWithRole
   if (error) throwMapped(error);
 
   return (data ?? []).map((row) => {
-    const membership = Array.isArray(row.group_members) ? row.group_members[0] : row.group_members;
+    const { group_members, ...group } = row;
+    const membership = Array.isArray(group_members) ? group_members[0] : group_members;
     return {
-      id: row.id,
-      name: row.name,
-      created_by: row.created_by,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
+      ...group,
       myRole: (membership as GroupMemberRow).role,
       joinedAt: (membership as GroupMemberRow).joined_at,
     };

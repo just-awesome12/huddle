@@ -14,8 +14,9 @@ begin;
 select plan(7);
 
 select has_function(
-  'public', 'create_group', array['text'],
-  'create_group(text) exists'
+  'public', 'create_group',
+  array['text', 'text', 'text', 'text[]', 'group_visibility'],
+  'create_group(name, description, location, tags, visibility) exists'
 );
 
 -- ---------------------------------------------------------------------
