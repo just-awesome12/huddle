@@ -115,6 +115,10 @@ test('create idea → detail → appears in group list with badges', async ({ pa
   await expect(page.getByTestId('idea-list')).toContainText('Riverside Park');
   await expect(page.getByTestId('upcoming-ideas')).toContainText('Taco Tuesday');
   await expect(page.getByText('Ideas (1)')).toBeVisible();
+
+  // The activity feed surfaces the new idea.
+  await expect(page.getByTestId('activity-feed')).toContainText('Taco Tuesday');
+  await expect(page.getByTestId('activity-feed')).toContainText('added');
 });
 
 test('whitespace title and javascript: link are rejected', async ({ page }) => {

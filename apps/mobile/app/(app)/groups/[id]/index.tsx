@@ -12,6 +12,11 @@ import {
 import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
 import { useGroupVoteState } from '@huddle/api-client/votes-hooks';
 import { useGroupCommentCounts } from '@huddle/api-client/comments-hooks';
+import {
+  useGroupActivity,
+  type ActivityItem,
+  type ActivityKind,
+} from '@huddle/api-client/activity-hooks';
 import type { IdeaCategory, IdeaStatus } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -62,6 +67,32 @@ const makeChipStyles = (c: ThemeColors) =>
     activeLabel: { color: c.surface },
   });
 
+const ACTIVITY_META: Record<ActivityKind, { emoji: string; verb: string }> = {
+  idea_added: { emoji: '💡', verb: 'added' },
+  idea_voted: { emoji: '❤', verb: 'loved' },
+  comment_added: { emoji: '💬', verb: 'commented on' },
+  picker_ran: { emoji: '🎲', verb: 'ran the picker →' },
+  member_joined: { emoji: '👋', verb: 'joined' },
+};
+
+function timeAgo(iso: string): string {
+  const secs = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (secs < 60) return 'just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function activityLine(a: ActivityItem): string {
+  const meta = ACTIVITY_META[a.kind];
+  const title = a.ideaTitle ? ` ${a.ideaTitle}` : '';
+  return `${meta.emoji}  ${a.actorName} ${meta.verb}${title}`;
+}
+
 export default function GroupDetailScreen() {
   const c = useColors();
   const styles = makeStyles(c);
@@ -80,6 +111,7 @@ export default function GroupDetailScreen() {
   const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
   const commentCounts = useGroupCommentCounts(supabase, id);
   const joinRequests = useJoinRequests(supabase, id);
+  const activity = useGroupActivity(supabase, id, 8);
   const leaveGroup = useLeaveGroup(supabase);
   const removeMember = useRemoveMember(supabase);
 
@@ -199,6 +231,20 @@ export default function GroupDetailScreen() {
                   onPress={() => router.push(`/groups/${id}/history`)}
                 />
               </View>
+
+              {(activity.data?.length ?? 0) > 0 ? (
+                <View style={styles.activityBlock}>
+                  <Text style={styles.sectionTitle}>What&apos;s happening</Text>
+                  {activity.data!.map((a) => (
+                    <View key={a.id} style={styles.activityRow}>
+                      <Text style={styles.activityText} numberOfLines={1}>
+                        {activityLine(a)}
+                      </Text>
+                      <Text style={styles.activityTime}>{timeAgo(a.timestamp)}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
 
               {upcoming.length > 0 ? (
                 <View style={styles.upcomingBlock}>
@@ -484,6 +530,15 @@ const makeStyles = (c: ThemeColors) =>
       borderTopColor: c.border,
     },
     ideasBlock: { gap: 10 },
+    activityBlock: { gap: 6, marginTop: 8 },
+    activityRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+    },
+    activityText: { flexShrink: 1, fontSize: 13, color: c.text },
+    activityTime: { flexShrink: 0, fontSize: 12, color: c.muted },
     metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
     visBadge: {
       backgroundColor: c.surface2,

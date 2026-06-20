@@ -33,6 +33,8 @@
     "./votes-hooks": "./src/votes-hooks.ts",
     "./comments": "./src/comments.ts",
     "./comments-hooks": "./src/comments-hooks.ts",
+    "./activity": "./src/activity.ts",
+    "./activity-hooks": "./src/activity-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

@@ -7,6 +7,11 @@ import {
   type GroupMemberWithProfile,
 } from '@huddle/api-client/groups';
 import { fetchGroupIdeas, type IdeaFilters, type IdeaWithProposer } from '@huddle/api-client/ideas';
+import {
+  fetchGroupActivity,
+  type ActivityItem,
+  type ActivityKind,
+} from '@huddle/api-client/activity';
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
 import { fetchGroupCommentCounts } from '@huddle/api-client/comments';
 import { ideaFiltersSchema, type IdeaCategory } from '@huddle/validation';
@@ -30,6 +35,27 @@ const CATEGORY_EMOJI: Record<IdeaCategory, string> = {
   event: '🎬',
   other: '💡',
 };
+
+const ACTIVITY_META: Record<ActivityKind, { emoji: string; verb: string }> = {
+  idea_added: { emoji: '💡', verb: 'added' },
+  idea_voted: { emoji: '❤', verb: 'loved' },
+  comment_added: { emoji: '💬', verb: 'commented on' },
+  picker_ran: { emoji: '🎲', verb: 'ran the picker →' },
+  member_joined: { emoji: '👋', verb: 'joined the huddle' },
+};
+
+/** Compact relative time ("just now", "5m ago", "3d ago", then a date). */
+function timeAgo(iso: string): string {
+  const secs = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (secs < 60) return 'just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 /** Build a filter-chip href, preserving the other dimension. */
 function filterHref(groupId: string, filters: IdeaFilters): string {
@@ -111,6 +137,13 @@ export default async function GroupDetailPage({
   try {
     voteCounts = (await fetchGroupVoteState(supabase, id, user.id)).countByIdea;
     commentCounts = await fetchGroupCommentCounts(supabase, id);
+  } catch {
+    // leave empty
+  }
+
+  let activity: ActivityItem[] = [];
+  try {
+    activity = await fetchGroupActivity(supabase, id, 8);
   } catch {
     // leave empty
   }
@@ -292,6 +325,42 @@ export default async function GroupDetailPage({
 
       {/* ===== Body ===== */}
       <div className="mx-auto max-w-[1080px] px-6 pb-20 pt-6 md:px-8">
+        {/* What's happening — activity feed */}
+        {activity.length > 0 && (
+          <section className="mb-7" data-testid="activity-feed">
+            <h3 className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
+              What&apos;s happening
+            </h3>
+            <ul className="mt-3 flex flex-col gap-1.5">
+              {activity.map((a) => {
+                const meta = ACTIVITY_META[a.kind];
+                const snippet =
+                  a.snippet && a.snippet.length > 60 ? `${a.snippet.slice(0, 60)}…` : a.snippet;
+                return (
+                  <li
+                    key={a.id}
+                    className="flex items-baseline gap-2 text-[14px] text-content"
+                    data-testid="activity-item"
+                  >
+                    <span aria-hidden className="text-[15px] leading-none">
+                      {meta.emoji}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="font-display font-extrabold">{a.actorName}</span>{' '}
+                      <span className="text-muted">{meta.verb}</span>
+                      {a.ideaTitle ? <span className="font-medium"> {a.ideaTitle}</span> : null}
+                      {a.kind === 'comment_added' && snippet ? (
+                        <span className="text-muted"> — “{snippet}”</span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 text-[12px] text-muted">{timeAgo(a.timestamp)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
         {/* Filter chips */}
         <div className="flex flex-wrap items-center gap-2" data-testid="idea-filters">
           <FilterChip
