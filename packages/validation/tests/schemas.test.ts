@@ -10,6 +10,11 @@ import {
   createGroupSchema,
   updateGroupSchema,
   groupMemberRoleSchema,
+  groupVisibilitySchema,
+  tagsSchema,
+  tagsStringSchema,
+  groupSearchSchema,
+  normalizeTags,
   createInviteSchema,
   acceptInviteSchema,
   usernameSearchSchema,
@@ -287,12 +292,16 @@ describe('onboardingSchema', () => {
 // =====================================================================
 
 describe('createGroupSchema', () => {
-  it('accepts a valid name', () => {
-    expect(createGroupSchema.parse({ name: 'Game Night' })).toEqual({ name: 'Game Night' });
+  it('accepts a valid name and applies defaults', () => {
+    expect(createGroupSchema.parse({ name: 'Game Night' })).toEqual({
+      name: 'Game Night',
+      tags: [],
+      visibility: 'invite_only',
+    });
   });
 
   it('trims whitespace', () => {
-    expect(createGroupSchema.parse({ name: '  Foodies  ' })).toEqual({ name: 'Foodies' });
+    expect(createGroupSchema.parse({ name: '  Foodies  ' })).toMatchObject({ name: 'Foodies' });
   });
 
   it('rejects an empty name', () => {
@@ -309,7 +318,39 @@ describe('createGroupSchema', () => {
 
   it('accepts a name at exactly 80 characters', () => {
     const name = 'a'.repeat(80);
-    expect(createGroupSchema.parse({ name })).toEqual({ name });
+    expect(createGroupSchema.parse({ name })).toMatchObject({ name });
+  });
+
+  it('accepts description, location, tags, and visibility', () => {
+    const parsed = createGroupSchema.parse({
+      name: 'Taco Lovers',
+      description: '  We love tacos  ',
+      location: 'Austin, TX',
+      tags: ['Food', 'food', '  Mexican '],
+      visibility: 'public',
+    });
+    expect(parsed).toEqual({
+      name: 'Taco Lovers',
+      description: 'We love tacos',
+      location: 'Austin, TX',
+      tags: ['food', 'mexican'],
+      visibility: 'public',
+    });
+  });
+
+  it('rejects a description longer than 500 characters', () => {
+    expect(() => createGroupSchema.parse({ name: 'X', description: 'a'.repeat(501) })).toThrow(
+      /at most 500/,
+    );
+  });
+
+  it('rejects more than 8 tags', () => {
+    const tags = Array.from({ length: 9 }, (_, i) => `tag${i}`);
+    expect(() => createGroupSchema.parse({ name: 'X', tags })).toThrow(/At most 8/);
+  });
+
+  it('rejects an unknown visibility', () => {
+    expect(() => createGroupSchema.parse({ name: 'X', visibility: 'secret' })).toThrow();
   });
 });
 
@@ -541,5 +582,56 @@ describe('updateIdeaStatusSchema / ideaFiltersSchema', () => {
       category: 'food',
     });
     expect(() => ideaFiltersSchema.parse({ status: 'nope' })).toThrow();
+  });
+});
+
+describe('groupVisibilitySchema', () => {
+  it('accepts the two valid values', () => {
+    expect(groupVisibilitySchema.parse('public')).toBe('public');
+    expect(groupVisibilitySchema.parse('invite_only')).toBe('invite_only');
+  });
+
+  it('rejects anything else', () => {
+    expect(() => groupVisibilitySchema.parse('private')).toThrow();
+  });
+});
+
+describe('normalizeTags / tagsSchema', () => {
+  it('lowercases, trims, drops empties, de-duplicates', () => {
+    expect(normalizeTags(['  Foo ', 'foo', '', 'BAR'])).toEqual(['foo', 'bar']);
+  });
+
+  it('tagsSchema normalizes an array', () => {
+    expect(tagsSchema.parse(['Tacos', 'tacos', ' Fun '])).toEqual(['tacos', 'fun']);
+  });
+
+  it('tagsSchema rejects more than 8 tags', () => {
+    expect(() => tagsSchema.parse(Array.from({ length: 9 }, (_, i) => `t${i}`))).toThrow(
+      /At most 8/,
+    );
+  });
+
+  it('tagsSchema rejects a tag longer than 30 characters', () => {
+    expect(() => tagsSchema.parse(['x'.repeat(31)])).toThrow(/at most 30/);
+  });
+
+  it('tagsStringSchema parses a comma-separated string', () => {
+    expect(tagsStringSchema.parse('Food, mexican , food,')).toEqual(['food', 'mexican']);
+  });
+});
+
+describe('groupSearchSchema', () => {
+  it('defaults to empty filters', () => {
+    expect(groupSearchSchema.parse({})).toEqual({ q: '', tags: [], location: '' });
+  });
+
+  it('trims the query and lowercases tags', () => {
+    expect(
+      groupSearchSchema.parse({ q: '  tacos ', tags: ['FOOD'], location: ' Austin ' }),
+    ).toEqual({ q: 'tacos', tags: ['food'], location: 'Austin' });
+  });
+
+  it('rejects a query longer than 80 characters', () => {
+    expect(() => groupSearchSchema.parse({ q: 'a'.repeat(81) })).toThrow(/too long/);
   });
 });
