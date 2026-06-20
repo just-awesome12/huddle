@@ -37,6 +37,8 @@
     "./activity-hooks": "./src/activity-hooks.ts",
     "./rsvps": "./src/rsvps.ts",
     "./rsvps-hooks": "./src/rsvps-hooks.ts",
+    "./reactions": "./src/reactions.ts",
+    "./reactions-hooks": "./src/reactions-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

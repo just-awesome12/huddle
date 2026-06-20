@@ -117,3 +117,10 @@ export type IdeaFilters = z.infer<typeof ideaFiltersSchema>;
 // Mirrors Database["public"]["Enums"]["rsvp_status"] (Phase 13 RSVP).
 export const rsvpStatusSchema = z.enum(['going', 'maybe', 'not_going']);
 export type RsvpStatus = z.infer<typeof rsvpStatusSchema>;
+
+// Emoji reactions (Phase 13). Mirrors the DB CHECK + reaction_target enum.
+export const REACTION_EMOJIS = ['👍', '🎉', '🔥', '😂', '😮', '🙌'] as const;
+export const reactionEmojiSchema = z.enum(REACTION_EMOJIS);
+export type ReactionEmoji = z.infer<typeof reactionEmojiSchema>;
+export const reactionTargetSchema = z.enum(['idea', 'decision', 'comment']);
+export type ReactionTargetType = z.infer<typeof reactionTargetSchema>;

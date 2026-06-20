@@ -8,7 +8,13 @@ import {
 } from '@huddle/api-client/decisions';
 import type { IdeaCategory } from '@huddle/validation';
 import { getSupabaseServerClient } from '@/lib/supabase';
+import {
+  fetchGroupReactions,
+  reactionTargetKey,
+  type ReactionSummary,
+} from '@huddle/api-client/reactions';
 import { GroupRealtime } from '@/components/GroupRealtime';
+import { ReactionBar } from '@/components/ReactionBar';
 import { CATEGORY_LABELS } from '@/components/IdeaBadges';
 
 const CATEGORY_EMOJI: Record<IdeaCategory, string> = {
@@ -38,6 +44,14 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
   } catch {
     notFound();
   }
+
+  let reactions: Record<string, ReactionSummary[]> = {};
+  try {
+    reactions = await fetchGroupReactions(supabase, id, user.id);
+  } catch {
+    // leave empty
+  }
+  const reactionPath = `/groups/${id}/history`;
 
   const dueForAWin = fairness.filter((m) => m.proposed > 0 && m.picked === 0);
 
@@ -122,6 +136,15 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
                     </span>
                   )}
                   <div className="mt-0.5 text-[13px] text-muted">{note}</div>
+                  <div className="mt-2">
+                    <ReactionBar
+                      groupId={id}
+                      targetType="decision"
+                      targetId={d.id}
+                      summaries={reactions[reactionTargetKey('decision', d.id)] ?? []}
+                      path={reactionPath}
+                    />
+                  </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-[7px]">
                   <span className="rounded-full bg-accent-50 px-[11px] py-[5px] font-display text-[11.5px] font-extrabold text-accent-600">

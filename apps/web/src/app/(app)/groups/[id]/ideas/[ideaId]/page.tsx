@@ -5,6 +5,12 @@ import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-c
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
 import { fetchIdeaComments, type CommentWithAuthor } from '@huddle/api-client/comments';
 import { fetchIdeaRsvps, type IdeaRsvp, type RsvpStatus } from '@huddle/api-client/rsvps';
+import {
+  fetchGroupReactions,
+  reactionTargetKey,
+  type ReactionSummary,
+} from '@huddle/api-client/reactions';
+import { ReactionBar } from '@/components/ReactionBar';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
 import { setRsvpAction, removeRsvpAction } from '@/actions/rsvps';
@@ -94,6 +100,15 @@ export default async function IdeaDetailPage({
     ['maybe', '🤔 Maybe'],
     ['not_going', "🙅 Can't"],
   ];
+
+  // Reactions (Phase 13). Best-effort; keyed by `${type}:${id}`.
+  let reactions: Record<string, ReactionSummary[]> = {};
+  try {
+    reactions = await fetchGroupReactions(supabase, id, user.id);
+  } catch {
+    // leave empty
+  }
+  const reactionPath = `/groups/${id}/ideas/${ideaId}`;
 
   // Private bucket → short-lived signed URL, minted per render.
   let photoUrl: string | null = null;
@@ -210,6 +225,16 @@ export default async function IdeaDetailPage({
 
         <div className="mt-[22px] flex flex-wrap items-center gap-[14px] border-t border-line pt-5">
           <VoteButton action={voteAction} voted={voted} count={voteCount} />
+        </div>
+
+        <div className="mt-3">
+          <ReactionBar
+            groupId={id}
+            targetType="idea"
+            targetId={ideaId}
+            summaries={reactions[reactionTargetKey('idea', ideaId)] ?? []}
+            path={reactionPath}
+          />
         </div>
 
         {/* Who's in? — RSVP */}
@@ -359,6 +384,15 @@ export default async function IdeaDetailPage({
                     <p className="mt-1 whitespace-pre-wrap text-[14.5px] leading-[1.5] text-muted">
                       {comment.body}
                     </p>
+                    <div className="mt-2">
+                      <ReactionBar
+                        groupId={id}
+                        targetType="comment"
+                        targetId={comment.id}
+                        summaries={reactions[reactionTargetKey('comment', comment.id)] ?? []}
+                        path={reactionPath}
+                      />
+                    </div>
                     {canDelete && (
                       <form
                         action={deleteCommentAction.bind(null, id, ideaId, comment.id)}

@@ -622,6 +622,51 @@ export type Database = {
           },
         ]
       }
+      reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          group_id: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          group_id: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          group_id?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["reaction_target"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -783,6 +828,7 @@ export type Database = {
       idea_status: "on_radar" | "done" | "dismissed"
       join_request_status: "pending" | "approved" | "rejected"
       push_platform: "ios" | "android"
+      reaction_target: "idea" | "decision" | "comment"
       report_reason: "spam" | "inappropriate" | "harassment" | "other"
       report_status: "open" | "reviewed" | "dismissed" | "actioned"
       rsvp_status: "going" | "maybe" | "not_going"
@@ -922,6 +968,7 @@ export const Constants = {
       idea_status: ["on_radar", "done", "dismissed"],
       join_request_status: ["pending", "approved", "rejected"],
       push_platform: ["ios", "android"],
+      reaction_target: ["idea", "decision", "comment"],
       report_reason: ["spam", "inappropriate", "harassment", "other"],
       report_status: ["open", "reviewed", "dismissed", "actioned"],
       rsvp_status: ["going", "maybe", "not_going"],

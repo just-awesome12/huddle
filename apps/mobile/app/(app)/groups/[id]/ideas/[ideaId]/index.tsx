@@ -34,7 +34,9 @@ import {
   useRemoveRsvp,
   type RsvpStatus,
 } from '@huddle/api-client/rsvps-hooks';
+import { useGroupReactions, reactionTargetKey } from '@huddle/api-client/reactions-hooks';
 import type { ReportReason } from '@huddle/validation';
+import { ReactionBar } from '@/components/ReactionBar';
 import { supabase } from '@/lib/supabase';
 import { googleCalendarUrl } from '@/lib/calendar';
 import { useAuth } from '@/context/AuthContext';
@@ -72,6 +74,7 @@ export default function IdeaDetailScreen() {
   const rsvps = useIdeaRsvps(supabase, ideaId);
   const setRsvp = useSetRsvp(supabase);
   const removeRsvp = useRemoveRsvp(supabase);
+  const reactions = useGroupReactions(supabase, id, myUserId ?? '');
   const comments = useIdeaComments(supabase, id, ideaId);
   const addComment = useAddComment(supabase, id, ideaId);
   const deleteComment = useDeleteComment(supabase, id, ideaId);
@@ -239,6 +242,13 @@ export default function IdeaDetailScreen() {
             );
           })()}
 
+          <ReactionBar
+            groupId={id}
+            targetType="idea"
+            targetId={ideaId}
+            summaries={reactions.data?.[reactionTargetKey('idea', ideaId)] ?? []}
+          />
+
           {photoUrl.data ? (
             <Image source={{ uri: photoUrl.data }} style={styles.photo} testID="idea-photo" />
           ) : null}
@@ -347,6 +357,14 @@ export default function IdeaDetailScreen() {
                     ) : null}
                   </View>
                   <Text style={styles.commentBody}>{cm.body}</Text>
+                  <View style={styles.commentReactions}>
+                    <ReactionBar
+                      groupId={id}
+                      targetType="comment"
+                      targetId={cm.id}
+                      summaries={reactions.data?.[reactionTargetKey('comment', cm.id)] ?? []}
+                    />
+                  </View>
                 </View>
               );
             })
@@ -554,6 +572,7 @@ const makeStyles = (c: ThemeColors) =>
     commentAuthor: { fontSize: 13, fontWeight: '600', color: c.text },
     commentDelete: { fontSize: 12, color: c.muted },
     commentBody: { fontSize: 14, color: c.text, lineHeight: 19 },
+    commentReactions: { marginTop: 6 },
     completionPrompt: {
       fontSize: 13,
       color: c.text,
