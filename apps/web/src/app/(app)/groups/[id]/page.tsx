@@ -20,6 +20,7 @@ import { leaveGroupAction, removeMemberAction } from '@/actions/groups';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { GroupRealtime } from '@/components/GroupRealtime';
+import { GroupPresence } from '@/components/GroupPresence';
 import {
   CategoryBadge,
   StatusBadge,
@@ -242,7 +243,7 @@ export default async function GroupDetailPage({
               )}
             </div>
             <div className="ml-auto flex items-center gap-3">
-              <span className="flex -space-x-2">
+              <span className="hidden -space-x-2 sm:flex">
                 {members.slice(0, 4).map((m) => (
                   <MiniAvatar
                     key={m.userId}
@@ -252,13 +253,10 @@ export default async function GroupDetailPage({
                   />
                 ))}
               </span>
-              <span className="inline-flex items-center gap-[7px] font-display text-[13px] font-extrabold">
-                <span
-                  className="h-2 w-2 rounded-full bg-online"
-                  style={{ animation: 'hud-pulse 1.8s ease-in-out infinite' }}
-                />
-                Live
-              </span>
+              <GroupPresence
+                groupId={id}
+                me={{ userId: user.id, displayName: myMembership.profile.display_name }}
+              />
             </div>
           </div>
 

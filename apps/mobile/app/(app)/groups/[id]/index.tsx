@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,6 +17,7 @@ import {
   type ActivityItem,
   type ActivityKind,
 } from '@huddle/api-client/activity-hooks';
+import { trackGroupPresence, type PresenceMember } from '@huddle/api-client/realtime';
 import type { IdeaCategory, IdeaStatus } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -115,6 +116,22 @@ export default function GroupDetailScreen() {
   const leaveGroup = useLeaveGroup(supabase);
   const removeMember = useRemoveMember(supabase);
 
+  // Live presence: who's viewing this hub right now.
+  const [present, setPresent] = useState<PresenceMember[]>([]);
+  const membersReady = members.isSuccess;
+  useEffect(() => {
+    if (!myUserId || !membersReady) return;
+    const me = members.data?.find((m) => m.userId === myUserId);
+    if (!me) return; // non-member (redirected below) — don't broadcast
+    return trackGroupPresence(
+      supabase,
+      id,
+      { userId: myUserId, displayName: me.profile.display_name },
+      setPresent,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, myUserId, membersReady]);
+
   if (group.isPending || members.isPending) {
     return (
       <View style={styles.center}>
@@ -203,6 +220,12 @@ export default function GroupDetailScreen() {
                     {group.data.visibility === 'public' ? '🌍 Public' : '🔒 Invite-only'}
                   </Text>
                 </View>
+                {present.length > 0 ? (
+                  <View style={styles.presenceBadge}>
+                    <View style={styles.presenceDot} />
+                    <Text style={styles.presenceText}>{present.length} here</Text>
+                  </View>
+                ) : null}
                 {group.data.location ? (
                   <Text style={styles.metaText}>📍 {group.data.location}</Text>
                 ) : null}
@@ -547,6 +570,17 @@ const makeStyles = (c: ThemeColors) =>
       paddingVertical: 3,
     },
     visBadgeText: { fontSize: 12, fontWeight: '600', color: c.muted },
+    presenceBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: c.surface2,
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+    },
+    presenceDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#7ce3b3' },
+    presenceText: { fontSize: 12, fontWeight: '600', color: c.muted },
     metaText: { fontSize: 13, color: c.muted },
     description: { fontSize: 13, color: c.muted, lineHeight: 18 },
     tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

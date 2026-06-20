@@ -163,5 +163,55 @@ export function subscribeToMyGroups(
   };
 }
 
+/** A member currently present on a group's hub. */
+export interface PresenceMember {
+  userId: string;
+  displayName: string;
+}
+
+/**
+ * Track who is currently viewing a group's hub via Realtime Presence.
+ * Each client tracks itself keyed by user id (so multiple tabs/devices
+ * collapse to one person), and `onChange` fires with the de-duplicated
+ * roster on every join/leave/sync. Returns an unsubscribe fn.
+ *
+ * Presence rides the same authed socket as Postgres Changes; it carries
+ * no row data, so there's no RLS surface — only what each client chooses
+ * to broadcast about itself.
+ */
+export function trackGroupPresence(
+  client: HuddleClient,
+  groupId: string,
+  me: PresenceMember,
+  onChange: (members: PresenceMember[]) => void,
+): () => void {
+  const channel = client.channel(`presence:group:${groupId}`, {
+    config: { presence: { key: me.userId } },
+  });
+
+  const emit = () => {
+    const state = channel.presenceState<PresenceMember>();
+    const byUser = new Map<string, PresenceMember>();
+    for (const metas of Object.values(state)) {
+      for (const m of metas) {
+        if (m.userId) byUser.set(m.userId, { userId: m.userId, displayName: m.displayName });
+      }
+    }
+    onChange([...byUser.values()]);
+  };
+
+  channel.on('presence', { event: 'sync' }, emit);
+  channel.on('presence', { event: 'join' }, emit);
+  channel.on('presence', { event: 'leave' }, emit);
+
+  channel.subscribe((status) => {
+    if (status === 'SUBSCRIBED') void channel.track(me);
+  });
+
+  return () => {
+    void client.removeChannel(channel);
+  };
+}
+
 /** Re-export for providers that want to surface connection state. */
 export type { RealtimeChannel };
