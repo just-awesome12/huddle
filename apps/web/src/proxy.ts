@@ -109,8 +109,9 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Run on everything except static assets, the Next.js internals, and
-    // the public metadata routes (robots/sitemap) — auth-walling those
-    // would redirect crawlers to /sign-in instead of serving the file.
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
+    // the public metadata routes (robots/sitemap/manifest) — auth-walling
+    // those would redirect crawlers / install prompts to /sign-in instead
+    // of serving the file.
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
   ],
 };
