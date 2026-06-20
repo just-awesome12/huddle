@@ -13,6 +13,7 @@ import {
   type ActivityKind,
 } from '@huddle/api-client/activity';
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
+import { fetchGroupRsvpState } from '@huddle/api-client/rsvps';
 import { fetchGroupCommentCounts } from '@huddle/api-client/comments';
 import { ideaFiltersSchema, type IdeaCategory } from '@huddle/validation';
 import { getSupabaseServerClient } from '@/lib/supabase';
@@ -135,9 +136,11 @@ export default async function GroupDetailPage({
 
   let voteCounts: Record<string, number> = {};
   let commentCounts: Record<string, number> = {};
+  let goingByIdea: Record<string, number> = {};
   try {
     voteCounts = (await fetchGroupVoteState(supabase, id, user.id)).countByIdea;
     commentCounts = await fetchGroupCommentCounts(supabase, id);
+    goingByIdea = (await fetchGroupRsvpState(supabase, id, user.id)).goingByIdea;
   } catch {
     // leave empty
   }
@@ -411,6 +414,9 @@ export default async function GroupDetailPage({
                       {idea.title}
                     </span>
                     <span className="flex shrink-0 items-center gap-3 text-xs text-muted">
+                      {(goingByIdea[idea.id] ?? 0) > 0 && (
+                        <span className="font-bold text-content">✅ {goingByIdea[idea.id]}</span>
+                      )}
                       <span>📅 {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}</span>
                       {idea.location && (
                         <span className="hidden max-w-[10rem] truncate sm:inline">

@@ -113,3 +113,7 @@ export const ideaFiltersSchema = z.object({
 });
 
 export type IdeaFilters = z.infer<typeof ideaFiltersSchema>;
+
+// Mirrors Database["public"]["Enums"]["rsvp_status"] (Phase 13 RSVP).
+export const rsvpStatusSchema = z.enum(['going', 'maybe', 'not_going']);
+export type RsvpStatus = z.infer<typeof rsvpStatusSchema>;

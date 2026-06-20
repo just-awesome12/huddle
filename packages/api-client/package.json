@@ -35,6 +35,8 @@
     "./comments-hooks": "./src/comments-hooks.ts",
     "./activity": "./src/activity.ts",
     "./activity-hooks": "./src/activity-hooks.ts",
+    "./rsvps": "./src/rsvps.ts",
+    "./rsvps-hooks": "./src/rsvps-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {

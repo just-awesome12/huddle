@@ -28,6 +28,12 @@ import {
   useAddComment,
   useDeleteComment,
 } from '@huddle/api-client/comments-hooks';
+import {
+  useIdeaRsvps,
+  useSetRsvp,
+  useRemoveRsvp,
+  type RsvpStatus,
+} from '@huddle/api-client/rsvps-hooks';
 import type { ReportReason } from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
 import { googleCalendarUrl } from '@/lib/calendar';
@@ -63,6 +69,9 @@ export default function IdeaDetailScreen() {
   const blockUser = useBlockUser(supabase, myUserId ?? '');
   const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
   const vote = useVoteIdea(supabase, id);
+  const rsvps = useIdeaRsvps(supabase, ideaId);
+  const setRsvp = useSetRsvp(supabase);
+  const removeRsvp = useRemoveRsvp(supabase);
   const comments = useIdeaComments(supabase, id, ideaId);
   const addComment = useAddComment(supabase, id, ideaId);
   const deleteComment = useDeleteComment(supabase, id, ideaId);
@@ -181,6 +190,52 @@ export default function IdeaDetailScreen() {
                   {voted ? '❤' : '🤍'} {count}
                 </Text>
               </Pressable>
+            );
+          })()}
+
+          {(() => {
+            const myRsvp = rsvps.data?.find((r) => r.userId === myUserId)?.status ?? null;
+            const going = rsvps.data?.filter((r) => r.status === 'going') ?? [];
+            const opts: [RsvpStatus, string][] = [
+              ['going', "✅ I'm in"],
+              ['maybe', '🤔 Maybe'],
+              ['not_going', "🙅 Can't"],
+            ];
+            return (
+              <View style={styles.rsvpBlock}>
+                <Text style={styles.sectionTitle}>
+                  Who&apos;s in?{going.length > 0 ? ` · ${going.length} going` : ''}
+                </Text>
+                <View style={styles.rsvpRow}>
+                  {opts.map(([status, label]) => (
+                    <Pressable
+                      key={status}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: myRsvp === status }}
+                      disabled={setRsvp.isPending}
+                      onPress={() => setRsvp.mutate({ ideaId, groupId: id, status })}
+                      style={[styles.rsvpBtn, myRsvp === status && styles.rsvpBtnOn]}
+                    >
+                      <Text style={[styles.rsvpText, myRsvp === status && styles.rsvpTextOn]}>
+                        {label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                  {myRsvp ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => removeRsvp.mutate({ ideaId, groupId: id })}
+                    >
+                      <Text style={styles.rsvpClear}>Clear</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+                {going.length > 0 ? (
+                  <Text style={styles.goingNames} numberOfLines={2}>
+                    {going.map((r) => r.profile.display_name).join(', ')}
+                  </Text>
+                ) : null}
+              </View>
             );
           })()}
 
@@ -411,6 +466,28 @@ const makeStyles = (c: ThemeColors) =>
     badges: { flexDirection: 'row', gap: 8 },
     meta: { fontSize: 12, color: c.muted },
     detailLine: { fontSize: 14, color: c.text },
+    rsvpBlock: { gap: 8, marginTop: 4 },
+    sectionTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      color: c.muted,
+    },
+    rsvpRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+    rsvpBtn: {
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface2,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    rsvpBtnOn: { borderColor: c.accent[600], backgroundColor: c.accent[600] },
+    rsvpText: { fontSize: 13, fontWeight: '700', color: c.muted },
+    rsvpTextOn: { color: '#ffffff' },
+    rsvpClear: { fontSize: 13, fontWeight: '600', color: c.muted },
+    goingNames: { fontSize: 13, color: c.text },
     voteBtn: {
       alignSelf: 'flex-start',
       flexDirection: 'row',

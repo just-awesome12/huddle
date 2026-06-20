@@ -4,8 +4,10 @@ import { fetchGroupMembers } from '@huddle/api-client/groups';
 import { fetchIdea, getIdeaPhotoUrl, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
 import { fetchIdeaComments, type CommentWithAuthor } from '@huddle/api-client/comments';
+import { fetchIdeaRsvps, type IdeaRsvp, type RsvpStatus } from '@huddle/api-client/rsvps';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { setIdeaStatusAction, deleteIdeaAction } from '@/actions/ideas';
+import { setRsvpAction, removeRsvpAction } from '@/actions/rsvps';
 import { blockUserAction } from '@/actions/moderation';
 import { toggleVoteAction } from '@/actions/votes';
 import { deleteCommentAction } from '@/actions/comments';
@@ -77,6 +79,21 @@ export default async function IdeaDetailPage({
   } catch {
     // leave empty
   }
+
+  // RSVPs (Phase 13). Best-effort.
+  let rsvps: IdeaRsvp[] = [];
+  try {
+    rsvps = await fetchIdeaRsvps(supabase, ideaId);
+  } catch {
+    // leave empty
+  }
+  const myRsvp: RsvpStatus | null = rsvps.find((r) => r.userId === user.id)?.status ?? null;
+  const going = rsvps.filter((r) => r.status === 'going');
+  const rsvpOptions: [RsvpStatus, string][] = [
+    ['going', "✅ I'm in"],
+    ['maybe', '🤔 Maybe'],
+    ['not_going', "🙅 Can't"],
+  ];
 
   // Private bucket → short-lived signed URL, minted per render.
   let photoUrl: string | null = null;
@@ -193,6 +210,65 @@ export default async function IdeaDetailPage({
 
         <div className="mt-[22px] flex flex-wrap items-center gap-[14px] border-t border-line pt-5">
           <VoteButton action={voteAction} voted={voted} count={voteCount} />
+        </div>
+
+        {/* Who's in? — RSVP */}
+        <div className="mt-[22px] border-t border-line pt-5" data-testid="rsvp">
+          <p className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
+            Who&apos;s in?{going.length > 0 ? ` · ${going.length} going` : ''}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {rsvpOptions.map(([status, label]) => (
+              <form key={status} action={setRsvpAction}>
+                <input type="hidden" name="ideaId" value={ideaId} />
+                <input type="hidden" name="groupId" value={id} />
+                <input type="hidden" name="status" value={status} />
+                <button
+                  type="submit"
+                  data-testid={`rsvp-${status}`}
+                  className={`rounded-full px-4 py-2 font-display text-sm font-bold transition-colors ${
+                    myRsvp === status
+                      ? 'bg-accent-600 text-white'
+                      : 'bg-surface-2 text-muted hover:bg-line'
+                  }`}
+                >
+                  {label}
+                </button>
+              </form>
+            ))}
+            {myRsvp && (
+              <form action={removeRsvpAction}>
+                <input type="hidden" name="ideaId" value={ideaId} />
+                <input type="hidden" name="groupId" value={id} />
+                <button
+                  type="submit"
+                  data-testid="rsvp-clear"
+                  className="text-sm font-medium text-muted hover:text-content"
+                >
+                  Clear
+                </button>
+              </form>
+            )}
+          </div>
+          {going.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="rsvp-going-list">
+              {going.map((r) => (
+                <span
+                  key={r.userId}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2.5 py-1 text-[13px] text-content"
+                >
+                  <span
+                    aria-hidden
+                    className="grid h-5 w-5 place-items-center rounded-full text-[10px] font-extrabold text-white"
+                    style={{ background: personColor(r.userId) }}
+                  >
+                    {(r.profile.display_name[0] ?? '?').toUpperCase()}
+                  </span>
+                  {r.profile.display_name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
