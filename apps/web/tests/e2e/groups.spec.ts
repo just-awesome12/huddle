@@ -98,8 +98,8 @@ test('admin can rename the group from settings', async ({ page }) => {
   await page.waitForURL(/\/settings$/);
 
   await page.getByLabel('Group name').fill('New Name');
-  await page.getByRole('button', { name: 'Save name' }).click();
-  await expect(page.getByText('Group renamed.')).toBeVisible();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByText('Saved.')).toBeVisible();
 
   // Detail + list reflect the rename.
   await page.goto('/groups');

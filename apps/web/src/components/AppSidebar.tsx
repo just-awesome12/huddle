@@ -47,6 +47,12 @@ export function AppSidebar({ groups, email }: { groups: SidebarGroup[]; email: s
         >
           <span className="text-[17px] leading-none">🏠</span> Home
         </Link>
+        <Link
+          href="/discover"
+          className={`${row} ${pathname === '/discover' ? 'bg-brand-50 text-brand-ink' : 'text-content hover:bg-surface-2'}`}
+        >
+          <span className="text-[17px] leading-none">🧭</span> Discover
+        </Link>
       </nav>
 
       <div className="px-5 pb-2 pt-4 font-display text-[11px] font-extrabold tracking-[0.13em] text-faint">

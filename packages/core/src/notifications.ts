@@ -7,8 +7,14 @@
 // supabase/functions/_shared/notifications.ts (drift-guarded in tests).
 // =====================================================================
 
-/** The notifiable events (one per source table INSERT). */
-export type NotificationEvent = 'new_idea' | 'picker_ran' | 'group_invite' | 'new_comment';
+/** The notifiable events. */
+export type NotificationEvent =
+  | 'new_idea'
+  | 'picker_ran'
+  | 'group_invite'
+  | 'new_comment'
+  | 'join_request'
+  | 'join_approved';
 
 /** A user's per-event preferences. Columns mirror notification_prefs. */
 export interface NotificationPrefs {
@@ -16,6 +22,8 @@ export interface NotificationPrefs {
   picker_ran: boolean;
   group_invite: boolean;
   new_comment: boolean;
+  join_request: boolean;
+  join_approved: boolean;
 }
 
 /** Absent prefs row = opted in to everything (D: missing row = default-on). */
@@ -24,6 +32,8 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   picker_ran: true,
   group_invite: true,
   new_comment: true,
+  join_request: true,
+  join_approved: true,
 };
 
 /** Whether a user with these prefs wants `event`. Null prefs → default. */

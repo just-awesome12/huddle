@@ -821,6 +821,20 @@ project-root/
 
 ---
 
+### Phase 12 — Public, Discoverable Groups ✅ COMPLETE (pending PR)
+
+User-requested: make groups public/discoverable with description, location, and tags.
+
+- [x] **12.1 Schema + RLS + RPCs** — `group_visibility` enum + `description`/`location`/`tags`/`member_count` on `groups` (migration 024); `groups` SELECT widened to member-OR-public (contents stay members-only); `pg_trgm`/GIN search indexes; `member_count` trigger; `group_join_requests` table + `request_to_join`/`respond_to_join_request` RPCs (HD005/HD006). pgTAP (+26). D79/D80.
+- [x] **12.2 Validation + data layer** — extended create/update schemas + tag normalization + search schema; `searchPublicGroups`/`requestToJoin`/`fetchJoinRequests`/`respondToJoinRequest`/`fetchMyJoinRequests` + mobile hooks; unit tests.
+- [x] **12.3 Web UI** — create/settings fields, `/discover` search, admin approval, hub banner + Playwright (`public-groups.spec`).
+- [x] **12.4 Mobile UI** — mirrored create/settings/discover/approval via hooks (device smoke deferred — Maestro).
+- [x] **12.5 Join-request push** — `join_request` (→ admins) + `join_approved` (→ requester) on the fan-out seam; migration 025; probe (+2). D81.
+- [x] **12.6 Docs + full gate.**
+- Deferred: instant-join mode, group bans, anonymous/SEO discovery, FTS ranking, perimeter search rate-limit (with the rest of Cloudflare, D51).
+
+---
+
 ## 8. Cross-Phase Testing Strategy
 
 Every phase enforces these gates before progressing.

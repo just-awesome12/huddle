@@ -6,7 +6,13 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 
-type PrefKey = 'new_idea' | 'picker_ran' | 'group_invite' | 'new_comment';
+type PrefKey =
+  | 'new_idea'
+  | 'picker_ran'
+  | 'group_invite'
+  | 'new_comment'
+  | 'join_request'
+  | 'join_approved';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
   {
@@ -25,6 +31,16 @@ const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
     subtitle: 'When the random picker chooses for your group',
   },
   { key: 'group_invite', title: 'Group invites', subtitle: 'When someone invites you to a group' },
+  {
+    key: 'join_request',
+    title: 'Join requests',
+    subtitle: 'When someone asks to join a public group you run',
+  },
+  {
+    key: 'join_approved',
+    title: 'Join approvals',
+    subtitle: 'When your request to join a group is approved',
+  },
 ];
 
 export default function NotificationSettingsScreen() {
@@ -44,6 +60,8 @@ export default function NotificationSettingsScreen() {
     picker_ran: row?.picker_ran ?? true,
     group_invite: row?.group_invite ?? true,
     new_comment: row?.new_comment ?? true,
+    join_request: row?.join_request ?? true,
+    join_approved: row?.join_approved ?? true,
   };
 
   const toggle = (key: PrefKey) => {

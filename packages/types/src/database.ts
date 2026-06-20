@@ -187,6 +187,61 @@ export type Database = {
           },
         ]
       }
+      group_join_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          group_id: string
+          id: string
+          message: string | null
+          status: Database["public"]["Enums"]["join_request_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          group_id: string
+          id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["join_request_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          group_id?: string
+          id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["join_request_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_join_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_join_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_join_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
@@ -227,23 +282,38 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          description: string | null
           id: string
+          location: string | null
+          member_count: number
           name: string
+          tags: string[]
           updated_at: string
+          visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Insert: {
           created_at?: string
           created_by: string
+          description?: string | null
           id?: string
+          location?: string | null
+          member_count?: number
           name: string
+          tags?: string[]
           updated_at?: string
+          visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Update: {
           created_at?: string
           created_by?: string
+          description?: string | null
           id?: string
+          location?: string | null
+          member_count?: number
           name?: string
+          tags?: string[]
           updated_at?: string
+          visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Relationships: [
           {
@@ -403,6 +473,8 @@ export type Database = {
       notification_prefs: {
         Row: {
           group_invite: boolean
+          join_approved: boolean
+          join_request: boolean
           new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
@@ -411,6 +483,8 @@ export type Database = {
         }
         Insert: {
           group_invite?: boolean
+          join_approved?: boolean
+          join_request?: boolean
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
@@ -419,6 +493,8 @@ export type Database = {
         }
         Update: {
           group_invite?: boolean
+          join_approved?: boolean
+          join_request?: boolean
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
@@ -555,9 +631,14 @@ export type Database = {
         Returns: {
           created_at: string
           created_by: string
+          description: string | null
           id: string
+          location: string | null
+          member_count: number
           name: string
+          tags: string[]
           updated_at: string
+          visibility: Database["public"]["Enums"]["group_visibility"]
         }
         SetofOptions: {
           from: "*"
@@ -567,13 +648,24 @@ export type Database = {
         }
       }
       create_group: {
-        Args: { p_name: string }
+        Args: {
+          p_description?: string
+          p_location?: string
+          p_name: string
+          p_tags?: string[]
+          p_visibility?: Database["public"]["Enums"]["group_visibility"]
+        }
         Returns: {
           created_at: string
           created_by: string
+          description: string | null
           id: string
+          location: string | null
+          member_count: number
           name: string
+          tags: string[]
           updated_at: string
+          visibility: Database["public"]["Enums"]["group_visibility"]
         }
         SetofOptions: {
           from: "*"
@@ -596,11 +688,51 @@ export type Database = {
           status: string
         }[]
       }
+      request_to_join: {
+        Args: { p_group_id: string; p_message?: string }
+        Returns: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          group_id: string
+          id: string
+          message: string | null
+          status: Database["public"]["Enums"]["join_request_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "group_join_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      respond_to_join_request: {
+        Args: { p_approve: boolean; p_request_id: string }
+        Returns: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          group_id: string
+          id: string
+          message: string | null
+          status: Database["public"]["Enums"]["join_request_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "group_join_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       group_member_role: "admin" | "member"
+      group_visibility: "invite_only" | "public"
       idea_category: "food" | "activity" | "place" | "event" | "other"
       idea_status: "on_radar" | "done" | "dismissed"
+      join_request_status: "pending" | "approved" | "rejected"
       push_platform: "ios" | "android"
       report_reason: "spam" | "inappropriate" | "harassment" | "other"
       report_status: "open" | "reviewed" | "dismissed" | "actioned"
@@ -735,8 +867,10 @@ export const Constants = {
   public: {
     Enums: {
       group_member_role: ["admin", "member"],
+      group_visibility: ["invite_only", "public"],
       idea_category: ["food", "activity", "place", "event", "other"],
       idea_status: ["on_radar", "done", "dismissed"],
+      join_request_status: ["pending", "approved", "rejected"],
       push_platform: ["ios", "android"],
       report_reason: ["spam", "inappropriate", "harassment", "other"],
       report_status: ["open", "reviewed", "dismissed", "actioned"],

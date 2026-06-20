@@ -8,13 +8,21 @@
 // Edit both files together.
 // =====================================================================
 
-export type NotificationEvent = 'new_idea' | 'picker_ran' | 'group_invite' | 'new_comment';
+export type NotificationEvent =
+  | 'new_idea'
+  | 'picker_ran'
+  | 'group_invite'
+  | 'new_comment'
+  | 'join_request'
+  | 'join_approved';
 
 export interface NotificationPrefs {
   new_idea: boolean;
   picker_ran: boolean;
   group_invite: boolean;
   new_comment: boolean;
+  join_request: boolean;
+  join_approved: boolean;
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
@@ -22,6 +30,8 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   picker_ran: true,
   group_invite: true,
   new_comment: true,
+  join_request: true,
+  join_approved: true,
 };
 
 export function shouldNotify(

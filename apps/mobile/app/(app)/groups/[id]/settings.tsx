@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,17 +11,20 @@ import {
 } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { createGroupSchema } from '@huddle/validation';
+import { updateGroupSchema, type GroupVisibility } from '@huddle/validation';
 import {
   useGroup,
   useGroupMembers,
-  useUpdateGroup,
+  useUpdateGroupFields,
   useDeleteGroup,
+  useJoinRequests,
+  useRespondToJoinRequest,
 } from '@huddle/api-client/groups-hooks';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
 import { FormField } from '@/components/FormField';
+import { GroupFormFields } from '@/components/GroupFormFields';
 import { ConfirmAction } from '@/components/ConfirmAction';
 
 export default function GroupSettingsScreen() {
@@ -33,17 +37,29 @@ export default function GroupSettingsScreen() {
 
   const group = useGroup(supabase, id);
   const members = useGroupMembers(supabase, id);
-  const updateGroup = useUpdateGroup(supabase);
+  const updateGroup = useUpdateGroupFields(supabase);
   const deleteGroup = useDeleteGroup(supabase);
+  const requests = useJoinRequests(supabase, id);
+  const respond = useRespondToJoinRequest(supabase);
 
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const [tags, setTags] = useState('');
+  const [visibility, setVisibility] = useState<GroupVisibility>('invite_only');
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
-  const [renamed, setRenamed] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  // Seed the input once the group loads (and after an external rename).
+  // Seed the inputs once the group loads.
   useEffect(() => {
-    if (group.data) setName(group.data.name);
+    if (group.data) {
+      setName(group.data.name);
+      setDescription(group.data.description ?? '');
+      setLocation(group.data.location ?? '');
+      setTags((group.data.tags ?? []).join(', '));
+      setVisibility(group.data.visibility);
+    }
   }, [group.data]);
 
   if (group.isPending || members.isPending) {
@@ -74,25 +90,35 @@ export default function GroupSettingsScreen() {
     return <Redirect href={`/groups/${id}`} />;
   }
 
-  const onRename = () => {
+  const onSave = () => {
     setFieldError(undefined);
     setFormError(null);
-    setRenamed(false);
+    setSaved(false);
 
-    const parsed = createGroupSchema.safeParse({ name });
+    const parsed = updateGroupSchema.safeParse({
+      name,
+      description,
+      location,
+      tags: tags.split(','),
+      visibility,
+    });
     if (!parsed.success) {
-      setFieldError(parsed.error.flatten().fieldErrors.name?.[0]);
+      const errors = parsed.error.flatten().fieldErrors;
+      setFieldError(errors.name?.[0]);
+      setFormError(errors.tags?.[0] ?? errors.description?.[0] ?? errors.location?.[0] ?? null);
       return;
     }
 
     updateGroup.mutate(
-      { groupId: id, name: parsed.data.name },
+      { groupId: id, patch: parsed.data },
       {
-        onSuccess: () => setRenamed(true),
-        onError: () => setFormError('Could not rename the group. Please try again.'),
+        onSuccess: () => setSaved(true),
+        onError: () => setFormError('Could not save changes. Please try again.'),
       },
     );
   };
+
+  const pending = requests.data ?? [];
 
   return (
     <KeyboardAvoidingView
@@ -108,7 +134,7 @@ export default function GroupSettingsScreen() {
         <Text style={styles.heading}>Group settings</Text>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Rename</Text>
+          <Text style={styles.sectionTitle}>Details</Text>
           <FormField
             label="Group name"
             value={name}
@@ -117,6 +143,16 @@ export default function GroupSettingsScreen() {
             error={fieldError}
             autoCapitalize="words"
           />
+          <GroupFormFields
+            description={description}
+            onChangeDescription={setDescription}
+            location={location}
+            onChangeLocation={setLocation}
+            tags={tags}
+            onChangeTags={setTags}
+            visibility={visibility}
+            onChangeVisibility={setVisibility}
+          />
           {formError ? (
             <View style={styles.alert}>
               <Text style={styles.alertText} accessibilityRole="alert">
@@ -124,12 +160,45 @@ export default function GroupSettingsScreen() {
               </Text>
             </View>
           ) : null}
-          {renamed ? (
+          {saved ? (
             <View style={styles.success}>
-              <Text style={styles.successText}>Group renamed.</Text>
+              <Text style={styles.successText}>Saved.</Text>
             </View>
           ) : null}
-          <Button label="Save name" onPress={onRename} loading={updateGroup.isPending} />
+          <Button label="Save changes" onPress={onSave} loading={updateGroup.isPending} />
+        </View>
+
+        {/* Join requests (public groups) */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Join requests ({pending.length})</Text>
+          {requests.isPending ? (
+            <ActivityIndicator color={c.brand[600]} />
+          ) : pending.length === 0 ? (
+            <Text style={styles.muted}>No pending requests.</Text>
+          ) : (
+            pending.map((r) => (
+              <View key={r.id} style={styles.requestRow}>
+                <View style={styles.requestInfo}>
+                  <Text style={styles.requestName}>{r.profile.display_name}</Text>
+                  <Text style={styles.muted}>@{r.profile.username}</Text>
+                  {r.message ? <Text style={styles.muted}>“{r.message}”</Text> : null}
+                </View>
+                <View style={styles.requestActions}>
+                  <Button
+                    label="Approve"
+                    loading={respond.isPending}
+                    onPress={() => respond.mutate({ requestId: r.id, approve: true, groupId: id })}
+                  />
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => respond.mutate({ requestId: r.id, approve: false, groupId: id })}
+                  >
+                    <Text style={styles.reject}>Reject</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))
+          )}
         </View>
 
         <View style={[styles.card, styles.dangerCard]}>
@@ -195,4 +264,17 @@ const makeStyles = (c: ThemeColors) =>
     alertText: { color: c.dangerText, fontSize: 13 },
     success: { backgroundColor: '#f0fdf4', padding: 10, borderRadius: 8 },
     successText: { color: '#15803d', fontSize: 13 },
+    requestRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 8,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingTop: 12,
+    },
+    requestInfo: { flexShrink: 1, gap: 2 },
+    requestName: { fontSize: 14, fontWeight: '600', color: c.text },
+    requestActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    reject: { fontSize: 14, fontWeight: '600', color: c.muted },
   });

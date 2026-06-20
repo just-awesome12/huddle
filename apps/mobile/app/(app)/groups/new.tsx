@@ -2,17 +2,22 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
-import { createGroupSchema } from '@huddle/validation';
+import { createGroupSchema, type GroupVisibility } from '@huddle/validation';
 import { useCreateGroup } from '@huddle/api-client/groups-hooks';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/Button';
 import { FormField } from '@/components/FormField';
+import { GroupFormFields } from '@/components/GroupFormFields';
 
 export default function NewGroupScreen() {
   const c = useColors();
   const styles = makeStyles(c);
   const router = useRouter();
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [location, setLocation] = useState('');
+  const [tags, setTags] = useState('');
+  const [visibility, setVisibility] = useState<GroupVisibility>('invite_only');
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
   const createGroup = useCreateGroup(supabase);
@@ -21,20 +26,37 @@ export default function NewGroupScreen() {
     setFieldError(undefined);
     setFormError(null);
 
-    const parsed = createGroupSchema.safeParse({ name });
+    const parsed = createGroupSchema.safeParse({
+      name,
+      description,
+      location,
+      tags: tags.split(','),
+      visibility,
+    });
     if (!parsed.success) {
-      setFieldError(parsed.error.flatten().fieldErrors.name?.[0]);
+      const errors = parsed.error.flatten().fieldErrors;
+      setFieldError(errors.name?.[0]);
+      setFormError(errors.tags?.[0] ?? errors.description?.[0] ?? errors.location?.[0] ?? null);
       return;
     }
 
-    createGroup.mutate(parsed.data.name, {
-      onSuccess: (group) => {
-        router.replace(`/groups/${group.id}`);
+    createGroup.mutate(
+      {
+        name: parsed.data.name,
+        description: parsed.data.description,
+        location: parsed.data.location,
+        tags: parsed.data.tags,
+        visibility: parsed.data.visibility,
       },
-      onError: () => {
-        setFormError('Could not create the group. Please try again.');
+      {
+        onSuccess: (group) => {
+          router.replace(`/groups/${group.id}`);
+        },
+        onError: () => {
+          setFormError('Could not create the group. Please try again.');
+        },
       },
-    });
+    );
   };
 
   return (
@@ -58,6 +80,17 @@ export default function NewGroupScreen() {
             hint="Up to 80 characters. You can rename it later."
             error={fieldError}
             autoCapitalize="words"
+          />
+
+          <GroupFormFields
+            description={description}
+            onChangeDescription={setDescription}
+            location={location}
+            onChangeLocation={setLocation}
+            tags={tags}
+            onChangeTags={setTags}
+            visibility={visibility}
+            onChangeVisibility={setVisibility}
           />
 
           {formError ? (

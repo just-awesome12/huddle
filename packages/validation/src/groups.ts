@@ -6,17 +6,85 @@ const groupNameSchema = z
   .min(1, 'Group name is required')
   .max(80, 'Group name must be at most 80 characters');
 
+// Mirrors Database["public"]["Enums"]["group_visibility"].
+export const groupVisibilitySchema = z.enum(['invite_only', 'public']);
+export type GroupVisibility = z.infer<typeof groupVisibilitySchema>;
+
+export const groupDescriptionSchema = z
+  .string()
+  .trim()
+  .max(500, 'Description must be at most 500 characters');
+
+export const groupLocationSchema = z
+  .string()
+  .trim()
+  .max(120, 'Location must be at most 120 characters');
+
+/** Normalize a raw tag list: trim, lowercase, drop empties, de-duplicate. */
+export function normalizeTags(raw: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const t of raw) {
+    const v = t.trim().toLowerCase();
+    if (!v) continue;
+    if (!seen.has(v)) {
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out;
+}
+
+// Tags: normalized then bounded (<=8 tags, each <=30 chars) — mirrors the
+// DB CHECK + normalize trigger.
+export const tagsSchema = z
+  .array(z.string())
+  .transform(normalizeTags)
+  .pipe(
+    z.array(z.string().max(30, 'Each tag must be at most 30 characters')).max(8, 'At most 8 tags'),
+  );
+
+/** Parse a comma-separated tags string (form input) into normalized tags. */
+export const tagsStringSchema = z
+  .string()
+  .transform((s) => s.split(','))
+  .pipe(tagsSchema);
+
 export const createGroupSchema = z.object({
   name: groupNameSchema,
+  description: groupDescriptionSchema.optional(),
+  location: groupLocationSchema.optional(),
+  tags: tagsSchema.optional().default([]),
+  visibility: groupVisibilitySchema.default('invite_only'),
 });
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
 
-// Rename-only for now; other group settings live in later phases.
+// Partial for edits — every field optional; only the provided ones change.
 export const updateGroupSchema = createGroupSchema.partial();
 
 export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;
 
-// Mirrors Database["public"]["Enums"]["group_member_role"]
+// Discovery search: free text + optional tag/location filters.
+export const groupSearchSchema = z.object({
+  q: z.string().trim().max(80, 'Search is too long').optional().default(''),
+  tags: z
+    .array(z.string().trim().toLowerCase().min(1))
+    .max(8, 'At most 8 tags')
+    .optional()
+    .default([]),
+  location: z.string().trim().max(120, 'Location is too long').optional().default(''),
+});
+
+export type GroupSearchInput = z.infer<typeof groupSearchSchema>;
+
+// Optional note attached to a join request.
+export const joinRequestMessageSchema = z
+  .string()
+  .trim()
+  .max(300, 'Message must be at most 300 characters')
+  .optional();
+
+// Mirrors Database["public"]["Enums"]["group_member_role"].
 export const groupMemberRoleSchema = z.enum(['admin', 'member']);
 export type GroupMemberRole = z.infer<typeof groupMemberRoleSchema>;

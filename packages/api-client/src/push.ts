@@ -17,6 +17,8 @@ export interface NotificationPrefsInput {
   picker_ran: boolean;
   group_invite: boolean;
   new_comment: boolean;
+  join_request: boolean;
+  join_approved: boolean;
 }
 
 export const notificationQueryKeys = {

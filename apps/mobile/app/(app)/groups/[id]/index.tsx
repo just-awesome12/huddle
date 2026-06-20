@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useGroup,
   useGroupMembers,
   useLeaveGroup,
   useRemoveMember,
+  useJoinRequests,
 } from '@huddle/api-client/groups-hooks';
 import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
 import { useGroupVoteState } from '@huddle/api-client/votes-hooks';
@@ -78,6 +79,7 @@ export default function GroupDetailScreen() {
   const ideas = useGroupIdeas(supabase, id, filters);
   const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
   const commentCounts = useGroupCommentCounts(supabase, id);
+  const joinRequests = useJoinRequests(supabase, id);
   const leaveGroup = useLeaveGroup(supabase);
   const removeMember = useRemoveMember(supabase);
 
@@ -104,8 +106,15 @@ export default function GroupDetailScreen() {
     );
   }
 
+  // A public group's row is visible to non-members (discovery), but the hub
+  // is members-only — send non-members to the discover flow to request to
+  // join. invite_only groups already hit the "not found" branch above.
   const myMembership = members.data.find((m) => m.userId === myUserId);
-  const isAdmin = myMembership?.role === 'admin';
+  if (!myMembership) {
+    return <Redirect href="/discover" />;
+  }
+  const isAdmin = myMembership.role === 'admin';
+  const pendingRequestCount = isAdmin ? (joinRequests.data?.length ?? 0) : 0;
 
   // "Upcoming" = on-radar ideas dated today-or-later, soonest first.
   // event_date is YYYY-MM-DD so a string compare is chronological.
@@ -139,7 +148,7 @@ export default function GroupDetailScreen() {
               onPress={() => router.push(`/groups/${id}/invite`)}
             />
             <Button
-              label="Settings"
+              label={pendingRequestCount > 0 ? `Requests (${pendingRequestCount})` : 'Settings'}
               variant="ghost"
               onPress={() => router.push(`/groups/${id}/settings`)}
             />
@@ -155,6 +164,29 @@ export default function GroupDetailScreen() {
           ListHeaderComponent={
             <View style={styles.ideasBlock}>
               <Text style={styles.groupName}>{group.data.name}</Text>
+
+              <View style={styles.metaRow}>
+                <View style={styles.visBadge}>
+                  <Text style={styles.visBadgeText}>
+                    {group.data.visibility === 'public' ? '🌍 Public' : '🔒 Invite-only'}
+                  </Text>
+                </View>
+                {group.data.location ? (
+                  <Text style={styles.metaText}>📍 {group.data.location}</Text>
+                ) : null}
+              </View>
+              {group.data.description ? (
+                <Text style={styles.description}>{group.data.description}</Text>
+              ) : null}
+              {group.data.tags.length > 0 ? (
+                <View style={styles.tagsRow}>
+                  {group.data.tags.map((t) => (
+                    <Text key={t} style={styles.tag}>
+                      #{t}
+                    </Text>
+                  ))}
+                </View>
+              ) : null}
 
               <View style={styles.actionRow}>
                 <Button
@@ -452,6 +484,25 @@ const makeStyles = (c: ThemeColors) =>
       borderTopColor: c.border,
     },
     ideasBlock: { gap: 10 },
+    metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+    visBadge: {
+      backgroundColor: c.surface2,
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+    },
+    visBadgeText: { fontSize: 12, fontWeight: '600', color: c.muted },
+    metaText: { fontSize: 13, color: c.muted },
+    description: { fontSize: 13, color: c.muted, lineHeight: 18 },
+    tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+    tag: {
+      fontSize: 12,
+      color: c.muted,
+      backgroundColor: c.surface2,
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
     actionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     ideasHeader: {
       flexDirection: 'row',

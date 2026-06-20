@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import {
   fetchGroup,
   fetchGroupMembers,
+  fetchJoinRequests,
   type GroupMemberWithProfile,
 } from '@huddle/api-client/groups';
 import { fetchGroupIdeas, type IdeaFilters, type IdeaWithProposer } from '@huddle/api-client/ideas';
@@ -94,8 +95,15 @@ export default async function GroupDetailPage({
     notFound();
   }
 
+  // A public group's row is now visible to non-members (discovery), but the
+  // hub is for members only — bounce non-members to the discovery flow,
+  // where they can request to join. (invite_only groups already 404'd above
+  // because fetchGroup throws for non-members.)
   const myMembership = members.find((m) => m.userId === user.id);
-  const isAdmin = myMembership?.role === 'admin';
+  if (!myMembership) {
+    redirect('/discover');
+  }
+  const isAdmin = myMembership.role === 'admin';
   const hasFilters = !!(filters.status || filters.category);
 
   let voteCounts: Record<string, number> = {};
@@ -105,6 +113,16 @@ export default async function GroupDetailPage({
     commentCounts = await fetchGroupCommentCounts(supabase, id);
   } catch {
     // leave empty
+  }
+
+  // Admins see a pending-join-request count (public groups).
+  let pendingRequestCount = 0;
+  if (isAdmin) {
+    try {
+      pendingRequestCount = (await fetchJoinRequests(supabase, id)).length;
+    } catch {
+      // leave 0
+    }
   }
 
   const onRadarCount = ideas.filter((i) => i.status === 'on_radar').length;
@@ -160,9 +178,35 @@ export default async function GroupDetailPage({
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 text-[15px] text-brand-100">
-                {members.length} {members.length === 1 ? 'member' : 'members'}
-              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-brand-100">
+                <span>
+                  {members.length} {members.length === 1 ? 'member' : 'members'}
+                </span>
+                <span
+                  className="rounded-full bg-white/15 px-2.5 py-0.5 font-display text-[11px] font-extrabold uppercase tracking-[0.06em]"
+                  data-testid="visibility-badge"
+                >
+                  {group.visibility === 'public' ? '🌍 Public' : '🔒 Invite-only'}
+                </span>
+                {group.location && <span>📍 {group.location}</span>}
+              </div>
+              {group.description && (
+                <p className="mt-2 max-w-[60ch] text-[14px] text-brand-100/90">
+                  {group.description}
+                </p>
+              )}
+              {group.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {group.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full bg-white/10 px-2.5 py-0.5 text-[12px] font-medium text-white/90"
+                    >
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="ml-auto flex items-center gap-3">
               <span className="flex -space-x-2">
@@ -215,6 +259,18 @@ export default async function GroupDetailPage({
                 >
                   Invite
                 </Link>
+                {pendingRequestCount > 0 && (
+                  <Link
+                    href={`/groups/${id}/settings`}
+                    data-testid="requests-link"
+                    className="inline-flex items-center gap-2 rounded-full bg-accent-600 px-5 py-[13px] font-display text-[15px] font-extrabold text-white transition-transform hover:-translate-y-0.5"
+                  >
+                    Requests
+                    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-white px-1 text-[12px] font-black text-accent-600">
+                      {pendingRequestCount}
+                    </span>
+                  </Link>
+                )}
                 <Link
                   href={`/groups/${id}/settings`}
                   className="rounded-full border border-white/25 px-5 py-[13px] font-display text-[15px] font-extrabold text-white transition-colors hover:bg-white/10"
