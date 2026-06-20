@@ -183,6 +183,44 @@ try {
   });
   assert(r4.status === 200 && r4.json?.recipientCount === 0 && r4.json?.skipped, 'link/email invite (no user) is skipped');
 
+  // --- join_request: requester (c) → group admins (a, 1 device) ---
+  const rj1 = await invoke({
+    type: 'INSERT',
+    table: 'group_join_requests',
+    record: { id: `jr-${ts}`, group_id: groupId, user_id: c.user.id, status: 'pending' },
+  });
+  assert(
+    rj1.status === 200 && rj1.json?.recipientCount === 1,
+    `join_request: 1 admin recipient (a), got ${rj1.json?.recipientCount}`,
+  );
+  assert(
+    rj1.json?.event === 'join_request' &&
+      rj1.json?.sampleMessage?.data?.path === `/groups/${groupId}/settings`,
+    'join_request: event + deep-link to settings',
+  );
+
+  // --- join_approved: the requester (c) is notified; approver (a) is actor ---
+  const rj2 = await invoke({
+    type: 'UPDATE',
+    table: 'group_join_requests',
+    record: {
+      id: `jr-${ts}`,
+      group_id: groupId,
+      user_id: c.user.id,
+      status: 'approved',
+      decided_by: a.user.id,
+    },
+  });
+  assert(
+    rj2.status === 200 && rj2.json?.recipientCount === 1,
+    `join_approved: 1 recipient (requester c), got ${rj2.json?.recipientCount}`,
+  );
+  assert(
+    rj2.json?.event === 'join_approved' &&
+      rj2.json?.sampleMessage?.data?.path === `/groups/${groupId}`,
+    'join_approved: event + deep-link to the group',
+  );
+
   // --- wrong secret is rejected ---
   const r5 = await invoke(
     { type: 'INSERT', table: 'ideas', record: { id: idea.id, group_id: groupId, proposed_by: a.user.id } },

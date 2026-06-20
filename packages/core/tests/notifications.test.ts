@@ -15,6 +15,8 @@ const allOff: NotificationPrefs = {
   picker_ran: false,
   group_invite: false,
   new_comment: false,
+  join_request: false,
+  join_approved: false,
 };
 
 describe('shouldNotify', () => {
@@ -96,11 +98,25 @@ describe('Deno mirror drift guard', () => {
     {
       userId: 'b',
       expoToken: 't-b',
-      prefs: { new_idea: false, picker_ran: true, group_invite: true, new_comment: false },
+      prefs: {
+        new_idea: false,
+        picker_ran: true,
+        group_invite: true,
+        new_comment: false,
+        join_request: true,
+        join_approved: false,
+      },
     },
   ];
   it('selectRecipientTokens matches the mirror', () => {
-    for (const ev of ['new_idea', 'picker_ran', 'group_invite', 'new_comment'] as const) {
+    for (const ev of [
+      'new_idea',
+      'picker_ran',
+      'group_invite',
+      'new_comment',
+      'join_request',
+      'join_approved',
+    ] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),
       );

@@ -473,6 +473,8 @@ export type Database = {
       notification_prefs: {
         Row: {
           group_invite: boolean
+          join_approved: boolean
+          join_request: boolean
           new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
@@ -481,6 +483,8 @@ export type Database = {
         }
         Insert: {
           group_invite?: boolean
+          join_approved?: boolean
+          join_request?: boolean
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
@@ -489,6 +493,8 @@ export type Database = {
         }
         Update: {
           group_invite?: boolean
+          join_approved?: boolean
+          join_request?: boolean
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean

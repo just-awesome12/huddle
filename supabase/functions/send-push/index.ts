@@ -73,6 +73,8 @@ async function recipientsForUsers(service: Service, userIds: string[]): Promise<
       picker_ran: p.picker_ran as boolean,
       group_invite: p.group_invite as boolean,
       new_comment: p.new_comment as boolean,
+      join_request: p.join_request as boolean,
+      join_approved: p.join_approved as boolean,
     });
   }
   return (tokens ?? []).map((t) => ({
@@ -85,6 +87,25 @@ async function recipientsForUsers(service: Service, userIds: string[]): Promise<
 async function memberIds(service: Service, groupId: string): Promise<string[]> {
   const { data } = await service.from('group_members').select('user_id').eq('group_id', groupId);
   return (data ?? []).map((m) => m.user_id as string);
+}
+
+async function adminIds(service: Service, groupId: string): Promise<string[]> {
+  const { data } = await service
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', groupId)
+    .eq('role', 'admin');
+  return (data ?? []).map((m) => m.user_id as string);
+}
+
+/** Display name for one user (falls back to "Someone"). */
+async function displayName(service: Service, userId: string): Promise<string> {
+  const { data } = await service
+    .from('profiles')
+    .select('display_name')
+    .eq('id', userId)
+    .maybeSingle();
+  return (data?.display_name as string) ?? 'Someone';
 }
 
 interface Resolved {
@@ -186,6 +207,46 @@ async function resolve(
         data: { path: token ? `/invites/${token}` : `/groups` },
       },
     };
+  }
+
+  if (table === 'group_join_requests') {
+    const groupId = str(record.group_id);
+    const requesterId = str(record.user_id);
+    const status = str(record.status);
+    if (!groupId || !requesterId) return { skip: 'missing join-request fields' };
+    const name = await groupName(service, groupId);
+
+    if (status === 'pending') {
+      // New request → notify the group's admins (minus the requester).
+      const who = await displayName(service, requesterId);
+      return {
+        event: 'join_request',
+        actorId: requesterId,
+        recipientUserIds: await adminIds(service, groupId),
+        content: {
+          title: `Join request for ${name}`,
+          body: `${who} wants to join`,
+          data: { path: `/groups/${groupId}/settings` },
+        },
+      };
+    }
+
+    if (status === 'approved') {
+      // Approved → notify the requester. The approving admin is the actor,
+      // but the recipient is the requester, so no self-exclusion conflict.
+      return {
+        event: 'join_approved',
+        actorId: str(record.decided_by),
+        recipientUserIds: [requesterId],
+        content: {
+          title: `You're in!`,
+          body: `Your request to join ${name} was approved`,
+          data: { path: `/groups/${groupId}` },
+        },
+      };
+    }
+
+    return { skip: `join-request status not notifiable: ${status}` };
   }
 
   return { skip: `unsupported table: ${table}` };
