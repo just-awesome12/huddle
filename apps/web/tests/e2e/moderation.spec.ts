@@ -67,7 +67,7 @@ test('member can report an idea, block the author (hides their ideas), then unbl
 
   // Invite a member.
   await page.goto(groupUrl);
-  await page.getByRole('link', { name: 'Invite' }).click();
+  await page.getByRole('link', { name: 'Invite', exact: true }).click();
   await page.getByRole('button', { name: 'Generate invite link' }).click();
   const inviteUrl = (await page.getByTestId('invite-url').textContent())!;
 

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { IdeaCategory, IdeaStatus } from '@huddle/validation';
 
 export const CATEGORY_LABELS: Record<IdeaCategory, string> = {
@@ -14,17 +15,22 @@ export const STATUS_LABELS: Record<IdeaStatus, string> = {
   dismissed: 'Dismissed',
 };
 
-const statusClasses: Record<IdeaStatus, string> = {
-  on_radar: 'bg-sky-100 text-sky-800',
-  done: 'bg-green-100 text-green-800',
-  dismissed: 'bg-surface-2 text-muted',
+// Translucent status pills (app redesign). on_radar uses a green that
+// reads on both themes; done/dismissed use the neutral surface-2 chip.
+const statusStyle: Record<IdeaStatus, { className: string; style?: CSSProperties }> = {
+  on_radar: {
+    className: 'font-extrabold',
+    style: { color: '#1f8a5b', background: 'rgba(47,158,143,.16)' },
+  },
+  done: { className: 'bg-surface-2 font-extrabold text-muted' },
+  dismissed: { className: 'bg-surface-2 font-extrabold text-muted' },
 };
 
 export function CategoryBadge({ category }: { category: IdeaCategory }) {
   return (
     <span
       data-testid={`category-badge-${category}`}
-      className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800"
+      className="inline-flex items-center rounded-full bg-surface-2 px-[11px] py-[5px] font-display text-[11.5px] font-bold text-muted"
     >
       {CATEGORY_LABELS[category]}
     </span>
@@ -32,10 +38,12 @@ export function CategoryBadge({ category }: { category: IdeaCategory }) {
 }
 
 export function StatusBadge({ status }: { status: IdeaStatus }) {
+  const s = statusStyle[status];
   return (
     <span
       data-testid={`status-badge-${status}`}
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses[status]}`}
+      className={`inline-flex shrink-0 items-center rounded-full px-[11px] py-[5px] font-display text-[11.5px] ${s.className}`}
+      style={s.style}
     >
       {STATUS_LABELS[status]}
     </span>

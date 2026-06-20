@@ -82,7 +82,7 @@ test('add by username → invitee sees pending invite → accepts', async ({ pag
   // Admin: group → invite page → search → invite.
   await signUp(page, admin);
   await createGroup(page, 'Username Invite Group');
-  await page.getByRole('link', { name: 'Invite' }).click();
+  await page.getByRole('link', { name: 'Invite', exact: true }).click();
   await page.waitForURL(/\/invite$/);
 
   // Search the FULL username: the DB persists across runs, so a short
@@ -118,7 +118,7 @@ test('add by username → invitee sees pending invite → accepts', async ({ pag
 test('search returns empty for nonexistent username prefixes', async ({ page }) => {
   await signUp(page, makeTestUser('emp'));
   await createGroup(page, 'Empty Search Group');
-  await page.getByRole('link', { name: 'Invite' }).click();
+  await page.getByRole('link', { name: 'Invite', exact: true }).click();
   await page.waitForURL(/\/invite$/);
 
   await page.getByLabel('Add by username').fill('zz_no_such_user_zz');

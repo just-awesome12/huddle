@@ -66,7 +66,7 @@ test('post a comment → appears in the thread + list badge → delete', async (
   await page.getByTestId('comment-input').fill("Let's go Friday");
   await page.getByTestId('comment-submit').click();
   await expect(page.getByTestId('comment-list')).toContainText("Let's go Friday");
-  await expect(page.getByText('Discussion (1)')).toBeVisible();
+  await expect(page.getByText('Comments (1)')).toBeVisible();
 
   // Shows on the group list.
   await page.goto(groupUrl);

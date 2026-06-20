@@ -60,7 +60,7 @@ async function createGroup(page: Page, name: string) {
 }
 
 async function generateInviteLink(page: Page): Promise<string> {
-  await page.getByRole('link', { name: 'Invite' }).click();
+  await page.getByRole('link', { name: 'Invite', exact: true }).click();
   await page.waitForURL(/\/invite$/);
   await page.getByRole('button', { name: 'Generate invite link' }).click();
   const url = await page.getByTestId('invite-url').textContent();

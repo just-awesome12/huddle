@@ -17,6 +17,16 @@ import { AddToCalendar } from '@/components/AddToCalendar';
 import { VoteButton } from '@/components/VoteButton';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { Button } from '@/components/Button';
+import { personColor } from '@/lib/group-visuals';
+import type { IdeaCategory } from '@huddle/validation';
+
+const CATEGORY_EMOJI: Record<IdeaCategory, string> = {
+  food: '🌮',
+  activity: '🎳',
+  place: '📍',
+  event: '🎬',
+  other: '💡',
+};
 
 export default async function IdeaDetailPage({
   params,
@@ -79,40 +89,93 @@ export default async function IdeaDetailPage({
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-[720px]">
       <GroupRealtime groupId={id} />
-      <Link href={`/groups/${id}`} className="text-sm text-muted hover:text-content">
-        &larr; Back to ideas
+      <Link
+        href={`/groups/${id}`}
+        className="font-display text-[13.5px] font-extrabold text-muted hover:text-content"
+      >
+        ← Back to ideas
       </Link>
 
-      <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-xl font-medium" data-testid="idea-title">
-            {idea.title}
-          </h2>
-          <div className="flex shrink-0 items-center gap-2">
-            <CategoryBadge category={idea.category} />
-            <StatusBadge status={idea.status} />
+      {/* ===== Hero card ===== */}
+      <div
+        className="mt-4 rounded-[24px] border border-line bg-surface p-7"
+        style={{ boxShadow: '0 16px 30px -22px rgba(38,33,92,.32)' }}
+      >
+        <div className="flex items-start gap-[18px]">
+          <span className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-[20px] bg-accent-50 text-[38px]">
+            {CATEGORY_EMOJI[idea.category]}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-[9px]">
+              <StatusBadge status={idea.status} />
+              <CategoryBadge category={idea.category} />
+            </div>
+            <h1
+              className="mt-3 font-display text-[clamp(24px,3.2vw,30px)] font-black tracking-[-0.01em] text-content"
+              data-testid="idea-title"
+            >
+              {idea.title}
+            </h1>
+            <div className="mt-[10px] flex items-center gap-[9px]">
+              <span
+                aria-hidden
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-full font-display text-[11px] font-extrabold text-white"
+                style={{ background: personColor(idea.proposed_by ?? idea.id) }}
+              >
+                {(idea.proposer?.display_name?.[0] ?? '?').toUpperCase()}
+              </span>
+              <span className="text-[13.5px] font-bold text-muted">
+                Proposed by {idea.proposer?.display_name ?? 'someone'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <p className="mt-1 text-sm text-muted">
-          Proposed by {idea.proposer?.display_name ?? 'someone'} on{' '}
-          {new Date(idea.created_at).toLocaleDateString()}
-        </p>
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt={`Photo for ${idea.title}`}
+            data-testid="idea-photo"
+            className="mt-5 max-h-96 w-full rounded-[16px] border border-line object-cover"
+          />
+        )}
+
+        {idea.description && (
+          <p className="mt-5 whitespace-pre-wrap text-[16px] leading-[1.6] text-content">
+            {idea.description}
+          </p>
+        )}
+
+        {idea.link && (
+          <a
+            href={idea.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-block break-all font-display text-sm font-extrabold text-brand-ink underline"
+          >
+            {idea.link}
+          </a>
+        )}
 
         {(idea.event_date || idea.location) && (
-          <div className="mt-3 flex flex-col gap-1 text-sm text-content" data-testid="idea-details">
+          <div className="mt-[18px] flex flex-wrap gap-[10px]" data-testid="idea-details">
             {idea.event_date && (
-              <p data-testid="idea-date">
-                <span aria-hidden>📅</span>{' '}
-                {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
-              </p>
+              <span
+                className="inline-flex items-center gap-[7px] rounded-[12px] bg-surface-2 px-[14px] py-[9px] text-[13.5px] font-bold text-muted"
+                data-testid="idea-date"
+              >
+                📅 {new Date(`${idea.event_date}T00:00:00`).toLocaleDateString()}
+              </span>
             )}
             {idea.location && (
-              <p data-testid="idea-location">
-                <span aria-hidden>📍</span> {idea.location}
-              </p>
+              <span
+                className="inline-flex items-center gap-[7px] rounded-[12px] bg-surface-2 px-[14px] py-[9px] text-[13.5px] font-bold text-muted"
+                data-testid="idea-location"
+              >
+                📍 {idea.location}
+              </span>
             )}
           </div>
         )}
@@ -128,35 +191,11 @@ export default async function IdeaDetailPage({
           />
         )}
 
-        <div className="mt-4">
+        <div className="mt-[22px] flex flex-wrap items-center gap-[14px] border-t border-line pt-5">
           <VoteButton action={voteAction} voted={voted} count={voteCount} />
         </div>
 
-        {photoUrl && (
-          <img
-            src={photoUrl}
-            alt={`Photo for ${idea.title}`}
-            data-testid="idea-photo"
-            className="mt-4 max-h-96 w-full rounded-lg border border-line object-cover"
-          />
-        )}
-
-        {idea.description && (
-          <p className="mt-4 whitespace-pre-wrap text-sm text-content">{idea.description}</p>
-        )}
-
-        {idea.link && (
-          <a
-            href={idea.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-block break-all text-sm font-medium text-brand-ink underline"
-          >
-            {idea.link}
-          </a>
-        )}
-
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           {idea.status !== 'done' && (
             <form action={statusAction}>
               <input type="hidden" name="status" value="done" />
@@ -188,7 +227,7 @@ export default async function IdeaDetailPage({
         <div className="mt-6 flex items-center gap-4">
           <Link
             href={`/groups/${id}/ideas/${ideaId}/edit`}
-            className="text-sm font-medium text-muted hover:text-brand-ink"
+            className="font-display text-sm font-extrabold text-muted hover:text-brand-ink"
           >
             Edit idea
           </Link>
@@ -204,13 +243,13 @@ export default async function IdeaDetailPage({
       )}
 
       <section className="mt-8" data-testid="comments">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">
-          Discussion ({comments.length})
+        <h3 className="font-display text-[18px] font-black text-content">
+          Comments ({comments.length})
         </h3>
 
         {idea.status === 'done' && (
           <p
-            className="mt-2 rounded-md bg-surface-2 px-3 py-2 text-sm text-content"
+            className="mt-3 rounded-[12px] bg-surface-2 px-4 py-3 text-sm text-content"
             data-testid="completion-prompt"
           >
             How was it? Drop a quick note for the group — what to remember for next time.
@@ -224,30 +263,41 @@ export default async function IdeaDetailPage({
             {comments.map((comment) => {
               const canDelete = comment.author?.id === user.id || isAdmin;
               return (
-                <li key={comment.id} className="rounded-lg border border-line bg-surface px-4 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-medium text-content">
-                      {comment.author?.display_name ?? 'A former member'}
-                    </span>
-                    <span className="text-xs text-faint">
-                      {new Date(comment.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-content">{comment.body}</p>
-                  {canDelete && (
-                    <form
-                      action={deleteCommentAction.bind(null, id, ideaId, comment.id)}
-                      className="mt-2"
-                    >
-                      <button
-                        type="submit"
-                        aria-label="Delete comment"
-                        className="text-xs font-medium text-muted hover:text-red-700"
+                <li key={comment.id} className="flex gap-3">
+                  <span
+                    aria-hidden
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-display text-[13px] font-extrabold text-white"
+                    style={{ background: personColor(comment.author?.id ?? comment.id) }}
+                  >
+                    {(comment.author?.display_name?.[0] ?? '?').toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1 rounded-[16px] rounded-tl-[4px] border border-line bg-surface px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-display text-[13.5px] font-extrabold text-content">
+                        {comment.author?.display_name ?? 'A former member'}
+                      </span>
+                      <span className="text-xs text-faint">
+                        {new Date(comment.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-[14.5px] leading-[1.5] text-muted">
+                      {comment.body}
+                    </p>
+                    {canDelete && (
+                      <form
+                        action={deleteCommentAction.bind(null, id, ideaId, comment.id)}
+                        className="mt-2"
                       >
-                        Delete
-                      </button>
-                    </form>
-                  )}
+                        <button
+                          type="submit"
+                          aria-label="Delete comment"
+                          className="text-xs font-medium text-muted hover:text-red-700"
+                        >
+                          Delete
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </li>
               );
             })}
