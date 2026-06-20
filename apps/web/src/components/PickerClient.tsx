@@ -15,6 +15,14 @@ export interface PickableIdea {
   category: IdeaCategory;
 }
 
+const CATEGORY_EMOJI: Record<IdeaCategory, string> = {
+  food: '🌮',
+  activity: '🎳',
+  place: '📍',
+  event: '🎬',
+  other: '💡',
+};
+
 type Phase = 'idle' | 'rolling' | 'done';
 
 /** Minimum spin time so the reveal feels deliberate, not instant. */
@@ -28,7 +36,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const [phase, setPhase] = useState<Phase>('idle');
-  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [spinIdx, setSpinIdx] = useState(0);
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [pickCount, setPickCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +56,13 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
   const canPick = candidates.length >= 2 && phase !== 'rolling';
   const chosen = chosenId ? (ideas.find((i) => i.id === chosenId) ?? null) : null;
 
+  // Ideas eligible for the shortlist (in-category, so the checkboxes stay
+  // visible for the whole category even when some are unticked).
+  const inCategory = useMemo(
+    () => (category ? ideas.filter((i) => i.category === category) : ideas),
+    [ideas, category],
+  );
+
   function toggleSelected(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -65,10 +80,10 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
 
     const pool = candidates;
     let i = 0;
-    setHighlightId(pool[0]?.id ?? null);
+    setSpinIdx(0);
     tickRef.current = setInterval(() => {
       i = (i + 1) % pool.length;
-      setHighlightId(pool[i]?.id ?? null);
+      setSpinIdx(i);
     }, TICK_MS);
 
     const start = Date.now();
@@ -87,7 +102,6 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
 
     if (!result.ok) {
       setPhase('idle');
-      setHighlightId(null);
       setError(
         result.error === 'too_few_candidates'
           ? 'Need at least 2 ideas to pick from. Clear a filter or add more ideas.'
@@ -98,7 +112,9 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
       return;
     }
 
-    setHighlightId(result.chosenIdeaId);
+    // Land the reel on the server's chosen idea.
+    const landed = pool.findIndex((p) => p.id === result.chosenIdeaId);
+    if (landed >= 0) setSpinIdx(landed);
     setChosenId(result.chosenIdeaId);
     setPickCount(pool.length);
     setPhase('done');
@@ -106,14 +122,14 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
 
   if (ideas.length < 2) {
     return (
-      <div className="mt-6 rounded-lg border border-dashed border-line px-6 py-8 text-center">
-        <p className="text-sm font-medium text-content">Not enough ideas to pick from yet</p>
+      <div className="mt-6 rounded-2xl border border-dashed border-line px-6 py-8 text-center">
+        <p className="text-sm font-semibold text-content">Not enough ideas to pick from yet</p>
         <p className="mt-1 text-sm text-muted">
           Add at least two on-the-radar ideas, then come back to let Huddle choose.
         </p>
         <Link
           href={`/groups/${groupId}/ideas/new`}
-          className="mt-4 inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+          className="mt-4 inline-flex items-center justify-center rounded-full bg-accent-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-accent-900"
         >
           Add an idea
         </Link>
@@ -125,7 +141,9 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
     <div className="mt-6 flex flex-col gap-6">
       {/* Category filter */}
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Category</h3>
+        <h3 className="font-display text-[12px] font-extrabold uppercase tracking-[0.1em] text-muted">
+          Category
+        </h3>
         <div className="mt-2 flex flex-wrap gap-2" data-testid="picker-categories">
           <FilterChip active={category === ''} label="Any" onClick={() => setCategory('')} />
           {(Object.keys(CATEGORY_LABELS) as IdeaCategory[]).map((c) => (
@@ -139,8 +157,8 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
         </div>
       </div>
 
-      {/* Shortlist toggle */}
-      <div>
+      {/* Toggles: shortlist + fair mode */}
+      <div className="flex flex-col gap-3">
         <label className="flex items-center gap-2 text-sm font-medium text-content">
           <input
             type="checkbox"
@@ -151,70 +169,57 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
           />
           Choose from a shortlist
         </label>
-        {useShortlist && (
-          <p className="mt-1 text-xs text-muted">
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-content">
+            <input
+              type="checkbox"
+              checked={fair}
+              onChange={(e) => setFair(e.target.checked)}
+              className="h-4 w-4 rounded border-line text-brand-600 focus:ring-brand-500"
+              data-testid="picker-fair-toggle"
+            />
+            Give everyone a fair shot
+          </label>
+          <p className="mt-1 pl-6 text-xs text-muted">
+            Leans toward people whose ideas haven’t been picked yet. Still random — just weighted.
+          </p>
+        </div>
+      </div>
+
+      {/* Shortlist selection (only when the toggle is on). */}
+      {useShortlist && (
+        <div>
+          <p className="text-xs text-muted">
             Tick the ideas to include. Leave all unticked to use every idea in the category.
           </p>
-        )}
-      </div>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {inCategory.map((idea) => (
+              <li key={idea.id}>
+                <label className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-content">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(idea.id)}
+                    onChange={() => toggleSelected(idea.id)}
+                    className="h-4 w-4 shrink-0 rounded border-line text-brand-600 focus:ring-brand-500"
+                    aria-label={`Include ${idea.title}`}
+                  />
+                  <span className="text-base leading-none" aria-hidden>
+                    {CATEGORY_EMOJI[idea.category]}
+                  </span>
+                  <span className="truncate font-medium">{idea.title}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      {/* Fair mode (opt-in): weights toward members picked least. */}
-      <div>
-        <label className="flex items-center gap-2 text-sm font-medium text-content">
-          <input
-            type="checkbox"
-            checked={fair}
-            onChange={(e) => setFair(e.target.checked)}
-            className="h-4 w-4 rounded border-line text-brand-600 focus:ring-brand-500"
-            data-testid="picker-fair-toggle"
-          />
-          Give everyone a fair shot
-        </label>
-        <p className="mt-1 text-xs text-muted">
-          Leans toward people whose ideas haven’t been picked yet. Still random — just weighted.
-        </p>
-      </div>
-
-      {/* Candidate list (with shortlist checkboxes + spin highlight) */}
-      <ul className="flex flex-col gap-2" data-testid="picker-candidates">
-        {pickableForDisplay(ideas, category).map((idea) => {
-          const inPool = candidates.some((c) => c.id === idea.id);
-          const isHighlight = highlightId === idea.id;
-          const isChosen = phase === 'done' && chosenId === idea.id;
-          return (
-            <li key={idea.id}>
-              <div
-                className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 transition-all ${
-                  isChosen
-                    ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500 dark:bg-brand-900'
-                    : isHighlight
-                      ? 'border-brand-400 bg-surface-2'
-                      : 'border-line bg-surface'
-                } ${!inPool ? 'opacity-40' : ''}`}
-                data-testid={`picker-candidate-${idea.id}`}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  {useShortlist && (
-                    <input
-                      type="checkbox"
-                      checked={selected.has(idea.id)}
-                      onChange={() => toggleSelected(idea.id)}
-                      className="h-4 w-4 shrink-0 rounded border-line text-brand-600 focus:ring-brand-500"
-                      aria-label={`Include ${idea.title}`}
-                    />
-                  )}
-                  <span className="truncate text-sm font-medium text-content">{idea.title}</span>
-                </div>
-                <CategoryBadge category={idea.category} />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {/* The reel — a slot-machine strip that settles on the winner. */}
+      <Reel pool={candidates} spinIdx={spinIdx} phase={phase} data-testid="picker-candidates" />
 
       {error && (
         <p
-          className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700"
           role="alert"
           data-testid="picker-error"
         >
@@ -222,32 +227,21 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
         </p>
       )}
 
-      {/* Result */}
-      {phase === 'done' && (
-        <div
-          className="relative overflow-hidden rounded-lg border border-brand-500 bg-brand-50 p-5 text-center dark:bg-brand-900"
-          data-testid="picker-result"
-        >
+      {/* Result footer — provenance + link to the chosen idea. */}
+      {phase === 'done' && chosen && (
+        <div className="relative text-center" data-testid="picker-result">
           <Confetti />
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-ink">
-            The pick is
-          </p>
-          <p className="mt-1 text-lg font-semibold text-content" data-testid="picker-result-title">
-            {chosen ? chosen.title : 'an idea'}
-          </p>
           {pickCount !== null && (
-            <p className="mt-1 text-xs text-muted" data-testid="picker-provenance">
+            <p className="text-[13px] text-muted" data-testid="picker-provenance">
               Chosen at random from {pickCount} option{pickCount === 1 ? '' : 's'}
             </p>
           )}
-          {chosen && (
-            <Link
-              href={`/groups/${groupId}/ideas/${chosen.id}`}
-              className="mt-2 inline-block text-sm font-medium text-brand-ink hover:underline"
-            >
-              View idea →
-            </Link>
-          )}
+          <Link
+            href={`/groups/${groupId}/ideas/${chosen.id}`}
+            className="mt-1 inline-flex items-center gap-1 font-display text-sm font-bold text-accent-600 hover:underline"
+          >
+            View idea →
+          </Link>
         </div>
       )}
 
@@ -259,11 +253,15 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
           disabled={!canPick}
           data-testid="picker-run"
         >
-          {phase === 'done' ? 'Pick again' : 'Pick for us'}
+          {phase === 'done'
+            ? '↻ Spin again'
+            : phase === 'rolling'
+              ? 'Spinning…'
+              : '🎲 Spin the picker'}
         </Button>
         <Link
           href={`/groups/${groupId}/history`}
-          className="text-sm font-medium text-muted hover:text-brand-ink"
+          className="font-display text-sm font-bold text-muted hover:text-brand-ink"
         >
           View history →
         </Link>
@@ -272,10 +270,88 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
   );
 }
 
-/** Ideas shown in the candidate list — narrowed only by category so the
- *  shortlist checkboxes stay visible for the whole category. */
-function pickableForDisplay(ideas: PickableIdea[], category: IdeaCategory | ''): PickableIdea[] {
-  return category ? ideas.filter((i) => i.category === category) : ideas;
+/**
+ * Slot-machine reel: three rows (prev / current / next) where the centre
+ * scales up, and on landing turns accent-pink with a check. The centre
+ * title carries the result testid once landed.
+ */
+function Reel({
+  pool,
+  spinIdx,
+  phase,
+  'data-testid': testId,
+}: {
+  pool: PickableIdea[];
+  spinIdx: number;
+  phase: Phase;
+  'data-testid': string;
+}) {
+  const n = pool.length;
+
+  if (n === 0) {
+    return (
+      <div
+        className="rounded-2xl bg-surface-2 px-6 py-10 text-center text-sm text-muted"
+        data-testid={testId}
+      >
+        No ideas match this filter.
+      </div>
+    );
+  }
+
+  const ai = ((spinIdx % n) + n) % n;
+  const rows: { idea: PickableIdea; center: boolean }[] = [
+    { idea: pool[(ai - 1 + n) % n]!, center: false },
+    { idea: pool[ai]!, center: true },
+    { idea: pool[(ai + 1) % n]!, center: false },
+  ];
+  const landed = phase === 'done';
+
+  return (
+    <div className="overflow-hidden rounded-2xl bg-surface-2 px-3 py-3" data-testid={testId}>
+      <div className="flex flex-col gap-1">
+        {rows.map(({ idea, center }, i) => {
+          const isLanded = center && landed;
+          return (
+            <div
+              key={`${i}-${idea.id}`}
+              className={`flex items-center gap-3 rounded-2xl transition-all duration-150 ${
+                center ? 'px-4 py-4' : 'px-4 py-2'
+              } ${
+                isLanded
+                  ? 'bg-accent-400 text-white shadow-[0_18px_34px_-14px_rgba(212,83,126,0.7)]'
+                  : center
+                    ? 'bg-surface text-content shadow-sm'
+                    : 'text-content'
+              }`}
+              style={{ transform: center ? 'scale(1)' : 'scale(0.9)' }}
+            >
+              <span
+                className={`${center ? 'text-3xl' : 'text-xl opacity-50'} leading-none`}
+                aria-hidden
+              >
+                {CATEGORY_EMOJI[idea.category]}
+              </span>
+              <span
+                className={`min-w-0 flex-1 truncate font-display ${
+                  center ? 'text-[20px] font-extrabold' : 'text-[14px] font-bold'
+                }`}
+                data-testid={isLanded ? 'picker-result-title' : undefined}
+              >
+                {idea.title}
+              </span>
+              {center && !landed && <CategoryBadge category={idea.category} />}
+              {isLanded && (
+                <span className="ml-auto text-2xl" aria-hidden>
+                  ✓
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function FilterChip({
@@ -291,7 +367,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+      className={`rounded-full px-3.5 py-1.5 font-display text-xs font-bold transition-colors ${
         active ? 'bg-brand-600 text-white' : 'bg-surface-2 text-muted hover:bg-line'
       }`}
     >
