@@ -93,7 +93,10 @@ export default function GroupListScreen() {
 
       <View style={styles.toolbar}>
         <Text style={styles.heading}>Your groups</Text>
-        <Button label="New group" onPress={() => router.push('/groups/new')} />
+        <View style={styles.toolbarActions}>
+          <Button label="Discover" variant="secondary" onPress={() => router.push('/discover')} />
+          <Button label="New group" onPress={() => router.push('/groups/new')} />
+        </View>
       </View>
 
       {isPending ? (
@@ -158,6 +161,7 @@ const makeStyles = (c: ThemeColors) =>
       paddingBottom: 8,
     },
     heading: { fontSize: 18, fontWeight: '600', color: c.text },
+    toolbarActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
     errorText: { fontSize: 14, color: c.dangerText },
     empty: {
