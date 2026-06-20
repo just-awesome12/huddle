@@ -56,7 +56,7 @@ async function createGroup(page: Page, name: string): Promise<string> {
 }
 
 async function inviteSecondMember(adminPage: Page): Promise<string> {
-  await adminPage.getByRole('link', { name: 'Invite' }).click();
+  await adminPage.getByRole('link', { name: 'Invite', exact: true }).click();
   await adminPage.waitForURL(/\/invite$/);
   await adminPage.getByRole('button', { name: 'Generate invite link' }).click();
   const url = await adminPage.getByTestId('invite-url').textContent();

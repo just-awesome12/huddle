@@ -1,8 +1,9 @@
 /**
- * Huddle logo: the brand mark (figures around a lightbulb) + the
- * "HUDDLE" wordmark. The mark PNG works on light and dark; the wordmark
- * is theme-coloured text (Montserrat) so it stays legible in both modes.
- * Mark-only via `wordmark={false}` for tight spots.
+ * Huddle logo: the brand mark (the "Spectrum Ring" — a glossy spectrum
+ * loop) + the "HUDDLE" wordmark. The mark PNG is on transparency and
+ * works on light and dark; the wordmark is theme-coloured text
+ * (Montserrat) so it stays legible in both modes. Mark-only via
+ * `wordmark={false}` for tight spots.
  */
 export function Logo({
   wordmark = true,

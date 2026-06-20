@@ -22,8 +22,8 @@ export function Logo({ wordmark = true }: { wordmark?: boolean }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  // 1408×768 source → explicit w/h (RN Web ignores aspectRatio here and
-  // would render at the intrinsic 1408px width, blowing out the header).
-  mark: { width: 51, height: 28 },
+  // Square 1024² ring source → explicit w/h (RN Web ignores aspectRatio
+  // here and would render at the intrinsic width, blowing out the header).
+  mark: { width: 28, height: 28 },
   word: { fontSize: 20, fontWeight: '700', letterSpacing: 1 },
 });

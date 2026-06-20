@@ -233,7 +233,7 @@ test('non-proposer member: no edit/delete controls, but can change status', asyn
 
   // Invite a second member by link.
   await page.goto(ideaUrl.replace(/\/ideas\/.*$/, ''));
-  await page.getByRole('link', { name: 'Invite' }).click();
+  await page.getByRole('link', { name: 'Invite', exact: true }).click();
   await page.getByRole('button', { name: 'Generate invite link' }).click();
   const inviteUrl = (await page.getByTestId('invite-url').textContent())!;
 
