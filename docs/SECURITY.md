@@ -22,7 +22,20 @@ Cloudflare) is defence-in-depth on top of that.
 | Human verification                | Cloudflare Turnstile on web sign-up                                      | `apps/web/src/components/TurnstileWidget.tsx`, verified server-side in `auth.ts`. Mobile has no Turnstile equivalent (documented gap). |
 | Fail-closed prod guards           | `instrumentation.ts` (Turnstile, D38); `send-push` (webhook secret, D65) | Web refuses to boot if the Turnstile bypass is reachable in production; send-push refuses the dev webhook secret outside local.        |
 | Search rate limiting              | `apps/web/src/app/api/profiles/search`                                   | In-memory per-user sliding window (D51) — defence-in-depth; the real perimeter limit is Cloudflare (deferred).                         |
-| Auth wall                         | `apps/web/src/proxy.ts`                                                  | All non-public routes redirect to sign-in; robots/sitemap excluded so they serve.                                                      |
+| Auth wall                         | `apps/web/src/proxy.ts`                                                  | All non-public routes redirect to sign-in; robots/sitemap/manifest excluded so they serve.                                             |
+
+**Public groups (Phase 12, D79).** Group discovery is a deliberate, scoped
+relaxation of the members-only posture — **not a removal of it**. Only the
+`groups` SELECT policy widened (to `is_group_member(id) OR visibility =
+'public'`); `ideas`, `group_members`, `decisions`, and `group_invites`
+keep their `is_group_member()` policies, so a non-member who discovers a
+public group sees its **metadata only** (name, description, location, tags,
+member count) and **never its contents** — pgTAP asserts this. Discovery
+stays **behind the auth wall** (authenticated role only) and the robots
+`Disallow: /` / `noindex` are unchanged (a truly-anonymous/SEO-indexed
+option was declined). The `/discover` search is a Server-Component
+navigation (naturally bounded); a dedicated perimeter rate-limit on it is
+deferred with the rest of the Cloudflare work (§5, cf. D51).
 
 ---
 
