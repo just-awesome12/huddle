@@ -146,6 +146,46 @@ try {
   );
   assert(r5.body?.decision?.filters?.fair === true, 'fair mode records filters.fair = true');
 
+  // (6) "Just decide" fallback (15c): a group with only 1 on-radar idea but
+  // a past `done` pick. Unfiltered run without fallback → too few; WITH
+  // fallback → the done idea joins the pool and a pick is made.
+  const { data: fgroup, error: fgErr } = await A.rpc('create_group', {
+    p_name: `Fallback Group ${ts}`,
+  });
+  if (fgErr) throw new Error(`create_group(fallback): ${fgErr.message}`);
+  const { data: onRadar } = await A.from('ideas')
+    .insert({ group_id: fgroup.id, proposed_by: aSign.user.id, title: 'Sushi', category: 'food' })
+    .select('id')
+    .single();
+  await A.from('ideas').insert({
+    group_id: fgroup.id,
+    proposed_by: aSign.user.id,
+    title: 'Past pizza',
+    category: 'food',
+    status: 'done',
+  });
+
+  const rNoFb = await invoke(A, { groupId: fgroup.id, filters: {} });
+  assert(
+    rNoFb.status === 422 && rNoFb.body?.error === 'too_few_candidates',
+    'fallback off: 1 on-radar idea → 422 too_few_candidates',
+  );
+
+  const rFb = await invoke(A, { groupId: fgroup.id, fallback: true, filters: {} });
+  assert(
+    rFb.status === 200 && rFb.body?.decision?.candidate_idea_ids?.length === 2,
+    `fallback on: done idea joins the pool → pick from 2, got ${rFb.body?.decision?.candidate_idea_ids?.length}`,
+  );
+  assert(
+    rFb.body?.decision?.filters?.fallback === true && allIds.indexOf(rFb.body?.chosenIdeaId) === -1,
+    'fallback records filters.fallback = true and can pick the on-radar or done idea',
+  );
+  // Sanity: the on-radar idea is among the candidates.
+  assert(
+    rFb.body?.decision?.candidate_idea_ids?.includes(onRadar.id),
+    'fallback pool includes the on-radar idea',
+  );
+
   // The chosen idea now has history → it cannot be hard-deleted (NO ACTION).
   const { error: delErr } = await A.from('ideas').delete().eq('id', r1.body.chosenIdeaId);
   assert(

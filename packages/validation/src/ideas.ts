@@ -18,7 +18,7 @@ export type IdeaCategory = z.infer<typeof ideaCategorySchema>;
 export const ideaStatusSchema = z.enum(['on_radar', 'done', 'dismissed']);
 export type IdeaStatus = z.infer<typeof ideaStatusSchema>;
 
-const ideaTitleSchema = z
+export const ideaTitleSchema = z
   .string({ required_error: 'Title is required' })
   .trim()
   .min(1, 'Title is required')

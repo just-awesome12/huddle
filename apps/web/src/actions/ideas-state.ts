@@ -7,6 +7,8 @@
 export interface IdeaActionState {
   fieldErrors?: Record<string, string[] | undefined>;
   formError?: string;
+  /** Set by quick-add to signal success without navigating away. */
+  ok?: boolean;
 }
 
 export const EMPTY_IDEA_STATE: IdeaActionState = {};

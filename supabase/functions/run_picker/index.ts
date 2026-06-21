@@ -36,6 +36,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 interface PickerBody {
   groupId?: unknown;
   fair?: unknown;
+  fallback?: unknown;
   filters?: { category?: unknown; shortlist?: unknown; fair?: unknown } | null;
 }
 
@@ -79,6 +80,10 @@ Deno.serve(async (req) => {
     // Opt-in "fair" mode: weight the pick toward members whose ideas
     // have been chosen least (D77). Default stays uniform (D60).
     const fair = body.fair === true || body.filters?.fair === true;
+    // "Just decide" fallback (15c): when an UNFILTERED run has < 2 on-radar
+    // ideas, widen the pool with the group's past `done` picks so the
+    // picker still works (the panel's #1 ask). ≥2 candidates still required.
+    const fallback = body.fallback === true;
 
     const url = Deno.env.get('SUPABASE_URL');
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -139,6 +144,33 @@ Deno.serve(async (req) => {
       candidateIds = candidateIds.filter((id) => allowed.has(id));
     }
 
+    // Fallback: only for an unfiltered run that's short on on-radar ideas —
+    // pull in `done` ideas (the "do it again" pool) to reach a pickable set.
+    let usedFallback = false;
+    if (
+      candidateIds.length < 2 &&
+      fallback &&
+      !category &&
+      (!shortlist || shortlist.length === 0)
+    ) {
+      const { data: doneIdeas, error: doneErr } = await userClient
+        .from('ideas')
+        .select('id, proposed_by')
+        .eq('group_id', groupId)
+        .eq('status', 'done');
+      if (doneErr) {
+        console.error('run_picker: done-ideas query failed', doneErr.message);
+        return json({ error: 'internal' }, 500);
+      }
+      for (const i of doneIdeas ?? []) {
+        if (!proposerById.has(i.id as string)) {
+          proposerById.set(i.id as string, (i.proposed_by as string | null) ?? null);
+        }
+      }
+      candidateIds = [...proposerById.keys()];
+      usedFallback = true;
+    }
+
     if (candidateIds.length < 2) {
       return json({ error: 'too_few_candidates', count: candidateIds.length }, 422);
     }
@@ -181,7 +213,7 @@ Deno.serve(async (req) => {
         run_by: user.id,
         chosen_idea_id: chosenIdeaId,
         candidate_idea_ids: candidateIds,
-        filters: { category, shortlist: shortlist ?? null, fair },
+        filters: { category, shortlist: shortlist ?? null, fair, fallback: usedFallback },
       })
       .select()
       .single();

@@ -24,6 +24,7 @@ import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { GroupPresence } from '@/components/GroupPresence';
 import { GroupMuteToggle } from '@/components/GroupMuteToggle';
+import { QuickAddIdea } from '@/components/QuickAddIdea';
 import {
   CategoryBadge,
   StatusBadge,
@@ -452,6 +453,11 @@ export default async function GroupDetailPage({
         <p className="mt-5 font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
           Ideas ({ideas.length})
         </p>
+
+        {/* Quick-add (15c) — fast, name-only path; full form is "+ New idea" above */}
+        <div className="mt-3">
+          <QuickAddIdea groupId={id} />
+        </div>
 
         {/* Upcoming */}
         {upcoming.length > 0 && (

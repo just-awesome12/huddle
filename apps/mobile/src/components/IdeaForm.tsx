@@ -17,6 +17,7 @@ import { createIdeaSchema, type IdeaCategory } from '@huddle/validation';
 import { CATEGORY_LABELS } from './IdeaBadges';
 import { Button } from './Button';
 import { FormField } from './FormField';
+import { relativeDateChips } from '@/lib/relative-dates';
 
 export interface IdeaFormValues {
   title: string;
@@ -224,6 +225,22 @@ export function IdeaForm({
             hint="When is this happening?"
             error={fieldErrors.eventDate}
           />
+          <View style={styles.dateChips}>
+            {relativeDateChips().map((chip) => (
+              <Pressable
+                key={chip.label}
+                accessibilityRole="button"
+                onPress={() => setEventDate(chip.value)}
+                style={[styles.dateChip, eventDate === chip.value && styles.dateChipOn]}
+              >
+                <Text
+                  style={[styles.dateChipText, eventDate === chip.value && styles.dateChipTextOn]}
+                >
+                  {chip.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
           <FormField
             label="Location (optional)"
@@ -278,6 +295,18 @@ const makeStyles = (c: ThemeColors) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: c.canvas },
     scroll: { padding: 16 },
+    dateChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+    dateChip: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.surface2,
+    },
+    dateChipOn: { borderColor: c.brand[600], backgroundColor: c.brand[600] },
+    dateChipText: { fontSize: 12, fontWeight: '600', color: c.muted },
+    dateChipTextOn: { color: '#fff' },
     card: {
       backgroundColor: c.surface,
       borderRadius: 12,

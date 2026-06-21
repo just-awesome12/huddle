@@ -29,7 +29,16 @@ type Phase = 'idle' | 'rolling' | 'done';
 const MIN_SPIN_MS = 1400;
 const TICK_MS = 90;
 
-export function PickerClient({ groupId, ideas }: { groupId: string; ideas: PickableIdea[] }) {
+export function PickerClient({
+  groupId,
+  ideas,
+  fallbackIdeas = [],
+}: {
+  groupId: string;
+  ideas: PickableIdea[];
+  /** Past picks used only when an unfiltered run has < 2 on-radar ideas (15c). */
+  fallbackIdeas?: PickableIdea[];
+}) {
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
   const [fair, setFair] = useState(false);
@@ -53,8 +62,16 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
     return pool;
   }, [ideas, category, useShortlist, selected]);
 
-  const canPick = candidates.length >= 2 && phase !== 'rolling';
-  const chosen = chosenId ? (ideas.find((i) => i.id === chosenId) ?? null) : null;
+  // "Just decide" fallback (15c): with an unfiltered run and < 2 on-radar
+  // ideas, widen the pool with past picks so the picker still works.
+  const noFilter = !category && !(useShortlist && selected.size > 0);
+  const useFallback = candidates.length < 2 && noFilter && fallbackIdeas.length > 0;
+  const effectivePool = useFallback ? [...candidates, ...fallbackIdeas] : candidates;
+
+  const canPick = effectivePool.length >= 2 && phase !== 'rolling';
+  const chosen = chosenId
+    ? ([...ideas, ...fallbackIdeas].find((i) => i.id === chosenId) ?? null)
+    : null;
 
   // Ideas eligible for the shortlist (in-category, so the checkboxes stay
   // visible for the whole category even when some are unticked).
@@ -78,7 +95,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
     setChosenId(null);
     setPhase('rolling');
 
-    const pool = candidates;
+    const pool = effectivePool;
     let i = 0;
     setSpinIdx(0);
     tickRef.current = setInterval(() => {
@@ -92,6 +109,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
       category: category || null,
       shortlist: useShortlist && selected.size > 0 ? [...selected] : null,
       fair,
+      fallback: useFallback,
     });
 
     const elapsed = Date.now() - start;
@@ -120,7 +138,7 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
     setPhase('done');
   }
 
-  if (ideas.length < 2) {
+  if (ideas.length + fallbackIdeas.length < 2) {
     return (
       <div className="mt-6 rounded-2xl border border-dashed border-line px-6 py-8 text-center">
         <p className="text-sm font-semibold text-content">Not enough ideas to pick from yet</p>
@@ -214,8 +232,14 @@ export function PickerClient({ groupId, ideas }: { groupId: string; ideas: Picka
         </div>
       )}
 
+      {useFallback && phase === 'idle' && (
+        <p className="rounded-xl bg-accent-50 px-3 py-2 text-xs text-accent-600">
+          Not enough new ideas — including past picks so you can still decide.
+        </p>
+      )}
+
       {/* The reel — a slot-machine strip that settles on the winner. */}
-      <Reel pool={candidates} spinIdx={spinIdx} phase={phase} data-testid="picker-candidates" />
+      <Reel pool={effectivePool} spinIdx={spinIdx} phase={phase} data-testid="picker-candidates" />
 
       {error && (
         <p

@@ -2,7 +2,12 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { createIdeaSchema, updateIdeaSchema, updateIdeaStatusSchema } from '@huddle/validation';
+import {
+  createIdeaSchema,
+  updateIdeaSchema,
+  updateIdeaStatusSchema,
+  ideaTitleSchema,
+} from '@huddle/validation';
 import { isHuddleError } from '@huddle/api-client/errors';
 import {
   createIdea,
@@ -117,6 +122,32 @@ export async function createIdeaAction(
 
   revalidatePath(`/groups/${parsed.data.groupId}`);
   redirect(`/groups/${parsed.data.groupId}/ideas/${ideaId}`);
+}
+
+/**
+ * Quick-add (Phase 15c): create an idea from just a title and stay on the
+ * hub — the fast, mid-conversation path the panel asked for. Category
+ * defaults to "other" (editable later); everything else is optional.
+ */
+export async function quickAddIdeaAction(
+  _prev: IdeaActionState,
+  formData: FormData,
+): Promise<IdeaActionState> {
+  const groupId = String(formData.get('groupId') ?? '');
+  const parsed = ideaTitleSchema.safeParse(formData.get('title'));
+  if (!parsed.success) {
+    return { fieldErrors: { title: [parsed.error.issues[0]?.message ?? 'Title is required'] } };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  try {
+    await createIdea(supabase, { groupId, title: parsed.data, category: 'other' });
+  } catch {
+    return { formError: 'Could not add the idea. Please try again.' };
+  }
+
+  revalidatePath(`/groups/${groupId}`);
+  return { ok: true };
 }
 
 export async function updateIdeaAction(

@@ -8,6 +8,7 @@ import { EMPTY_IDEA_STATE } from '@/actions/ideas-state';
 import { CATEGORY_LABELS } from './IdeaBadges';
 import { Button } from './Button';
 import { FormField } from './FormField';
+import { relativeDateChips } from '@/lib/relative-dates';
 
 interface IdeaFormProps {
   groupId: string;
@@ -42,6 +43,8 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
   );
   const [compressing, setCompressing] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [eventDate, setEventDate] = useState(idea?.eventDate ?? '');
+  const dateChips = relativeDateChips();
 
   /**
    * Compress in the browser BEFORE submit (max ~1MB, 1920px long edge)
@@ -148,14 +151,42 @@ export function IdeaForm({ groupId, idea, currentPhotoUrl }: IdeaFormProps) {
         error={state.fieldErrors?.link?.[0]}
       />
 
-      <FormField
-        label="Date (optional)"
-        name="eventDate"
-        type="date"
-        defaultValue={idea?.eventDate ?? ''}
-        hint="When is this happening?"
-        error={state.fieldErrors?.eventDate?.[0]}
-      />
+      <div className="flex flex-col gap-1.5">
+        <FormField
+          label="Date (optional)"
+          name="eventDate"
+          type="date"
+          value={eventDate}
+          onChange={(e) => setEventDate(e.target.value)}
+          hint="When is this happening?"
+          error={state.fieldErrors?.eventDate?.[0]}
+        />
+        <div className="flex flex-wrap gap-1.5">
+          {dateChips.map((chip) => (
+            <button
+              key={chip.label}
+              type="button"
+              onClick={() => setEventDate(chip.value)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                eventDate === chip.value
+                  ? 'border-accent-400 bg-accent-100 text-content'
+                  : 'border-line bg-surface-2 text-muted hover:bg-accent-100'
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+          {eventDate && (
+            <button
+              type="button"
+              onClick={() => setEventDate('')}
+              className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-medium text-muted hover:bg-surface"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
 
       <FormField
         label="Location (optional)"

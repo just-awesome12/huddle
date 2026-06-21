@@ -21,6 +21,7 @@ export async function runPickerAction(input: {
   category?: string | null;
   shortlist?: string[] | null;
   fair?: boolean;
+  fallback?: boolean;
 }): Promise<PickerActionResult> {
   const parsed = runPickerSchema.safeParse({
     groupId: input.groupId,
@@ -42,6 +43,7 @@ export async function runPickerAction(input: {
       category: parsed.data.category,
       shortlist: parsed.data.shortlist,
       fair: parsed.data.fair,
+      fallback: input.fallback ?? false,
     });
 
     // History goes live for members via realtime, but revalidate so the
