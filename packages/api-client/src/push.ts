@@ -58,6 +58,51 @@ export async function removePushToken(client: HuddleClient, expoToken: string): 
 }
 
 // -----------------------------------------------------------------------
+// Web push subscriptions (Phase 15) — the browser counterpart to tokens.
+// -----------------------------------------------------------------------
+
+/** A W3C Push subscription, flattened for storage. */
+export interface WebPushSubscriptionInput {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent?: string | null;
+}
+
+/**
+ * Register (or refresh) the current user's browser push subscription.
+ * Idempotent on the endpoint (one browser = one endpoint): a re-subscribe
+ * with rotated keys upserts rather than duplicating.
+ */
+export async function saveWebPushSubscription(
+  client: HuddleClient,
+  sub: WebPushSubscriptionInput,
+): Promise<void> {
+  const userId = await requireUserId(client);
+  const { error } = await client.from('web_push_subscriptions').upsert(
+    {
+      user_id: userId,
+      endpoint: sub.endpoint,
+      p256dh: sub.p256dh,
+      auth: sub.auth,
+      user_agent: sub.userAgent ?? null,
+      last_seen_at: new Date().toISOString(),
+    },
+    { onConflict: 'endpoint' },
+  );
+  if (error) throwMapped(error);
+}
+
+/** Remove a browser subscription (the user disabling web notifications). */
+export async function removeWebPushSubscription(
+  client: HuddleClient,
+  endpoint: string,
+): Promise<void> {
+  const { error } = await client.from('web_push_subscriptions').delete().eq('endpoint', endpoint);
+  if (error) throwMapped(error);
+}
+
+// -----------------------------------------------------------------------
 // Preferences
 // -----------------------------------------------------------------------
 

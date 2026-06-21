@@ -5,6 +5,7 @@ import { fetchProfile } from '@huddle/api-client/profiles';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { ProfileForm } from '@/components/ProfileForm';
+import { WebPushToggle } from '@/components/WebPushToggle';
 import { deleteAccountAction } from '@/actions/account';
 import { unblockUserAction } from '@/actions/moderation';
 
@@ -38,6 +39,13 @@ export default async function AccountPage() {
             bio={profile.bio}
             avatarUrl={profile.avatar_url}
           />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Notifications</h3>
+        <div className="mt-3">
+          <WebPushToggle />
         </div>
       </section>
 

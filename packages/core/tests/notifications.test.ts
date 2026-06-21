@@ -3,10 +3,13 @@ import {
   shouldNotify,
   selectRecipientTokens,
   buildExpoMessages,
+  selectWebSubscriptions,
+  buildWebPushPayload,
   chunk,
   DEFAULT_PREFS,
   type NotificationPrefs,
   type Recipient,
+  type WebSubscriptionRecipient,
 } from '../src/notifications';
 import * as mirror from '../../../supabase/functions/_shared/notifications.ts';
 
@@ -82,6 +85,41 @@ describe('buildExpoMessages', () => {
   });
 });
 
+describe('selectWebSubscriptions', () => {
+  const subs: WebSubscriptionRecipient[] = [
+    { userId: 'actor', subscription: { endpoint: 'e-actor', p256dh: 'p', auth: 'a' }, prefs: null },
+    { userId: 'u1', subscription: { endpoint: 'e-u1', p256dh: 'p', auth: 'a' }, prefs: null },
+    {
+      userId: 'u2',
+      subscription: { endpoint: 'e-u2', p256dh: 'p', auth: 'a' },
+      prefs: { ...DEFAULT_PREFS, new_idea: false },
+    },
+  ];
+
+  it('excludes the actor and honours per-event opt-out (same rule as tokens)', () => {
+    expect(selectWebSubscriptions(subs, 'new_idea', 'actor')).toEqual([
+      { endpoint: 'e-u1', p256dh: 'p', auth: 'a' },
+    ]);
+    expect(selectWebSubscriptions(subs, 'picker_ran', 'actor')).toEqual([
+      { endpoint: 'e-u1', p256dh: 'p', auth: 'a' },
+      { endpoint: 'e-u2', p256dh: 'p', auth: 'a' },
+    ]);
+  });
+});
+
+describe('buildWebPushPayload', () => {
+  it('serializes title/body/data; omits data when absent', () => {
+    expect(
+      JSON.parse(buildWebPushPayload({ title: 'T', body: 'B', data: { path: '/x' } })),
+    ).toEqual({
+      title: 'T',
+      body: 'B',
+      data: { path: '/x' },
+    });
+    expect(JSON.parse(buildWebPushPayload({ title: 'T', body: 'B' }))).not.toHaveProperty('data');
+  });
+});
+
 describe('chunk', () => {
   it('splits into chunks of at most size, last possibly smaller', () => {
     expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
@@ -128,5 +166,19 @@ describe('Deno mirror drift guard', () => {
       mirror.buildExpoMessages(['a', 'b'], content),
     );
     expect(chunk([1, 2, 3], 2)).toEqual(mirror.chunk([1, 2, 3], 2));
+  });
+
+  it('selectWebSubscriptions and buildWebPushPayload match the mirror', () => {
+    const webSubs: WebSubscriptionRecipient[] = [
+      { userId: 'a', subscription: { endpoint: 'e-a', p256dh: 'p', auth: 'x' }, prefs: null },
+      { userId: 'b', subscription: { endpoint: 'e-b', p256dh: 'p', auth: 'x' }, prefs: allOff },
+    ];
+    for (const ev of ['new_idea', 'picker_ran', 'group_invite'] as const) {
+      expect(selectWebSubscriptions(webSubs, ev, 'a')).toEqual(
+        mirror.selectWebSubscriptions(webSubs, ev, 'a'),
+      );
+    }
+    const content = { title: 'T', body: 'B', data: { p: '/g' } };
+    expect(buildWebPushPayload(content)).toEqual(mirror.buildWebPushPayload(content));
   });
 });

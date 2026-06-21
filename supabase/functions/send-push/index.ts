@@ -22,16 +22,28 @@ import { createClient } from 'npm:@supabase/supabase-js@2.47.10';
 import {
   selectRecipientTokens,
   buildExpoMessages,
+  selectWebSubscriptions,
+  buildWebPushPayload,
   chunk,
   EXPO_PUSH_CHUNK_SIZE,
   type NotificationEvent,
   type NotificationPrefs,
   type Recipient,
+  type WebSubscriptionRecipient,
   type NotificationContent,
 } from '../_shared/notifications.ts';
 
 const DEV_WEBHOOK_SECRET = 'local-dev-webhook-secret';
 const DEFAULT_EXPO_URL = 'https://exp.host/--/api/v2/push/send';
+
+// Dev VAPID keypair (Phase 15). Mirrors the webhook-secret pattern: a
+// well-known dev fallback so local needs no env wiring; PRODUCTION must
+// set VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY (the private key is sensitive).
+// Unlike the webhook secret (auth → fail closed), a missing prod VAPID key
+// just disables the web channel (Expo still fires) rather than 500-ing.
+const DEV_VAPID_PUBLIC =
+  'BKdy5OAxfwCSCpqXCdtl7yvMHUEEavOdo-VLrVj7Qc-pPfjuXiywVdEdcEHPil6dKhzSoX9GcGVCg_cLHkeTjLw';
+const DEV_VAPID_PRIVATE = 'E94wHsvKv2FlSGIqxXFshO4KXGYagDwDX84DNmi3N-U';
 
 interface WebhookPayload {
   type?: string;
@@ -59,11 +71,24 @@ async function groupName(service: Service, groupId: string): Promise<string> {
   return (data?.name as string) ?? 'your group';
 }
 
-/** Build Recipient[] for a set of user ids (their tokens × their prefs). */
-async function recipientsForUsers(service: Service, userIds: string[]): Promise<Recipient[]> {
-  if (userIds.length === 0) return [];
-  const [{ data: tokens }, { data: prefs }] = await Promise.all([
+/**
+ * Fetch both delivery channels for a set of users in ONE round trip:
+ * Expo tokens, web subscriptions, and prefs (fetched once and shared).
+ * Doing this as a single Promise.all keeps the per-request query count
+ * low — the edge runtime intermittently returned partial results when
+ * tokens/prefs and subs/prefs were fetched as two separate round trips.
+ */
+async function gatherRecipients(
+  service: Service,
+  userIds: string[],
+): Promise<{ recipients: Recipient[]; webRecipients: WebSubscriptionRecipient[] }> {
+  if (userIds.length === 0) return { recipients: [], webRecipients: [] };
+  const [{ data: tokens }, { data: subs }, { data: prefs }] = await Promise.all([
     service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
+    service
+      .from('web_push_subscriptions')
+      .select('user_id, endpoint, p256dh, auth')
+      .in('user_id', userIds),
     service.from('notification_prefs').select('*').in('user_id', userIds),
   ]);
   const prefsByUser = new Map<string, NotificationPrefs>();
@@ -77,11 +102,21 @@ async function recipientsForUsers(service: Service, userIds: string[]): Promise<
       join_approved: p.join_approved as boolean,
     });
   }
-  return (tokens ?? []).map((t) => ({
+  const recipients = (tokens ?? []).map((t) => ({
     userId: t.user_id as string,
     expoToken: t.expo_token as string,
     prefs: prefsByUser.get(t.user_id as string) ?? null,
   }));
+  const webRecipients = (subs ?? []).map((s) => ({
+    userId: s.user_id as string,
+    subscription: {
+      endpoint: s.endpoint as string,
+      p256dh: s.p256dh as string,
+      auth: s.auth as string,
+    },
+    prefs: prefsByUser.get(s.user_id as string) ?? null,
+  }));
+  return { recipients, webRecipients };
 }
 
 async function memberIds(service: Service, groupId: string): Promise<string[]> {
@@ -303,18 +338,29 @@ Deno.serve(async (req) => {
       return json({ ok: true, skipped: resolved.skip, recipientCount: 0 });
     }
 
-    const recipients = await recipientsForUsers(service, resolved.recipientUserIds);
+    // One round trip for both channels' recipients (Expo + web) + prefs.
+    const { recipients, webRecipients } = await gatherRecipients(
+      service,
+      resolved.recipientUserIds,
+    );
     const tokens = selectRecipientTokens(recipients, resolved.event, resolved.actorId);
     const messages = buildExpoMessages(tokens, resolved.content);
+
+    // Web push (Phase 15): same recipient-selection rule, second channel.
+    const webSubs = selectWebSubscriptions(webRecipients, resolved.event, resolved.actorId);
+    const webPayload = buildWebPushPayload(resolved.content);
 
     if (dryRun) {
       return json({
         ok: true,
         event: resolved.event,
         recipientCount: tokens.length,
+        webRecipientCount: webSubs.length,
         dispatched: false,
         selectedTokens: tokens,
         sampleMessage: messages[0] ?? null,
+        sampleWebSubscription: webSubs[0] ?? null,
+        sampleWebPayload: webSubs.length > 0 ? webPayload : null,
       });
     }
 
@@ -346,12 +392,52 @@ Deno.serve(async (req) => {
       await service.from('push_tokens').delete().in('expo_token', deadTokens);
     }
 
+    // --- Dispatch to web subscribers via VAPID; prune gone (404/410) ---
+    // web-push is imported lazily so the function still boots (and dry-run
+    // works) even if the npm dep can't load in the edge runtime; a web
+    // dispatch failure is best-effort and never 500s the webhook.
+    const deadWeb: string[] = [];
+    if (webSubs.length > 0) {
+      const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY') ?? (isLocal ? DEV_VAPID_PUBLIC : '');
+      const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY') ?? (isLocal ? DEV_VAPID_PRIVATE : '');
+      const vapidSubject = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:notifications@huddleapp.local';
+      if (!vapidPublic || !vapidPrivate) {
+        console.error(
+          'send-push: VAPID keys required for web push in production; skipping web channel',
+        );
+      } else {
+        try {
+          const webpush = (await import('npm:web-push@3.6.7')).default;
+          webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+          for (const s of webSubs) {
+            try {
+              await webpush.sendNotification(
+                { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+                webPayload,
+              );
+            } catch (err) {
+              const status = (err as { statusCode?: number })?.statusCode;
+              if (status === 404 || status === 410) deadWeb.push(s.endpoint);
+              else console.error('send-push: web push send failed', status, err);
+            }
+          }
+        } catch (e) {
+          console.error('send-push: web-push module/dispatch failed', e);
+        }
+      }
+      if (deadWeb.length > 0) {
+        await service.from('web_push_subscriptions').delete().in('endpoint', deadWeb);
+      }
+    }
+
     return json({
       ok: true,
       event: resolved.event,
       recipientCount: tokens.length,
+      webRecipientCount: webSubs.length,
       dispatched: true,
       pruned: deadTokens.length,
+      prunedWeb: deadWeb.length,
     });
   } catch (e) {
     console.error('send-push: unhandled', e);

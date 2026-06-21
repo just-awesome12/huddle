@@ -99,6 +99,16 @@ try {
     { user_id: c.user.id, expo_token: `ExponentPushToken[c-${ts}]`, platform: 'ios' },
   ]);
 
+  // Web push (Phase 15): give b one browser subscription. Same selection
+  // rules as Expo tokens, so for new_idea (actor a excluded, c opted out)
+  // b is the only eligible web subscriber.
+  await admin.from('web_push_subscriptions').insert({
+    user_id: b.user.id,
+    endpoint: `https://push.example/${ts}-b`,
+    p256dh: 'p256dh-b',
+    auth: 'auth-b',
+  });
+
   // c opts out of new_idea only.
   await admin.from('notification_prefs').insert({
     user_id: c.user.id,
@@ -126,6 +136,16 @@ try {
     r1.json?.sampleMessage?.title?.includes('New idea') &&
       r1.json?.sampleMessage?.data?.path === `/groups/${groupId}/ideas/${idea.id}`,
     'new_idea: message title + deep-link path',
+  );
+  // Web push (Phase 15): b is the only eligible web subscriber.
+  assert(
+    r1.json?.webRecipientCount === 1,
+    `new_idea: 1 web subscriber (b), got ${r1.json?.webRecipientCount}`,
+  );
+  assert(
+    typeof r1.json?.sampleWebPayload === 'string' &&
+      JSON.parse(r1.json.sampleWebPayload)?.data?.path === `/groups/${groupId}/ideas/${idea.id}`,
+    'new_idea: web payload carries title/body + deep-link path',
   );
 
   // --- picker_ran: c did NOT opt out → b(2) + c(1) = 3 ---

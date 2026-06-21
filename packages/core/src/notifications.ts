@@ -93,6 +93,48 @@ export function buildExpoMessages(tokens: string[], content: NotificationContent
   }));
 }
 
+// -----------------------------------------------------------------------
+// Web Push (Phase 15) — second delivery channel, same selection rules.
+// -----------------------------------------------------------------------
+
+/** A browser's W3C Push subscription (the bits send-push needs to deliver). */
+export interface WebPushSubscription {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+/** One browser's eligibility input: who owns the subscription + their prefs. */
+export interface WebSubscriptionRecipient {
+  userId: string;
+  subscription: WebPushSubscription;
+  prefs: NotificationPrefs | null;
+}
+
+/**
+ * The web subscriptions that should receive `event`: same rule as
+ * selectRecipientTokens (everyone except the actor, who hasn't opted
+ * out), but carrying subscriptions instead of Expo tokens.
+ */
+export function selectWebSubscriptions(
+  recipients: WebSubscriptionRecipient[],
+  event: NotificationEvent,
+  actorId: string | null,
+): WebPushSubscription[] {
+  return recipients
+    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .map((r) => r.subscription);
+}
+
+/** The JSON payload a browser service worker reads to render the notification. */
+export function buildWebPushPayload(content: NotificationContent): string {
+  return JSON.stringify({
+    title: content.title,
+    body: content.body,
+    ...(content.data ? { data: content.data } : {}),
+  });
+}
+
 /** Expo accepts at most 100 messages per request. */
 export const EXPO_PUSH_CHUNK_SIZE = 100;
 
