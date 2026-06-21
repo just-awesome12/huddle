@@ -83,6 +83,21 @@ try {
   if (grpErr) throw new Error(`group: ${grpErr.message}`);
   const groupId = grp.id;
 
+  // Seed the idea FIRST, before members/tokens. Inserting an idea fires the
+  // ideas_send_push pg_net trigger → a REAL (non-dry-run) send-push that
+  // dispatches to the Expo API; the fake tokens come back
+  // DeviceNotRegistered and get PRUNED. By creating the idea while there are
+  // no members/tokens yet, that real dispatch is a no-op (nothing to prune),
+  // and the brief wait lets the async pg_net request drain before we seed the
+  // tokens the dry-run assertions depend on. (Was the root cause of flaky
+  // low recipient counts — the prune raced the assertions.)
+  const { data: idea } = await admin
+    .from('ideas')
+    .insert({ group_id: groupId, proposed_by: a.user.id, title: 'Tacos', category: 'food' })
+    .select('id')
+    .single();
+  await new Promise((r) => setTimeout(r, 4000));
+
   // Memberships: a is added as admin by the creator-membership trigger
   // (D45) when the group row is inserted, so only add b and c here.
   const { error: memErr } = await admin.from('group_members').insert([
@@ -91,13 +106,15 @@ try {
   ]);
   if (memErr) throw new Error(`members: ${memErr.message}`);
 
-  // Tokens: a 1, b 2 (two devices), c 1.
-  await admin.from('push_tokens').insert([
+  // Tokens: a 1, b 2 (two devices), c 1. No more real ideas are inserted
+  // after this, so nothing will prune them.
+  const { error: tokErr } = await admin.from('push_tokens').insert([
     { user_id: a.user.id, expo_token: `ExponentPushToken[a-${ts}]`, platform: 'ios' },
     { user_id: b.user.id, expo_token: `ExponentPushToken[b1-${ts}]`, platform: 'ios' },
     { user_id: b.user.id, expo_token: `ExponentPushToken[b2-${ts}]`, platform: 'android' },
     { user_id: c.user.id, expo_token: `ExponentPushToken[c-${ts}]`, platform: 'ios' },
   ]);
+  if (tokErr) throw new Error(`tokens: ${tokErr.message}`);
 
   // Web push (Phase 15): give b one browser subscription. Same selection
   // rules as Expo tokens, so for new_idea (actor a excluded, c opted out)
@@ -116,13 +133,6 @@ try {
     picker_ran: true,
     group_invite: true,
   });
-
-  // An idea + decision to reference.
-  const { data: idea } = await admin
-    .from('ideas')
-    .insert({ group_id: groupId, proposed_by: a.user.id, title: 'Tacos', category: 'food' })
-    .select('id')
-    .single();
 
   // --- new_idea: actor (a) excluded, c opted out → only b's two devices ---
   const r1 = await invoke({
@@ -239,6 +249,70 @@ try {
     rj2.json?.event === 'join_approved' &&
       rj2.json?.sampleMessage?.data?.path === `/groups/${groupId}`,
     'join_approved: event + deep-link to the group',
+  );
+
+  // --- reaction (15b.2): targeted to the idea's proposer (a), minus self ---
+  const rreact = await invoke({
+    type: 'INSERT',
+    table: 'reactions',
+    record: {
+      id: `rx-${ts}`,
+      group_id: groupId,
+      target_type: 'idea',
+      target_id: idea.id,
+      user_id: b.user.id,
+      emoji: '🔥',
+    },
+  });
+  assert(
+    rreact.status === 200 && rreact.json?.event === 'reaction' && rreact.json?.recipientCount === 1,
+    `reaction: notifies only the idea proposer (a), got ${rreact.json?.recipientCount}`,
+  );
+  assert(
+    rreact.json?.sampleMessage?.data?.path === `/groups/${groupId}/ideas/${idea.id}`,
+    'reaction: deep-link to the reacted idea',
+  );
+
+  const rreactSelf = await invoke({
+    type: 'INSERT',
+    table: 'reactions',
+    record: {
+      id: `rxs-${ts}`,
+      group_id: groupId,
+      target_type: 'idea',
+      target_id: idea.id,
+      user_id: a.user.id,
+      emoji: '🔥',
+    },
+  });
+  assert(
+    rreactSelf.status === 200 && rreactSelf.json?.recipientCount === 0,
+    `reaction: a self-reaction notifies no one, got ${rreactSelf.json?.recipientCount}`,
+  );
+
+  // --- rsvp (15b.2): "going" targets the idea's proposer (a) ---
+  const rrsvp = await invoke({
+    type: 'INSERT',
+    table: 'idea_rsvps',
+    record: { idea_id: idea.id, group_id: groupId, user_id: b.user.id, status: 'going' },
+  });
+  assert(
+    rrsvp.status === 200 && rrsvp.json?.event === 'rsvp' && rrsvp.json?.recipientCount === 1,
+    `rsvp: "going" notifies the proposer (a), got ${rrsvp.json?.recipientCount}`,
+  );
+
+  // --- per-group mute (15b): c mutes the group → excluded from push ---
+  await admin
+    .from('group_notification_prefs')
+    .insert({ user_id: c.user.id, group_id: groupId, muted: true });
+  const rmute = await invoke({
+    type: 'INSERT',
+    table: 'decisions',
+    record: { id: `dm-${ts}`, group_id: groupId, run_by: a.user.id, chosen_idea_id: idea.id },
+  });
+  assert(
+    rmute.status === 200 && rmute.json?.recipientCount === 2,
+    `mute: c muted the group → picker_ran drops to 2 (b's 2 devices only), got ${rmute.json?.recipientCount}`,
   );
 
   // --- wrong secret is rejected ---

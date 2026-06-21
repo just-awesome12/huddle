@@ -278,6 +278,42 @@ export type Database = {
           },
         ]
       }
+      group_notification_prefs: {
+        Row: {
+          group_id: string
+          muted: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          muted?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          muted?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_notification_prefs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_notification_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_posts: {
         Row: {
           author_id: string | null
@@ -575,6 +611,8 @@ export type Database = {
           new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
+          reaction: boolean
+          rsvp: boolean
           updated_at: string
           user_id: string
         }
@@ -585,6 +623,8 @@ export type Database = {
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
+          reaction?: boolean
+          rsvp?: boolean
           updated_at?: string
           user_id: string
         }
@@ -595,6 +635,8 @@ export type Database = {
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
+          reaction?: boolean
+          rsvp?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -867,6 +909,14 @@ export type Database = {
         }
       }
       generate_invite_token: { Args: never; Returns: string }
+      get_push_recipients: {
+        Args: {
+          p_explicit_user_ids: string[]
+          p_group_id: string
+          p_scope: string
+        }
+        Returns: Json
+      }
       is_group_admin: { Args: { p_group_id: string }; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_valid_username: { Args: { value: string }; Returns: boolean }

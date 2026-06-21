@@ -19,10 +19,13 @@ export interface NotificationPrefsInput {
   new_comment: boolean;
   join_request: boolean;
   join_approved: boolean;
+  reaction: boolean;
+  rsvp: boolean;
 }
 
 export const notificationQueryKeys = {
   prefs: (userId: string) => ['notification-prefs', userId] as const,
+  groupMute: (groupId: string) => ['notification-prefs', 'mute', groupId] as const,
 };
 
 // -----------------------------------------------------------------------
@@ -99,6 +102,39 @@ export async function removeWebPushSubscription(
   endpoint: string,
 ): Promise<void> {
   const { error } = await client.from('web_push_subscriptions').delete().eq('endpoint', endpoint);
+  if (error) throwMapped(error);
+}
+
+// -----------------------------------------------------------------------
+// Per-group mute (Phase 15b)
+// -----------------------------------------------------------------------
+
+/** Whether the current user has muted push for a group (absent row = false). */
+export async function fetchGroupMute(client: HuddleClient, groupId: string): Promise<boolean> {
+  const userId = await requireUserId(client);
+  const { data, error } = await client
+    .from('group_notification_prefs')
+    .select('muted')
+    .eq('user_id', userId)
+    .eq('group_id', groupId)
+    .maybeSingle();
+  if (error) throwMapped(error);
+  return data?.muted ?? false;
+}
+
+/** Mute / unmute push for a group (own-row upsert keyed on user+group). */
+export async function setGroupMute(
+  client: HuddleClient,
+  groupId: string,
+  muted: boolean,
+): Promise<void> {
+  const userId = await requireUserId(client);
+  const { error } = await client
+    .from('group_notification_prefs')
+    .upsert(
+      { user_id: userId, group_id: groupId, muted, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,group_id' },
+    );
   if (error) throwMapped(error);
 }
 

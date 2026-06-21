@@ -14,7 +14,9 @@ export type NotificationEvent =
   | 'group_invite'
   | 'new_comment'
   | 'join_request'
-  | 'join_approved';
+  | 'join_approved'
+  | 'reaction'
+  | 'rsvp';
 
 export interface NotificationPrefs {
   new_idea: boolean;
@@ -23,6 +25,8 @@ export interface NotificationPrefs {
   new_comment: boolean;
   join_request: boolean;
   join_approved: boolean;
+  reaction: boolean;
+  rsvp: boolean;
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
@@ -32,6 +36,8 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   new_comment: true,
   join_request: true,
   join_approved: true,
+  reaction: true,
+  rsvp: true,
 };
 
 export function shouldNotify(
@@ -45,6 +51,7 @@ export interface Recipient {
   userId: string;
   expoToken: string;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 export function selectRecipientTokens(
@@ -53,7 +60,7 @@ export function selectRecipientTokens(
   actorId: string | null,
 ): string[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.expoToken);
 }
 
@@ -92,6 +99,7 @@ export interface WebSubscriptionRecipient {
   userId: string;
   subscription: WebPushSubscription;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 export function selectWebSubscriptions(
@@ -100,7 +108,7 @@ export function selectWebSubscriptions(
   actorId: string | null,
 ): WebPushSubscription[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.subscription);
 }
 

@@ -84,6 +84,8 @@ describe('upsertNotificationPrefs', () => {
       new_comment: true,
       join_request: true,
       join_approved: true,
+      reaction: true,
+      rsvp: true,
     });
     expect(out).toEqual(row);
     const c = chainOf(client);
@@ -139,5 +141,27 @@ describe('removeWebPushSubscription', () => {
     const c = chainOf(client);
     expect(c.delete).toHaveBeenCalled();
     expect(c.eq).toHaveBeenCalledWith('endpoint', 'https://push.example/abc');
+  });
+});
+
+describe('fetchGroupMute', () => {
+  it('returns the muted flag (absent row → false)', async () => {
+    const { fetchGroupMute } = await import('../src/push');
+    const off = makeClient({ data: null });
+    expect(await fetchGroupMute(off, 'g1')).toBe(false);
+    const on = makeClient({ data: { muted: true } });
+    expect(await fetchGroupMute(on, 'g1')).toBe(true);
+    expect(chainOf(on).eq).toHaveBeenCalledWith('group_id', 'g1');
+  });
+});
+
+describe('setGroupMute', () => {
+  it('upserts the caller’s mute keyed on (user, group)', async () => {
+    const { setGroupMute } = await import('../src/push');
+    const client = makeClient();
+    await setGroupMute(client, 'g1', true);
+    const [row, opts] = chainOf(client).upsert!.mock.calls[0]!;
+    expect(row).toMatchObject({ user_id: 'user-1', group_id: 'g1', muted: true });
+    expect(opts).toEqual({ onConflict: 'user_id,group_id' });
   });
 });

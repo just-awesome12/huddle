@@ -54,6 +54,19 @@ interface WebhookPayload {
 
 type Service = ReturnType<typeof createClient>;
 
+// A fresh service-role client per request. A module-scope singleton was
+// tried, but a reused supabase-js client in the edge runtime returned
+// degraded results on calls after the first (the integration probe's 2nd+
+// invocations under-reported). One client per webhook is correct.
+function getService(): Service | null {
+  const url = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !serviceKey) return null;
+  return createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -78,59 +91,62 @@ async function groupName(service: Service, groupId: string): Promise<string> {
  * low — the edge runtime intermittently returned partial results when
  * tokens/prefs and subs/prefs were fetched as two separate round trips.
  */
+type RecipientScope = 'members' | 'admins' | 'explicit';
+
 async function gatherRecipients(
   service: Service,
-  userIds: string[],
+  groupId: string,
+  scope: RecipientScope,
+  explicitUserIds: string[],
 ): Promise<{ recipients: Recipient[]; webRecipients: WebSubscriptionRecipient[] }> {
-  if (userIds.length === 0) return { recipients: [], webRecipients: [] };
-  const [{ data: tokens }, { data: subs }, { data: prefs }] = await Promise.all([
-    service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
-    service
-      .from('web_push_subscriptions')
-      .select('user_id, endpoint, p256dh, auth')
-      .in('user_id', userIds),
-    service.from('notification_prefs').select('*').in('user_id', userIds),
-  ]);
+  // ONE round trip (migration 034): a SECURITY DEFINER RPC resolves the
+  // target set (members/admins/explicit) AND returns their tokens, web
+  // subs, prefs, and mutes as a single jsonb value. Replaces several
+  // separate multi-row PostgREST reads that the edge runtime intermittently
+  // truncated.
+  const { data, error } = await service.rpc('get_push_recipients', {
+    p_group_id: groupId || null,
+    p_scope: scope,
+    p_explicit_user_ids: explicitUserIds,
+  });
+  if (error || !data) {
+    console.error('send-push: get_push_recipients failed', error);
+    return { recipients: [], webRecipients: [] };
+  }
+  const gathered = data as {
+    tokens: { user_id: string; expo_token: string }[];
+    subs: { user_id: string; endpoint: string; p256dh: string; auth: string }[];
+    prefs: (NotificationPrefs & { user_id: string })[];
+    muted: string[];
+  };
+
   const prefsByUser = new Map<string, NotificationPrefs>();
-  for (const p of prefs ?? []) {
-    prefsByUser.set(p.user_id as string, {
-      new_idea: p.new_idea as boolean,
-      picker_ran: p.picker_ran as boolean,
-      group_invite: p.group_invite as boolean,
-      new_comment: p.new_comment as boolean,
-      join_request: p.join_request as boolean,
-      join_approved: p.join_approved as boolean,
+  for (const p of gathered.prefs ?? []) {
+    prefsByUser.set(p.user_id, {
+      new_idea: p.new_idea,
+      picker_ran: p.picker_ran,
+      group_invite: p.group_invite,
+      new_comment: p.new_comment,
+      join_request: p.join_request,
+      join_approved: p.join_approved,
+      reaction: p.reaction,
+      rsvp: p.rsvp,
     });
   }
-  const recipients = (tokens ?? []).map((t) => ({
-    userId: t.user_id as string,
-    expoToken: t.expo_token as string,
-    prefs: prefsByUser.get(t.user_id as string) ?? null,
+  const mutedUsers = new Set<string>(gathered.muted ?? []);
+  const recipients = (gathered.tokens ?? []).map((t) => ({
+    userId: t.user_id,
+    expoToken: t.expo_token,
+    prefs: prefsByUser.get(t.user_id) ?? null,
+    muted: mutedUsers.has(t.user_id),
   }));
-  const webRecipients = (subs ?? []).map((s) => ({
-    userId: s.user_id as string,
-    subscription: {
-      endpoint: s.endpoint as string,
-      p256dh: s.p256dh as string,
-      auth: s.auth as string,
-    },
-    prefs: prefsByUser.get(s.user_id as string) ?? null,
+  const webRecipients = (gathered.subs ?? []).map((s) => ({
+    userId: s.user_id,
+    subscription: { endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth },
+    prefs: prefsByUser.get(s.user_id) ?? null,
+    muted: mutedUsers.has(s.user_id),
   }));
   return { recipients, webRecipients };
-}
-
-async function memberIds(service: Service, groupId: string): Promise<string[]> {
-  const { data } = await service.from('group_members').select('user_id').eq('group_id', groupId);
-  return (data ?? []).map((m) => m.user_id as string);
-}
-
-async function adminIds(service: Service, groupId: string): Promise<string[]> {
-  const { data } = await service
-    .from('group_members')
-    .select('user_id')
-    .eq('group_id', groupId)
-    .eq('role', 'admin');
-  return (data ?? []).map((m) => m.user_id as string);
 }
 
 /** Display name for one user (falls back to "Someone"). */
@@ -146,7 +162,12 @@ async function displayName(service: Service, userId: string): Promise<string> {
 interface Resolved {
   event: NotificationEvent;
   actorId: string | null;
-  recipientUserIds: string[];
+  /** How the RPC resolves recipients: the group's members, its admins, or
+   * an explicit list (single-user events). */
+  scope: RecipientScope;
+  explicitUserIds: string[];
+  /** The group the push originates in — used for per-group mute (15b). */
+  groupId: string;
   content: NotificationContent;
 }
 
@@ -164,7 +185,9 @@ async function resolve(
     return {
       event: 'new_idea',
       actorId: str(record.proposed_by),
-      recipientUserIds: await memberIds(service, groupId),
+      scope: 'members',
+      explicitUserIds: [],
+      groupId,
       content: {
         title: `New idea in ${name}`,
         body: str(record.title) ?? 'A new idea was added',
@@ -186,7 +209,9 @@ async function resolve(
     return {
       event: 'new_comment',
       actorId: str(record.author_id),
-      recipientUserIds: await memberIds(service, groupId),
+      scope: 'members',
+      explicitUserIds: [],
+      groupId,
       content: {
         title: `New comment in ${name}`,
         body: `${ideaTitle}: ${body}`,
@@ -209,7 +234,9 @@ async function resolve(
     return {
       event: 'picker_ran',
       actorId: str(record.run_by),
-      recipientUserIds: await memberIds(service, groupId),
+      scope: 'members',
+      explicitUserIds: [],
+      groupId,
       content: {
         title: `The picker chose for ${name}`,
         body: chosenTitle,
@@ -235,7 +262,9 @@ async function resolve(
     return {
       event: 'group_invite',
       actorId: invitedBy, // the inviter; the invitee is the recipient
-      recipientUserIds: [invitedUserId],
+      scope: 'explicit',
+      explicitUserIds: [invitedUserId],
+      groupId: groupId ?? '',
       content: {
         title: 'Group invite',
         body: `${inviterName} invited you to ${name}`,
@@ -257,7 +286,9 @@ async function resolve(
       return {
         event: 'join_request',
         actorId: requesterId,
-        recipientUserIds: await adminIds(service, groupId),
+        scope: 'admins',
+        explicitUserIds: [],
+        groupId,
         content: {
           title: `Join request for ${name}`,
           body: `${who} wants to join`,
@@ -272,7 +303,9 @@ async function resolve(
       return {
         event: 'join_approved',
         actorId: str(record.decided_by),
-        recipientUserIds: [requesterId],
+        scope: 'explicit',
+        explicitUserIds: [requesterId],
+        groupId,
         content: {
           title: `You're in!`,
           body: `Your request to join ${name} was approved`,
@@ -282,6 +315,93 @@ async function resolve(
     }
 
     return { skip: `join-request status not notifiable: ${status}` };
+  }
+
+  if (table === 'reactions') {
+    const groupId = str(record.group_id);
+    const targetType = str(record.target_type);
+    const targetId = str(record.target_id);
+    const actorId = str(record.user_id);
+    const emoji = str(record.emoji) ?? '';
+    if (!groupId || !targetType || !targetId) return { skip: 'missing reaction fields' };
+
+    // Targeted: notify only the AUTHOR of the reacted-to target.
+    let authorId: string | null = null;
+    let path = `/groups/${groupId}`;
+    let noun = 'your post';
+    if (targetType === 'idea') {
+      const { data } = await service
+        .from('ideas')
+        .select('proposed_by, title')
+        .eq('id', targetId)
+        .maybeSingle();
+      authorId = (data?.proposed_by as string) ?? null;
+      path = `/groups/${groupId}/ideas/${targetId}`;
+      noun = data?.title ? `your idea "${data.title}"` : 'your idea';
+    } else if (targetType === 'decision') {
+      const { data } = await service
+        .from('decisions')
+        .select('run_by')
+        .eq('id', targetId)
+        .maybeSingle();
+      authorId = (data?.run_by as string) ?? null;
+      path = `/groups/${groupId}/history`;
+      noun = 'your pick';
+    } else if (targetType === 'comment') {
+      const { data } = await service
+        .from('idea_comments')
+        .select('author_id, idea_id')
+        .eq('id', targetId)
+        .maybeSingle();
+      authorId = (data?.author_id as string) ?? null;
+      if (data?.idea_id) path = `/groups/${groupId}/ideas/${data.idea_id}`;
+      noun = 'your comment';
+    }
+    if (!authorId) return { skip: 'reaction target has no author' };
+
+    const name = await groupName(service, groupId);
+    const who = actorId ? await displayName(service, actorId) : 'Someone';
+    return {
+      event: 'reaction',
+      actorId, // a self-reaction is dropped by actor exclusion
+      scope: 'explicit',
+      explicitUserIds: [authorId],
+      groupId,
+      content: {
+        title: `New reaction in ${name}`,
+        body: `${who} reacted ${emoji} to ${noun}`,
+        data: { path },
+      },
+    };
+  }
+
+  if (table === 'idea_rsvps') {
+    // Triggers only fire this for status='going', so notify the idea's
+    // proposer that someone's in. (Targeted, not the whole group.)
+    const groupId = str(record.group_id);
+    const ideaId = str(record.idea_id);
+    const actorId = str(record.user_id);
+    if (!groupId || !ideaId) return { skip: 'missing rsvp fields' };
+    const [name, idea] = await Promise.all([
+      groupName(service, groupId),
+      service.from('ideas').select('proposed_by, title').eq('id', ideaId).maybeSingle(),
+    ]);
+    const proposerId = (idea.data?.proposed_by as string) ?? null;
+    if (!proposerId) return { skip: 'rsvp idea has no proposer' };
+    const who = actorId ? await displayName(service, actorId) : 'Someone';
+    const title = (idea.data?.title as string) ?? 'an idea';
+    return {
+      event: 'rsvp',
+      actorId,
+      scope: 'explicit',
+      explicitUserIds: [proposerId],
+      groupId,
+      content: {
+        title: `Someone's in — ${name}`,
+        body: `${who} is going to ${title}`,
+        data: { path: `/groups/${groupId}/ideas/${ideaId}` },
+      },
+    };
   }
 
   return { skip: `unsupported table: ${table}` };
@@ -322,15 +442,11 @@ Deno.serve(async (req) => {
     return json({ error: 'bad_request' }, 400);
   }
 
-  const url = Deno.env.get('SUPABASE_URL');
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!url || !serviceKey) {
+  const service = getService();
+  if (!service) {
     console.error('send-push: missing SUPABASE_* env');
     return json({ error: 'internal' }, 500);
   }
-  const service = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
 
   try {
     const resolved = await resolve(service, table, record);
@@ -341,7 +457,9 @@ Deno.serve(async (req) => {
     // One round trip for both channels' recipients (Expo + web) + prefs.
     const { recipients, webRecipients } = await gatherRecipients(
       service,
-      resolved.recipientUserIds,
+      resolved.groupId,
+      resolved.scope,
+      resolved.explicitUserIds,
     );
     const tokens = selectRecipientTokens(recipients, resolved.event, resolved.actorId);
     const messages = buildExpoMessages(tokens, resolved.content);

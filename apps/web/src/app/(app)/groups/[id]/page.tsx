@@ -13,6 +13,7 @@ import {
   type ActivityKind,
 } from '@huddle/api-client/activity';
 import { fetchGroupVoteState } from '@huddle/api-client/votes';
+import { fetchGroupMute } from '@huddle/api-client/push';
 import { fetchGroupRsvpState } from '@huddle/api-client/rsvps';
 import { fetchGroupCommentCounts } from '@huddle/api-client/comments';
 import { ideaFiltersSchema, type IdeaCategory } from '@huddle/validation';
@@ -22,6 +23,7 @@ import { RoleBadge } from '@/components/RoleBadge';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { GroupPresence } from '@/components/GroupPresence';
+import { GroupMuteToggle } from '@/components/GroupMuteToggle';
 import {
   CategoryBadge,
   StatusBadge,
@@ -182,6 +184,14 @@ export default async function GroupDetailPage({
     }
   }
 
+  // Per-group push mute (15b) — the member's own setting.
+  let muted = false;
+  try {
+    muted = await fetchGroupMute(supabase, id);
+  } catch {
+    // leave false
+  }
+
   const onRadarCount = ideas.filter((i) => i.status === 'on_radar').length;
   const todayStr = new Date().toLocaleDateString('en-CA');
   const upcoming = ideas
@@ -330,6 +340,7 @@ export default async function GroupDetailPage({
             >
               History
             </Link>
+            <GroupMuteToggle groupId={id} initialMuted={muted} />
             {isAdmin && (
               <>
                 <Link

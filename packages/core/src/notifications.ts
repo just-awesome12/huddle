@@ -14,7 +14,9 @@ export type NotificationEvent =
   | 'group_invite'
   | 'new_comment'
   | 'join_request'
-  | 'join_approved';
+  | 'join_approved'
+  | 'reaction'
+  | 'rsvp';
 
 /** A user's per-event preferences. Columns mirror notification_prefs. */
 export interface NotificationPrefs {
@@ -24,6 +26,8 @@ export interface NotificationPrefs {
   new_comment: boolean;
   join_request: boolean;
   join_approved: boolean;
+  reaction: boolean;
+  rsvp: boolean;
 }
 
 /** Absent prefs row = opted in to everything (D: missing row = default-on). */
@@ -34,6 +38,8 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   new_comment: true,
   join_request: true,
   join_approved: true,
+  reaction: true,
+  rsvp: true,
 };
 
 /** Whether a user with these prefs wants `event`. Null prefs → default. */
@@ -44,17 +50,19 @@ export function shouldNotify(
   return (prefs ?? DEFAULT_PREFS)[event];
 }
 
-/** One device's eligibility input: who owns the token and their prefs. */
+/** One device's eligibility input: who owns the token, their prefs, and
+ * whether they've muted this group (Phase 15b — orthogonal to prefs). */
 export interface Recipient {
   userId: string;
   expoToken: string;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 /**
  * The tokens that should actually receive `event`: everyone except the
- * actor who triggered it, who hasn't opted out. A user with several
- * devices yields several tokens — all kept (each token is unique).
+ * actor who triggered it, who hasn't muted this group and hasn't opted
+ * out of the event. A user with several devices yields several tokens.
  */
 export function selectRecipientTokens(
   recipients: Recipient[],
@@ -62,7 +70,7 @@ export function selectRecipientTokens(
   actorId: string | null,
 ): string[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.expoToken);
 }
 
@@ -104,16 +112,17 @@ export interface WebPushSubscription {
   auth: string;
 }
 
-/** One browser's eligibility input: who owns the subscription + their prefs. */
+/** One browser's eligibility input: who owns the subscription, prefs, mute. */
 export interface WebSubscriptionRecipient {
   userId: string;
   subscription: WebPushSubscription;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 /**
  * The web subscriptions that should receive `event`: same rule as
- * selectRecipientTokens (everyone except the actor, who hasn't opted
+ * selectRecipientTokens (everyone except the actor, not muted, not opted
  * out), but carrying subscriptions instead of Expo tokens.
  */
 export function selectWebSubscriptions(
@@ -122,7 +131,7 @@ export function selectWebSubscriptions(
   actorId: string | null,
 ): WebPushSubscription[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.subscription);
 }
 

@@ -12,7 +12,9 @@ type PrefKey =
   | 'group_invite'
   | 'new_comment'
   | 'join_request'
-  | 'join_approved';
+  | 'join_approved'
+  | 'reaction'
+  | 'rsvp';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
   {
@@ -41,6 +43,16 @@ const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
     title: 'Join approvals',
     subtitle: 'When your request to join a group is approved',
   },
+  {
+    key: 'reaction',
+    title: 'Reactions',
+    subtitle: 'When someone reacts to your idea, comment, or pick',
+  },
+  {
+    key: 'rsvp',
+    title: 'RSVPs',
+    subtitle: "When someone's going to an idea you proposed",
+  },
 ];
 
 export default function NotificationSettingsScreen() {
@@ -62,6 +74,8 @@ export default function NotificationSettingsScreen() {
     new_comment: row?.new_comment ?? true,
     join_request: row?.join_request ?? true,
     join_approved: row?.join_approved ?? true,
+    reaction: row?.reaction ?? true,
+    rsvp: row?.rsvp ?? true,
   };
 
   const toggle = (key: PrefKey) => {

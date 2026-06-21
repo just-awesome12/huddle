@@ -12,6 +12,7 @@ import {
 import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
 import { useGroupVoteState } from '@huddle/api-client/votes-hooks';
 import { useGroupCommentCounts } from '@huddle/api-client/comments-hooks';
+import { useGroupMute, useSetGroupMute } from '@huddle/api-client/push-hooks';
 import {
   useGroupActivity,
   type ActivityItem,
@@ -110,6 +111,8 @@ export default function GroupDetailScreen() {
   const members = useGroupMembers(supabase, id);
   const ideas = useGroupIdeas(supabase, id, filters);
   const voteState = useGroupVoteState(supabase, id, myUserId ?? '');
+  const groupMute = useGroupMute(supabase, id);
+  const setGroupMute = useSetGroupMute(supabase, id);
   const commentCounts = useGroupCommentCounts(supabase, id);
   const joinRequests = useJoinRequests(supabase, id);
   const activity = useGroupActivity(supabase, id, 8);
@@ -257,6 +260,12 @@ export default function GroupDetailScreen() {
                   label="History"
                   variant="ghost"
                   onPress={() => router.push(`/groups/${id}/history`)}
+                />
+                <Button
+                  label={groupMute.data ? '🔕 Muted' : '🔔 Mute'}
+                  variant="ghost"
+                  loading={setGroupMute.isPending}
+                  onPress={() => setGroupMute.mutate(!groupMute.data)}
                 />
               </View>
 

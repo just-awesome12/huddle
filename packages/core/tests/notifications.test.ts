@@ -20,6 +20,8 @@ const allOff: NotificationPrefs = {
   new_comment: false,
   join_request: false,
   join_approved: false,
+  reaction: false,
+  rsvp: false,
 };
 
 describe('shouldNotify', () => {
@@ -63,6 +65,14 @@ describe('selectRecipientTokens', () => {
       'tok-u1b',
       'tok-u2',
     ]);
+  });
+
+  it('excludes a recipient who muted the group (Phase 15b)', () => {
+    const muted: Recipient[] = [
+      { userId: 'u1', expoToken: 'tok-u1', prefs: null, muted: true },
+      { userId: 'u2', expoToken: 'tok-u2', prefs: null, muted: false },
+    ];
+    expect(selectRecipientTokens(muted, 'new_idea', null)).toEqual(['tok-u2']);
   });
 });
 
@@ -143,6 +153,8 @@ describe('Deno mirror drift guard', () => {
         new_comment: false,
         join_request: true,
         join_approved: false,
+        reaction: true,
+        rsvp: false,
       },
     },
   ];
@@ -154,6 +166,8 @@ describe('Deno mirror drift guard', () => {
       'new_comment',
       'join_request',
       'join_approved',
+      'reaction',
+      'rsvp',
     ] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),
@@ -180,5 +194,15 @@ describe('Deno mirror drift guard', () => {
     }
     const content = { title: 'T', body: 'B', data: { p: '/g' } };
     expect(buildWebPushPayload(content)).toEqual(mirror.buildWebPushPayload(content));
+  });
+
+  it('the muted filter matches the mirror (Phase 15b)', () => {
+    const muted: Recipient[] = [
+      { userId: 'x', expoToken: 't-x', prefs: null, muted: true },
+      { userId: 'y', expoToken: 't-y', prefs: null, muted: false },
+    ];
+    expect(selectRecipientTokens(muted, 'new_idea', null)).toEqual(
+      mirror.selectRecipientTokens(muted, 'new_idea', null),
+    );
   });
 });
