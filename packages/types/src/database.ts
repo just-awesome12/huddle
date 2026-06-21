@@ -909,6 +909,14 @@ export type Database = {
         }
       }
       generate_invite_token: { Args: never; Returns: string }
+      get_push_recipients: {
+        Args: {
+          p_explicit_user_ids: string[]
+          p_group_id: string
+          p_scope: string
+        }
+        Returns: Json
+      }
       is_group_admin: { Args: { p_group_id: string }; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_valid_username: { Args: { value: string }; Returns: boolean }

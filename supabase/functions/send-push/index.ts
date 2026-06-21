@@ -95,74 +95,62 @@ async function groupName(service: Service, groupId: string): Promise<string> {
  * low — the edge runtime intermittently returned partial results when
  * tokens/prefs and subs/prefs were fetched as two separate round trips.
  */
+type RecipientScope = 'members' | 'admins' | 'explicit';
+
 async function gatherRecipients(
   service: Service,
-  userIds: string[],
   groupId: string,
+  scope: RecipientScope,
+  explicitUserIds: string[],
 ): Promise<{ recipients: Recipient[]; webRecipients: WebSubscriptionRecipient[] }> {
-  if (userIds.length === 0) return { recipients: [], webRecipients: [] };
-  const [{ data: tokens }, { data: subs }, { data: prefs }, { data: mutes }] = await Promise.all([
-    service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
-    service
-      .from('web_push_subscriptions')
-      .select('user_id, endpoint, p256dh, auth')
-      .in('user_id', userIds),
-    service.from('notification_prefs').select('*').in('user_id', userIds),
-    // Per-group mute (Phase 15b): only the muted rows for this group.
-    groupId
-      ? service
-          .from('group_notification_prefs')
-          .select('user_id')
-          .eq('group_id', groupId)
-          .eq('muted', true)
-          .in('user_id', userIds)
-      : Promise.resolve({ data: [] as { user_id: string }[] }),
-  ]);
+  // ONE round trip (migration 034): a SECURITY DEFINER RPC resolves the
+  // target set (members/admins/explicit) AND returns their tokens, web
+  // subs, prefs, and mutes as a single jsonb value. Replaces several
+  // separate multi-row PostgREST reads that the edge runtime intermittently
+  // truncated.
+  const { data, error } = await service.rpc('get_push_recipients', {
+    p_group_id: groupId || null,
+    p_scope: scope,
+    p_explicit_user_ids: explicitUserIds,
+  });
+  if (error || !data) {
+    console.error('send-push: get_push_recipients failed', error);
+    return { recipients: [], webRecipients: [] };
+  }
+  const gathered = data as {
+    tokens: { user_id: string; expo_token: string }[];
+    subs: { user_id: string; endpoint: string; p256dh: string; auth: string }[];
+    prefs: (NotificationPrefs & { user_id: string })[];
+    muted: string[];
+  };
+
   const prefsByUser = new Map<string, NotificationPrefs>();
-  for (const p of prefs ?? []) {
-    prefsByUser.set(p.user_id as string, {
-      new_idea: p.new_idea as boolean,
-      picker_ran: p.picker_ran as boolean,
-      group_invite: p.group_invite as boolean,
-      new_comment: p.new_comment as boolean,
-      join_request: p.join_request as boolean,
-      join_approved: p.join_approved as boolean,
-      reaction: p.reaction as boolean,
-      rsvp: p.rsvp as boolean,
+  for (const p of gathered.prefs ?? []) {
+    prefsByUser.set(p.user_id, {
+      new_idea: p.new_idea,
+      picker_ran: p.picker_ran,
+      group_invite: p.group_invite,
+      new_comment: p.new_comment,
+      join_request: p.join_request,
+      join_approved: p.join_approved,
+      reaction: p.reaction,
+      rsvp: p.rsvp,
     });
   }
-  const mutedUsers = new Set<string>((mutes ?? []).map((m) => m.user_id as string));
-  const recipients = (tokens ?? []).map((t) => ({
-    userId: t.user_id as string,
-    expoToken: t.expo_token as string,
-    prefs: prefsByUser.get(t.user_id as string) ?? null,
-    muted: mutedUsers.has(t.user_id as string),
+  const mutedUsers = new Set<string>(gathered.muted ?? []);
+  const recipients = (gathered.tokens ?? []).map((t) => ({
+    userId: t.user_id,
+    expoToken: t.expo_token,
+    prefs: prefsByUser.get(t.user_id) ?? null,
+    muted: mutedUsers.has(t.user_id),
   }));
-  const webRecipients = (subs ?? []).map((s) => ({
-    userId: s.user_id as string,
-    subscription: {
-      endpoint: s.endpoint as string,
-      p256dh: s.p256dh as string,
-      auth: s.auth as string,
-    },
-    prefs: prefsByUser.get(s.user_id as string) ?? null,
-    muted: mutedUsers.has(s.user_id as string),
+  const webRecipients = (gathered.subs ?? []).map((s) => ({
+    userId: s.user_id,
+    subscription: { endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth },
+    prefs: prefsByUser.get(s.user_id) ?? null,
+    muted: mutedUsers.has(s.user_id),
   }));
   return { recipients, webRecipients };
-}
-
-async function memberIds(service: Service, groupId: string): Promise<string[]> {
-  const { data } = await service.from('group_members').select('user_id').eq('group_id', groupId);
-  return (data ?? []).map((m) => m.user_id as string);
-}
-
-async function adminIds(service: Service, groupId: string): Promise<string[]> {
-  const { data } = await service
-    .from('group_members')
-    .select('user_id')
-    .eq('group_id', groupId)
-    .eq('role', 'admin');
-  return (data ?? []).map((m) => m.user_id as string);
 }
 
 /** Display name for one user (falls back to "Someone"). */
@@ -178,7 +166,10 @@ async function displayName(service: Service, userId: string): Promise<string> {
 interface Resolved {
   event: NotificationEvent;
   actorId: string | null;
-  recipientUserIds: string[];
+  /** How the RPC resolves recipients: the group's members, its admins, or
+   * an explicit list (single-user events). */
+  scope: RecipientScope;
+  explicitUserIds: string[];
   /** The group the push originates in — used for per-group mute (15b). */
   groupId: string;
   content: NotificationContent;
@@ -198,7 +189,8 @@ async function resolve(
     return {
       event: 'new_idea',
       actorId: str(record.proposed_by),
-      recipientUserIds: await memberIds(service, groupId),
+      scope: 'members',
+      explicitUserIds: [],
       groupId,
       content: {
         title: `New idea in ${name}`,
@@ -221,7 +213,8 @@ async function resolve(
     return {
       event: 'new_comment',
       actorId: str(record.author_id),
-      recipientUserIds: await memberIds(service, groupId),
+      scope: 'members',
+      explicitUserIds: [],
       groupId,
       content: {
         title: `New comment in ${name}`,
@@ -245,7 +238,8 @@ async function resolve(
     return {
       event: 'picker_ran',
       actorId: str(record.run_by),
-      recipientUserIds: await memberIds(service, groupId),
+      scope: 'members',
+      explicitUserIds: [],
       groupId,
       content: {
         title: `The picker chose for ${name}`,
@@ -272,7 +266,8 @@ async function resolve(
     return {
       event: 'group_invite',
       actorId: invitedBy, // the inviter; the invitee is the recipient
-      recipientUserIds: [invitedUserId],
+      scope: 'explicit',
+      explicitUserIds: [invitedUserId],
       groupId: groupId ?? '',
       content: {
         title: 'Group invite',
@@ -295,7 +290,8 @@ async function resolve(
       return {
         event: 'join_request',
         actorId: requesterId,
-        recipientUserIds: await adminIds(service, groupId),
+        scope: 'admins',
+        explicitUserIds: [],
         groupId,
         content: {
           title: `Join request for ${name}`,
@@ -311,7 +307,8 @@ async function resolve(
       return {
         event: 'join_approved',
         actorId: str(record.decided_by),
-        recipientUserIds: [requesterId],
+        scope: 'explicit',
+        explicitUserIds: [requesterId],
         groupId,
         content: {
           title: `You're in!`,
@@ -371,7 +368,8 @@ async function resolve(
     return {
       event: 'reaction',
       actorId, // a self-reaction is dropped by actor exclusion
-      recipientUserIds: [authorId],
+      scope: 'explicit',
+      explicitUserIds: [authorId],
       groupId,
       content: {
         title: `New reaction in ${name}`,
@@ -399,7 +397,8 @@ async function resolve(
     return {
       event: 'rsvp',
       actorId,
-      recipientUserIds: [proposerId],
+      scope: 'explicit',
+      explicitUserIds: [proposerId],
       groupId,
       content: {
         title: `Someone's in — ${name}`,
@@ -462,8 +461,9 @@ Deno.serve(async (req) => {
     // One round trip for both channels' recipients (Expo + web) + prefs.
     const { recipients, webRecipients } = await gatherRecipients(
       service,
-      resolved.recipientUserIds,
       resolved.groupId,
+      resolved.scope,
+      resolved.explicitUserIds,
     );
     const tokens = selectRecipientTokens(recipients, resolved.event, resolved.actorId);
     const messages = buildExpoMessages(tokens, resolved.content);
