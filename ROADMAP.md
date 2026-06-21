@@ -865,7 +865,7 @@ User-requested: personal + group identity, and a group-level chat surface.
 Scoped from a **3-round simulated user panel** (6 group personas: foodie crew, distributed work team, extended family, big college club, couple, roommates). The panel projected a +1.7 avg lift (5.3 → ~7.0) from this phase and flagged two infra unlocks (a scheduler; an email provider) as the real ceiling.
 
 - [x] **15a Web push** — the panel's unanimous #1 gap. `web_push_subscriptions` (own-row RLS) + a VAPID delivery channel on `send-push` reusing the D65 seam + shared selection (lazy `npm:web-push`); `public/sw.js`; account-page `WebPushToggle`. Migration 031. D89. (Full subscribe→deliver verified manually / deferred — needs a real push service.)
-- [ ] **15b** Per-group notification muting + **targeted** reaction/RSVP push (panel: small groups want the muting, not the chatter).
+- [x] **15b** Per-group notification muting (`group_notification_prefs`, D90) + **targeted** reaction/RSVP push — a reaction notifies only the target's author, an RSVP "going" only the idea proposer (panel: signal, not chatter). Migrations 032–033. D90–D91.
 - [ ] **15c** "Decide faster" speed cluster — name-only quick-add, "Decide now" shortcut, ≥1-option "just decide" fallback, relative-date chips.
 - [ ] **15d** Magic-link sign-in (lower the auth wall — family-critical) + onboarding/empty-state + starter ideas.
 - [ ] **15e** Saved/reusable candidate sets (the schedulerless half of "recurring") + pinned announcements + bulk invite.
