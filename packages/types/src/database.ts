@@ -374,6 +374,55 @@ export type Database = {
           },
         ]
       }
+      idea_rsvps: {
+        Row: {
+          created_at: string
+          group_id: string
+          idea_id: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          idea_id: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          idea_id?: string
+          status?: Database["public"]["Enums"]["rsvp_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_rsvps_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_rsvps_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "idea_rsvps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idea_votes: {
         Row: {
           created_at: string
@@ -573,6 +622,51 @@ export type Database = {
           },
         ]
       }
+      reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          group_id: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          group_id: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          group_id?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["reaction_target"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -734,8 +828,10 @@ export type Database = {
       idea_status: "on_radar" | "done" | "dismissed"
       join_request_status: "pending" | "approved" | "rejected"
       push_platform: "ios" | "android"
+      reaction_target: "idea" | "decision" | "comment"
       report_reason: "spam" | "inappropriate" | "harassment" | "other"
       report_status: "open" | "reviewed" | "dismissed" | "actioned"
+      rsvp_status: "going" | "maybe" | "not_going"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -872,8 +968,10 @@ export const Constants = {
       idea_status: ["on_radar", "done", "dismissed"],
       join_request_status: ["pending", "approved", "rejected"],
       push_platform: ["ios", "android"],
+      reaction_target: ["idea", "decision", "comment"],
       report_reason: ["spam", "inappropriate", "harassment", "other"],
       report_status: ["open", "reviewed", "dismissed", "actioned"],
+      rsvp_status: ["going", "maybe", "not_going"],
     },
   },
 } as const

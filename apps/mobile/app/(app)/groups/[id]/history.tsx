@@ -3,22 +3,28 @@ import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
 import { useGroupDecisions, useGroupFairness } from '@huddle/api-client/decisions-hooks';
+import { useGroupReactions, reactionTargetKey } from '@huddle/api-client/reactions-hooks';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
 import { CategoryBadge, CATEGORY_LABELS } from '@/components/IdeaBadges';
+import { ReactionBar } from '@/components/ReactionBar';
 
 export default function HistoryScreen() {
   const c = useColors();
   const styles = makeStyles(c);
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { session } = useAuth();
+  const myUserId = session?.user.id;
 
   useGroupRealtime(id);
 
   const group = useGroup(supabase, id);
   const decisions = useGroupDecisions(supabase, id);
   const fairness = useGroupFairness(supabase, id);
+  const reactions = useGroupReactions(supabase, id, myUserId ?? '');
 
   if (group.isPending || decisions.isPending) {
     return (
@@ -126,6 +132,14 @@ export default function HistoryScreen() {
                   ? ` · ${CATEGORY_LABELS[categoryFilter as keyof typeof CATEGORY_LABELS] ?? categoryFilter} only`
                   : ''}
               </Text>
+              <View style={styles.rowReactions}>
+                <ReactionBar
+                  groupId={id}
+                  targetType="decision"
+                  targetId={item.id}
+                  summaries={reactions.data?.[reactionTargetKey('decision', item.id)] ?? []}
+                />
+              </View>
             </View>
           );
         }}
@@ -216,4 +230,5 @@ const makeStyles = (c: ThemeColors) =>
     chosenTitle: { fontSize: 14, fontWeight: '600', color: c.text },
     removed: { fontSize: 14, fontWeight: '600', color: c.faint, fontStyle: 'italic' },
     meta: { fontSize: 12, color: c.muted },
+    rowReactions: { marginTop: 8 },
   });

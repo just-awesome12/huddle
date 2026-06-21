@@ -835,6 +835,19 @@ User-requested: make groups public/discoverable with description, location, and 
 
 ---
 
+### Phase 13 — Hub Engagement ✅ COMPLETE (pending PR)
+
+User-requested: make the group hub more engaging and social.
+
+- [x] **13.1 Activity feed** — schema-free "What's happening" merge of ideas/votes/comments/decisions/joins; `@huddle/api-client/activity(-hooks)`; web + mobile hub. D82.
+- [x] **13.2 Live presence** — "N here now" via Realtime Presence (`trackGroupPresence`); web + mobile banner. D83.
+- [x] **13.3 RSVP** — `idea_rsvps` (migration 026) + RLS + pgTAP; "Who's in?" on idea detail + going badge on Upcoming; web + mobile. D84.
+- [x] **13.4 Reactions** — polymorphic `reactions` (migration 027) over ideas/decisions/comments + RLS + pgTAP; shared `ReactionBar`; web + mobile. D85.
+- [x] **13.5 Docs + full gate.**
+- Deferred: push for RSVP/reactions (high-frequency), reaction analytics, presence on the dashboard, polls/streaks/nudges (the rest of the brainstorm).
+
+---
+
 ## 8. Cross-Phase Testing Strategy
 
 Every phase enforces these gates before progressing.

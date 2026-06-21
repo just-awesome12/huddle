@@ -105,17 +105,17 @@ test('invite → accept → both see members → admin removes → access revoke
 
     // Joiner sees both members; own role badge is Member.
     await expect(joinerPage.getByText('Members (2)')).toBeVisible();
-    await expect(joinerPage.getByText(admin.displayName)).toBeVisible();
+    await expect(joinerPage.getByTestId('member-list').getByText(admin.displayName)).toBeVisible();
     await expect(joinerPage.getByTestId('role-badge-member')).toBeVisible();
 
     // Admin: sees the new member, removes them.
     await page.goto(groupUrl);
     await expect(page.getByText('Members (2)')).toBeVisible();
-    await expect(page.getByText(joiner.displayName)).toBeVisible();
+    await expect(page.getByTestId('member-list').getByText(joiner.displayName)).toBeVisible();
     await page.getByRole('button', { name: 'Remove', exact: true }).click();
     await page.getByRole('button', { name: 'Remove member' }).click();
     await expect(page.getByText('Members (1)')).toBeVisible();
-    await expect(page.getByText(joiner.displayName)).not.toBeVisible();
+    await expect(page.getByTestId('member-list').getByText(joiner.displayName)).not.toBeVisible();
 
     // Joiner: access is gone — group page now 404s.
     await joinerPage.reload();

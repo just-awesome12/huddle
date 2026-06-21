@@ -70,7 +70,7 @@ test('create group → detail page → appears in list with admin badge', async 
   // Detail page: name, me as the only member, with role badge.
   await expect(page.getByTestId('group-name')).toHaveText('Friday Dinner Club');
   await expect(page.getByText('Members (1)')).toBeVisible();
-  await expect(page.getByText(user.displayName)).toBeVisible();
+  await expect(page.getByTestId('member-list').getByText(user.displayName)).toBeVisible();
   await expect(page.getByText('(you)')).toBeVisible();
   await expect(page.getByTestId('role-badge-admin')).toBeVisible();
 

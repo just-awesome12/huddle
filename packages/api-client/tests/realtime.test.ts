@@ -50,7 +50,7 @@ function makeClient() {
 }
 
 describe('subscribeToGroup', () => {
-  it('opens one channel with bindings for all four group tables', () => {
+  it('opens one channel with bindings for all group tables', () => {
     const client = makeClient();
     subscribeToGroup(client as never, 'g1', () => {});
 
@@ -66,6 +66,7 @@ describe('subscribeToGroup', () => {
       groups: 'id=eq.g1',
       decisions: 'group_id=eq.g1',
       idea_comments: 'group_id=eq.g1',
+      idea_rsvps: 'group_id=eq.g1',
     });
   });
 
