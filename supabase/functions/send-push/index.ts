@@ -54,21 +54,17 @@ interface WebhookPayload {
 
 type Service = ReturnType<typeof createClient>;
 
-// One service-role client reused across requests. Creating a fresh client
-// per invocation churns HTTP connections to the gateway and, under a burst
-// (the integration probe / CI), causes intermittent partial reads — the
-// recipient count comes back low. A module-scope singleton keeps the fetch
-// agent warm and the reads consistent.
-let serviceClient: Service | null = null;
+// A fresh service-role client per request. A module-scope singleton was
+// tried, but a reused supabase-js client in the edge runtime returned
+// degraded results on calls after the first (the integration probe's 2nd+
+// invocations under-reported). One client per webhook is correct.
 function getService(): Service | null {
-  if (serviceClient) return serviceClient;
   const url = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !serviceKey) return null;
-  serviceClient = createClient(url, serviceKey, {
+  return createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return serviceClient;
 }
 
 function json(body: unknown, status = 200): Response {

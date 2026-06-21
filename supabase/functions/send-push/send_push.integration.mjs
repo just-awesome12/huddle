@@ -83,6 +83,21 @@ try {
   if (grpErr) throw new Error(`group: ${grpErr.message}`);
   const groupId = grp.id;
 
+  // Seed the idea FIRST, before members/tokens. Inserting an idea fires the
+  // ideas_send_push pg_net trigger → a REAL (non-dry-run) send-push that
+  // dispatches to the Expo API; the fake tokens come back
+  // DeviceNotRegistered and get PRUNED. By creating the idea while there are
+  // no members/tokens yet, that real dispatch is a no-op (nothing to prune),
+  // and the brief wait lets the async pg_net request drain before we seed the
+  // tokens the dry-run assertions depend on. (Was the root cause of flaky
+  // low recipient counts — the prune raced the assertions.)
+  const { data: idea } = await admin
+    .from('ideas')
+    .insert({ group_id: groupId, proposed_by: a.user.id, title: 'Tacos', category: 'food' })
+    .select('id')
+    .single();
+  await new Promise((r) => setTimeout(r, 4000));
+
   // Memberships: a is added as admin by the creator-membership trigger
   // (D45) when the group row is inserted, so only add b and c here.
   const { error: memErr } = await admin.from('group_members').insert([
@@ -91,13 +106,15 @@ try {
   ]);
   if (memErr) throw new Error(`members: ${memErr.message}`);
 
-  // Tokens: a 1, b 2 (two devices), c 1.
-  await admin.from('push_tokens').insert([
+  // Tokens: a 1, b 2 (two devices), c 1. No more real ideas are inserted
+  // after this, so nothing will prune them.
+  const { error: tokErr } = await admin.from('push_tokens').insert([
     { user_id: a.user.id, expo_token: `ExponentPushToken[a-${ts}]`, platform: 'ios' },
     { user_id: b.user.id, expo_token: `ExponentPushToken[b1-${ts}]`, platform: 'ios' },
     { user_id: b.user.id, expo_token: `ExponentPushToken[b2-${ts}]`, platform: 'android' },
     { user_id: c.user.id, expo_token: `ExponentPushToken[c-${ts}]`, platform: 'ios' },
   ]);
+  if (tokErr) throw new Error(`tokens: ${tokErr.message}`);
 
   // Web push (Phase 15): give b one browser subscription. Same selection
   // rules as Expo tokens, so for new_idea (actor a excluded, c opted out)
@@ -116,13 +133,6 @@ try {
     picker_ran: true,
     group_invite: true,
   });
-
-  // An idea + decision to reference.
-  const { data: idea } = await admin
-    .from('ideas')
-    .insert({ group_id: groupId, proposed_by: a.user.id, title: 'Tacos', category: 'food' })
-    .select('id')
-    .single();
 
   // --- new_idea: actor (a) excluded, c opted out → only b's two devices ---
   const r1 = await invoke({
