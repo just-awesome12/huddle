@@ -112,6 +112,6 @@ export const config = {
     // the public metadata routes (robots/sitemap/manifest) — auth-walling
     // those would redirect crawlers / install prompts to /sign-in instead
     // of serving the file.
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.webmanifest|sw.js|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico)$).*)',
   ],
 };
