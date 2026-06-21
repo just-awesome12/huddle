@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -9,7 +17,7 @@ import {
   useRemoveMember,
   useJoinRequests,
 } from '@huddle/api-client/groups-hooks';
-import { useGroupIdeas, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
+import { useGroupIdeas, useCreateIdea, type IdeaFilters } from '@huddle/api-client/ideas-hooks';
 import { useGroupVoteState } from '@huddle/api-client/votes-hooks';
 import { useGroupCommentCounts } from '@huddle/api-client/comments-hooks';
 import { useGroupMute, useSetGroupMute } from '@huddle/api-client/push-hooks';
@@ -104,6 +112,17 @@ export default function GroupDetailScreen() {
   const myUserId = session?.user.id;
 
   const [filters, setFilters] = useState<IdeaFilters>({});
+  const [quickTitle, setQuickTitle] = useState('');
+  const createIdea = useCreateIdea(supabase);
+
+  const onQuickAdd = () => {
+    const title = quickTitle.trim();
+    if (!title) return;
+    createIdea.mutate(
+      { groupId: id, title, category: 'other' },
+      { onSuccess: () => setQuickTitle('') },
+    );
+  };
 
   useGroupRealtime(id);
 
@@ -312,6 +331,21 @@ export default function GroupDetailScreen() {
                   Ideas{ideas.isSuccess ? ` (${ideas.data.length})` : ''}
                 </Text>
                 <Button label="New idea" onPress={() => router.push(`/groups/${id}/ideas/new`)} />
+              </View>
+
+              {/* Quick-add (15c): fast, name-only path; full form is "New idea" */}
+              <View style={styles.quickAddRow}>
+                <TextInput
+                  value={quickTitle}
+                  onChangeText={setQuickTitle}
+                  placeholder="Quick-add an idea…"
+                  placeholderTextColor={c.muted}
+                  maxLength={200}
+                  returnKeyType="done"
+                  onSubmitEditing={onQuickAdd}
+                  style={styles.quickInput}
+                />
+                <Button label="Add" onPress={onQuickAdd} loading={createIdea.isPending} />
               </View>
 
               <View style={styles.chipsRow}>
@@ -611,6 +645,17 @@ const makeStyles = (c: ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+    },
+    quickAddRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    quickInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      color: c.text,
+      backgroundColor: c.surface,
     },
     chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     mutedText: { fontSize: 13, color: c.muted },
