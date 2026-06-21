@@ -611,6 +611,8 @@ export type Database = {
           new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
+          reaction: boolean
+          rsvp: boolean
           updated_at: string
           user_id: string
         }
@@ -621,6 +623,8 @@ export type Database = {
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
+          reaction?: boolean
+          rsvp?: boolean
           updated_at?: string
           user_id: string
         }
@@ -631,6 +635,8 @@ export type Database = {
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
+          reaction?: boolean
+          rsvp?: boolean
           updated_at?: string
           user_id?: string
         }

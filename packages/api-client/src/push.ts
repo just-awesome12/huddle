@@ -19,6 +19,8 @@ export interface NotificationPrefsInput {
   new_comment: boolean;
   join_request: boolean;
   join_approved: boolean;
+  reaction: boolean;
+  rsvp: boolean;
 }
 
 export const notificationQueryKeys = {

@@ -241,6 +241,56 @@ try {
     'join_approved: event + deep-link to the group',
   );
 
+  // --- reaction (15b.2): targeted to the idea's proposer (a), minus self ---
+  const rreact = await invoke({
+    type: 'INSERT',
+    table: 'reactions',
+    record: {
+      id: `rx-${ts}`,
+      group_id: groupId,
+      target_type: 'idea',
+      target_id: idea.id,
+      user_id: b.user.id,
+      emoji: '🔥',
+    },
+  });
+  assert(
+    rreact.status === 200 && rreact.json?.event === 'reaction' && rreact.json?.recipientCount === 1,
+    `reaction: notifies only the idea proposer (a), got ${rreact.json?.recipientCount}`,
+  );
+  assert(
+    rreact.json?.sampleMessage?.data?.path === `/groups/${groupId}/ideas/${idea.id}`,
+    'reaction: deep-link to the reacted idea',
+  );
+
+  const rreactSelf = await invoke({
+    type: 'INSERT',
+    table: 'reactions',
+    record: {
+      id: `rxs-${ts}`,
+      group_id: groupId,
+      target_type: 'idea',
+      target_id: idea.id,
+      user_id: a.user.id,
+      emoji: '🔥',
+    },
+  });
+  assert(
+    rreactSelf.status === 200 && rreactSelf.json?.recipientCount === 0,
+    `reaction: a self-reaction notifies no one, got ${rreactSelf.json?.recipientCount}`,
+  );
+
+  // --- rsvp (15b.2): "going" targets the idea's proposer (a) ---
+  const rrsvp = await invoke({
+    type: 'INSERT',
+    table: 'idea_rsvps',
+    record: { idea_id: idea.id, group_id: groupId, user_id: b.user.id, status: 'going' },
+  });
+  assert(
+    rrsvp.status === 200 && rrsvp.json?.event === 'rsvp' && rrsvp.json?.recipientCount === 1,
+    `rsvp: "going" notifies the proposer (a), got ${rrsvp.json?.recipientCount}`,
+  );
+
   // --- per-group mute (15b): c mutes the group → excluded from push ---
   await admin
     .from('group_notification_prefs')

@@ -84,6 +84,8 @@ describe('upsertNotificationPrefs', () => {
       new_comment: true,
       join_request: true,
       join_approved: true,
+      reaction: true,
+      rsvp: true,
     });
     expect(out).toEqual(row);
     const c = chainOf(client);

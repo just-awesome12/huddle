@@ -20,6 +20,8 @@ const allOff: NotificationPrefs = {
   new_comment: false,
   join_request: false,
   join_approved: false,
+  reaction: false,
+  rsvp: false,
 };
 
 describe('shouldNotify', () => {
@@ -151,6 +153,8 @@ describe('Deno mirror drift guard', () => {
         new_comment: false,
         join_request: true,
         join_approved: false,
+        reaction: true,
+        rsvp: false,
       },
     },
   ];
@@ -162,6 +166,8 @@ describe('Deno mirror drift guard', () => {
       'new_comment',
       'join_request',
       'join_approved',
+      'reaction',
+      'rsvp',
     ] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),

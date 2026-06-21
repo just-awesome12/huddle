@@ -14,7 +14,9 @@ export type NotificationEvent =
   | 'group_invite'
   | 'new_comment'
   | 'join_request'
-  | 'join_approved';
+  | 'join_approved'
+  | 'reaction'
+  | 'rsvp';
 
 /** A user's per-event preferences. Columns mirror notification_prefs. */
 export interface NotificationPrefs {
@@ -24,6 +26,8 @@ export interface NotificationPrefs {
   new_comment: boolean;
   join_request: boolean;
   join_approved: boolean;
+  reaction: boolean;
+  rsvp: boolean;
 }
 
 /** Absent prefs row = opted in to everything (D: missing row = default-on). */
@@ -34,6 +38,8 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   new_comment: true,
   join_request: true,
   join_approved: true,
+  reaction: true,
+  rsvp: true,
 };
 
 /** Whether a user with these prefs wants `event`. Null prefs → default. */

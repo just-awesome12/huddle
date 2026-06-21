@@ -54,6 +54,23 @@ interface WebhookPayload {
 
 type Service = ReturnType<typeof createClient>;
 
+// One service-role client reused across requests. Creating a fresh client
+// per invocation churns HTTP connections to the gateway and, under a burst
+// (the integration probe / CI), causes intermittent partial reads — the
+// recipient count comes back low. A module-scope singleton keeps the fetch
+// agent warm and the reads consistent.
+let serviceClient: Service | null = null;
+function getService(): Service | null {
+  if (serviceClient) return serviceClient;
+  const url = Deno.env.get('SUPABASE_URL');
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !serviceKey) return null;
+  serviceClient = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return serviceClient;
+}
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -110,6 +127,8 @@ async function gatherRecipients(
       new_comment: p.new_comment as boolean,
       join_request: p.join_request as boolean,
       join_approved: p.join_approved as boolean,
+      reaction: p.reaction as boolean,
+      rsvp: p.rsvp as boolean,
     });
   }
   const mutedUsers = new Set<string>((mutes ?? []).map((m) => m.user_id as string));
@@ -305,6 +324,91 @@ async function resolve(
     return { skip: `join-request status not notifiable: ${status}` };
   }
 
+  if (table === 'reactions') {
+    const groupId = str(record.group_id);
+    const targetType = str(record.target_type);
+    const targetId = str(record.target_id);
+    const actorId = str(record.user_id);
+    const emoji = str(record.emoji) ?? '';
+    if (!groupId || !targetType || !targetId) return { skip: 'missing reaction fields' };
+
+    // Targeted: notify only the AUTHOR of the reacted-to target.
+    let authorId: string | null = null;
+    let path = `/groups/${groupId}`;
+    let noun = 'your post';
+    if (targetType === 'idea') {
+      const { data } = await service
+        .from('ideas')
+        .select('proposed_by, title')
+        .eq('id', targetId)
+        .maybeSingle();
+      authorId = (data?.proposed_by as string) ?? null;
+      path = `/groups/${groupId}/ideas/${targetId}`;
+      noun = data?.title ? `your idea "${data.title}"` : 'your idea';
+    } else if (targetType === 'decision') {
+      const { data } = await service
+        .from('decisions')
+        .select('run_by')
+        .eq('id', targetId)
+        .maybeSingle();
+      authorId = (data?.run_by as string) ?? null;
+      path = `/groups/${groupId}/history`;
+      noun = 'your pick';
+    } else if (targetType === 'comment') {
+      const { data } = await service
+        .from('idea_comments')
+        .select('author_id, idea_id')
+        .eq('id', targetId)
+        .maybeSingle();
+      authorId = (data?.author_id as string) ?? null;
+      if (data?.idea_id) path = `/groups/${groupId}/ideas/${data.idea_id}`;
+      noun = 'your comment';
+    }
+    if (!authorId) return { skip: 'reaction target has no author' };
+
+    const name = await groupName(service, groupId);
+    const who = actorId ? await displayName(service, actorId) : 'Someone';
+    return {
+      event: 'reaction',
+      actorId, // a self-reaction is dropped by actor exclusion
+      recipientUserIds: [authorId],
+      groupId,
+      content: {
+        title: `New reaction in ${name}`,
+        body: `${who} reacted ${emoji} to ${noun}`,
+        data: { path },
+      },
+    };
+  }
+
+  if (table === 'idea_rsvps') {
+    // Triggers only fire this for status='going', so notify the idea's
+    // proposer that someone's in. (Targeted, not the whole group.)
+    const groupId = str(record.group_id);
+    const ideaId = str(record.idea_id);
+    const actorId = str(record.user_id);
+    if (!groupId || !ideaId) return { skip: 'missing rsvp fields' };
+    const [name, idea] = await Promise.all([
+      groupName(service, groupId),
+      service.from('ideas').select('proposed_by, title').eq('id', ideaId).maybeSingle(),
+    ]);
+    const proposerId = (idea.data?.proposed_by as string) ?? null;
+    if (!proposerId) return { skip: 'rsvp idea has no proposer' };
+    const who = actorId ? await displayName(service, actorId) : 'Someone';
+    const title = (idea.data?.title as string) ?? 'an idea';
+    return {
+      event: 'rsvp',
+      actorId,
+      recipientUserIds: [proposerId],
+      groupId,
+      content: {
+        title: `Someone's in — ${name}`,
+        body: `${who} is going to ${title}`,
+        data: { path: `/groups/${groupId}/ideas/${ideaId}` },
+      },
+    };
+  }
+
   return { skip: `unsupported table: ${table}` };
 }
 
@@ -343,15 +447,11 @@ Deno.serve(async (req) => {
     return json({ error: 'bad_request' }, 400);
   }
 
-  const url = Deno.env.get('SUPABASE_URL');
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!url || !serviceKey) {
+  const service = getService();
+  if (!service) {
     console.error('send-push: missing SUPABASE_* env');
     return json({ error: 'internal' }, 500);
   }
-  const service = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
 
   try {
     const resolved = await resolve(service, table, record);
