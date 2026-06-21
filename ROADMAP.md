@@ -848,6 +848,18 @@ User-requested: make the group hub more engaging and social.
 
 ---
 
+### Phase 14 — Personalized Identity + Group Wall ✅ COMPLETE (pending PR)
+
+User-requested: personal + group identity, and a group-level chat surface.
+
+- [x] **14.1 User identity** — `profiles.bio` + a public `avatars` bucket (owner-scoped write RLS); `@huddle/api-client/profiles` (`fetchProfile`/`updateProfile`/`uploadAvatar`) + `bioSchema`; web profile editor on `/account` + mobile editor in settings; avatars render in the hub member list + banner. Migration 028. D86.
+- [x] **14.2 Group identity** — admin-picked `groups.emoji`/`color`/`cover_photo_path` (nullable; `group-visuals` falls back to the id-hash); public `group-covers` bucket (admin-scoped write); curated `GROUP_EMOJIS`/`GROUP_COLORS`; pickers in group settings; applied to the hub banner (emoji + accent + cover), dashboard/discover cards, sidebar; web + mobile. Migration 029. D87.
+- [x] **14.3 Group wall** — `group_posts` (flat per-group chat, mirrors `idea_comments` D74: member RLS, blocked-author hidden, author/admin delete, immutable, realtime); `@huddle/api-client/posts(-hooks)` + `postBodySchema`; web `/groups/[id]/wall` + mobile screen, hub-linked; web + mobile. Migration 030. D88.
+- [x] **14.4 Docs + full gate.**
+- Deferred: **@mentions + mention push** (the wall ships first), wall pagination/reactions on posts, rich text/attachments.
+
+---
+
 ## 8. Cross-Phase Testing Strategy
 
 Every phase enforces these gates before progressing.
