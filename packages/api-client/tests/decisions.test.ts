@@ -130,6 +130,7 @@ describe('runPicker', () => {
       body: {
         groupId: 'g1',
         fair: false,
+        fallback: false,
         filters: { category: 'food', shortlist: ['i1', 'i2'], fair: false },
       },
     });
@@ -147,6 +148,7 @@ describe('runPicker', () => {
       body: {
         groupId: 'g1',
         fair: true,
+        fallback: false,
         filters: { category: null, shortlist: null, fair: true },
       },
     });
@@ -164,6 +166,7 @@ describe('runPicker', () => {
       body: {
         groupId: 'g1',
         fair: false,
+        fallback: false,
         filters: { category: null, shortlist: null, fair: false },
       },
     });

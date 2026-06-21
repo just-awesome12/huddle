@@ -65,6 +65,7 @@ export default function PickerScreen() {
 
   const group = useGroup(supabase, id);
   const ideasQuery = useGroupIdeas(supabase, id, { status: 'on_radar' });
+  const doneQuery = useGroupIdeas(supabase, id, { status: 'done' });
   const runPicker = useRunPicker(supabase);
 
   const [category, setCategory] = useState<IdeaCategory | ''>('');
@@ -89,6 +90,7 @@ export default function PickerScreen() {
   }, [phase, popAnim]);
 
   const ideas = useMemo(() => ideasQuery.data ?? [], [ideasQuery.data]);
+  const doneIdeas = useMemo(() => doneQuery.data ?? [], [doneQuery.data]);
 
   // Ideas shown in the list — narrowed only by category (shortlist
   // toggles per-idea below).
@@ -106,8 +108,17 @@ export default function PickerScreen() {
     return pool;
   }, [displayed, useShortlist, selected]);
 
-  const canPick = candidates.length >= 2 && phase !== 'rolling';
-  const chosen = chosenId ? (ideas.find((i) => i.id === chosenId) ?? null) : null;
+  // "Just decide" fallback (15c): widen an unfiltered, too-small pool with
+  // past picks (done ideas) so the picker still works.
+  const noFilter = !category && !(useShortlist && selected.size > 0);
+  const useFallback = candidates.length < 2 && noFilter && doneIdeas.length > 0;
+  const effectivePool = useFallback ? [...candidates, ...doneIdeas] : candidates;
+  const listItems = useFallback ? effectivePool : displayed;
+
+  const canPick = effectivePool.length >= 2 && phase !== 'rolling';
+  const chosen = chosenId
+    ? ([...ideas, ...doneIdeas].find((i) => i.id === chosenId) ?? null)
+    : null;
 
   const toggleSelected = (ideaId: string) => {
     setSelected((prev) => {
@@ -124,7 +135,7 @@ export default function PickerScreen() {
     setChosenId(null);
     setPhase('rolling');
 
-    const pool = candidates;
+    const pool = effectivePool;
     let i = 0;
     setHighlightId(pool[0]?.id ?? null);
     tickRef.current = setInterval(() => {
@@ -139,6 +150,7 @@ export default function PickerScreen() {
         category: category || undefined,
         shortlist: useShortlist && selected.size > 0 ? [...selected] : undefined,
         fair,
+        fallback: useFallback,
       });
       const elapsed = Date.now() - start;
       if (elapsed < MIN_SPIN_MS) {
@@ -205,7 +217,7 @@ export default function PickerScreen() {
           Can&rsquo;t agree? Let Huddle choose from your on-the-radar ideas.
         </Text>
 
-        {ideas.length < 2 ? (
+        {ideas.length + doneIdeas.length < 2 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>Not enough ideas yet</Text>
             <Text style={styles.mutedText}>
@@ -263,9 +275,15 @@ export default function PickerScreen() {
               </Text>
             ) : null}
 
+            {useFallback ? (
+              <Text style={styles.mutedText}>
+                Not enough new ideas — including past picks so you can still decide.
+              </Text>
+            ) : null}
+
             <View style={styles.candidateList}>
-              {displayed.map((idea) => {
-                const inPool = candidates.some((p) => p.id === idea.id);
+              {listItems.map((idea) => {
+                const inPool = effectivePool.some((p) => p.id === idea.id);
                 const isHighlight = highlightId === idea.id;
                 const isChosen = phase === 'done' && chosenId === idea.id;
                 const isSelected = selected.has(idea.id);

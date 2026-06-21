@@ -19,10 +19,17 @@ export default async function PickerPage({ params }: { params: Promise<{ id: str
   // as a thrown read → 404 (don't leak which ids exist).
   let group;
   let pickable: PickableIdea[];
+  let fallbackPool: PickableIdea[] = [];
   try {
     group = await fetchGroup(supabase, id);
     const ideas = await fetchGroupIdeas(supabase, id, { status: 'on_radar' });
     pickable = ideas.map((i) => ({ id: i.id, title: i.title, category: i.category }));
+    // Past picks (done ideas) as the "just decide" fallback pool (15c) —
+    // only needed when there aren't 2 on-radar ideas to pick between.
+    if (pickable.length < 2) {
+      const done = await fetchGroupIdeas(supabase, id, { status: 'done' });
+      fallbackPool = done.map((i) => ({ id: i.id, title: i.title, category: i.category }));
+    }
   } catch {
     notFound();
   }
@@ -86,7 +93,7 @@ export default async function PickerPage({ params }: { params: Promise<{ id: str
               PICKER
             </span>
           </div>
-          <PickerClient groupId={id} ideas={pickable} />
+          <PickerClient groupId={id} ideas={pickable} fallbackIdeas={fallbackPool} />
         </div>
 
         <p className="mt-4 text-[13px] text-brand-100">

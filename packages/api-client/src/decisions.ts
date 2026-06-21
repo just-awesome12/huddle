@@ -26,6 +26,9 @@ export interface RunPickerParams {
   shortlist?: string[];
   /** Opt-in: weight the pick toward members picked least (D77). */
   fair?: boolean;
+  /** "Just decide" fallback (15c): widen an unfiltered pool with past
+   * `done` picks when there are < 2 on-radar ideas. */
+  fallback?: boolean;
 }
 
 export interface RunPickerResult {
@@ -181,6 +184,7 @@ export async function runPicker(
     body: {
       groupId: params.groupId,
       fair: params.fair ?? false,
+      fallback: params.fallback ?? false,
       filters: {
         category: params.category ?? null,
         shortlist: params.shortlist ?? null,
