@@ -249,6 +249,11 @@ export default function GroupDetailScreen() {
                   onPress={() => router.push(`/groups/${id}/picker`)}
                 />
                 <Button
+                  label="Wall"
+                  variant="ghost"
+                  onPress={() => router.push(`/groups/${id}/wall`)}
+                />
+                <Button
                   label="History"
                   variant="ghost"
                   onPress={() => router.push(`/groups/${id}/history`)}

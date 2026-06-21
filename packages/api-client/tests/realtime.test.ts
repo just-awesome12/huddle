@@ -67,6 +67,7 @@ describe('subscribeToGroup', () => {
       decisions: 'group_id=eq.g1',
       idea_comments: 'group_id=eq.g1',
       idea_rsvps: 'group_id=eq.g1',
+      group_posts: 'group_id=eq.g1',
     });
   });
 

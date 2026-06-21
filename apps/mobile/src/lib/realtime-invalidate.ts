@@ -59,5 +59,12 @@ export function invalidateForChange(queryClient: QueryClient, change: RealtimeCh
         });
       }
       break;
+
+    case 'group_posts':
+      // Phase 14 — group wall. Refresh the wall thread.
+      if (groupId) {
+        void queryClient.invalidateQueries({ queryKey: ['groups', groupId, 'posts'] });
+      }
+      break;
   }
 }

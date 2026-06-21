@@ -19,3 +19,4 @@ export * from './ideas';
 export * from './picker';
 export * from './moderation';
 export * from './comments';
+export * from './posts';
