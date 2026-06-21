@@ -50,12 +50,58 @@ export const tagsStringSchema = z
   .transform((s) => s.split(','))
   .pipe(tagsSchema);
 
+// Group identity (Phase 14) — admin-chosen emoji + accent color. Pickers
+// are curated so dark-mode/AA stay safe; the palette mirrors group-visuals.
+export const GROUP_EMOJIS = [
+  '🌮',
+  '🏠',
+  '📚',
+  '🎬',
+  '🎳',
+  '☕',
+  '🥾',
+  '🎤',
+  '🍜',
+  '🎲',
+  '🎉',
+  '🍕',
+  '⚽',
+  '🏀',
+  '🎸',
+  '🧗',
+  '🍻',
+  '🎨',
+  '🌲',
+  '✈️',
+  '🐶',
+  '💡',
+  '🔥',
+  '⭐',
+] as const;
+export const GROUP_COLORS = [
+  '#d4537e',
+  '#665cc8',
+  '#2f9e8f',
+  '#7f77dd',
+  '#534ab7',
+  '#993556',
+  '#473e9f',
+] as const;
+
+export const groupEmojiSchema = z.string().trim().min(1).max(16);
+export const groupColorSchema = z
+  .string()
+  .trim()
+  .regex(/^#[0-9A-Fa-f]{6}$/, 'Color must be a hex code');
+
 export const createGroupSchema = z.object({
   name: groupNameSchema,
   description: groupDescriptionSchema.optional(),
   location: groupLocationSchema.optional(),
   tags: tagsSchema.optional().default([]),
   visibility: groupVisibilitySchema.default('invite_only'),
+  emoji: groupEmojiSchema.optional(),
+  color: groupColorSchema.optional(),
 });
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;

@@ -4,7 +4,7 @@ import { fetchMyPendingInvites, peekInvite } from '@huddle/api-client/invites';
 import { fetchGroupIdeas, type IdeaWithProposer } from '@huddle/api-client/ideas';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { RoleBadge } from '@/components/RoleBadge';
-import { groupEmoji, groupSoftBg } from '@/lib/group-visuals';
+import { groupEmojiFor, groupSoftBgFor } from '@/lib/group-visuals';
 
 function greetingWord(now = new Date()): string {
   const h = now.getHours();
@@ -115,7 +115,7 @@ export default async function GroupsPage() {
                   style={{ boxShadow: '0 16px 30px -22px rgba(38,33,92,.32)' }}
                 >
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] bg-accent-50 text-[22px]">
-                    {groupEmoji(invite.group_id)}
+                    {groupEmojiFor(invite.group_id, null)}
                   </span>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="font-display text-[16px] font-extrabold text-content">
@@ -168,9 +168,9 @@ export default async function GroupsPage() {
               <div className="flex items-start gap-[13px]">
                 <span
                   className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[15px] text-[26px]"
-                  style={{ background: groupSoftBg(group.id) }}
+                  style={{ background: groupSoftBgFor(group.id, group.color) }}
                 >
-                  {groupEmoji(group.id)}
+                  {groupEmojiFor(group.id, group.emoji)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="font-display text-[18px] font-black text-content">

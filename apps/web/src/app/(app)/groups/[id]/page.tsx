@@ -28,7 +28,7 @@ import {
   CATEGORY_LABELS,
   STATUS_LABELS,
 } from '@/components/IdeaBadges';
-import { groupEmoji, personColor } from '@/lib/group-visuals';
+import { groupEmojiFor, groupColorFor, personColor } from '@/lib/group-visuals';
 
 const CATEGORY_EMOJI: Record<IdeaCategory, string> = {
   food: '🌮',
@@ -196,8 +196,8 @@ export default async function GroupDetailPage({
     .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0))
     .slice(0, 3);
 
-  const bannerGradient =
-    'linear-gradient(140deg, var(--color-brand-900) 0%, var(--color-brand-800) 55%, var(--color-brand-600) 100%)';
+  const accent = groupColorFor(id, group.color);
+  const bannerGradient = `linear-gradient(140deg, var(--color-brand-900) 0%, var(--color-brand-800) 48%, ${accent} 120%)`;
 
   return (
     <div className="-mx-6 -my-8 md:-mx-8">
@@ -208,6 +208,23 @@ export default async function GroupDetailPage({
         className="relative overflow-hidden px-6 pb-7 pt-8 text-white md:px-8"
         style={{ background: bannerGradient }}
       >
+        {group.cover_photo_path && (
+          <>
+            <img
+              src={group.cover_photo_path}
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background: 'linear-gradient(140deg, rgba(20,16,48,.78), rgba(20,16,48,.45))',
+              }}
+            />
+          </>
+        )}
         <span
           aria-hidden
           className="pointer-events-none absolute right-[6%] top-[-50px] h-[200px] w-[200px] rounded-full"
@@ -219,7 +236,7 @@ export default async function GroupDetailPage({
         <div className="relative mx-auto max-w-[1080px]">
           <div className="flex flex-wrap items-center gap-4">
             <span className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-[18px] bg-white/15 text-[30px]">
-              {groupEmoji(id)}
+              {groupEmojiFor(id, group.emoji)}
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-[11px]">

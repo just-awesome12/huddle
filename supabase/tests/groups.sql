@@ -25,7 +25,8 @@ select has_table('public', 'groups', 'groups table exists');
 select columns_are(
   'public', 'groups',
   array['id', 'name', 'created_by', 'created_at', 'updated_at',
-        'visibility', 'description', 'location', 'tags', 'member_count'],
+        'visibility', 'description', 'location', 'tags', 'member_count',
+        'emoji', 'color', 'cover_photo_path'],
   'groups has the expected columns'
 );
 

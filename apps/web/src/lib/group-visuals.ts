@@ -38,3 +38,21 @@ export function groupSoftBg(id: string): string {
 export function personColor(seed: string): string {
   return COLORS[hash(seed) % COLORS.length]!;
 }
+
+// --- Phase 14: prefer the admin-chosen value, fall back to the hash. ---
+
+export function groupEmojiFor(id: string, emoji?: string | null): string {
+  return emoji || groupEmoji(id);
+}
+
+export function groupColorFor(id: string, color?: string | null): string {
+  return color || groupColor(id);
+}
+
+export function groupSoftBgFor(id: string, color?: string | null): string {
+  const hex = groupColorFor(id, color).replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, 0.16)`;
+}

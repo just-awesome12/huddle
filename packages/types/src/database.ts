@@ -280,9 +280,12 @@ export type Database = {
       }
       groups: {
         Row: {
+          color: string | null
+          cover_photo_path: string | null
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
           location: string | null
           member_count: number
@@ -292,9 +295,12 @@ export type Database = {
           visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Insert: {
+          color?: string | null
+          cover_photo_path?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          emoji?: string | null
           id?: string
           location?: string | null
           member_count?: number
@@ -304,9 +310,12 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Update: {
+          color?: string | null
+          cover_photo_path?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          emoji?: string | null
           id?: string
           location?: string | null
           member_count?: number
@@ -726,9 +735,12 @@ export type Database = {
       accept_invite: {
         Args: { p_token: string }
         Returns: {
+          color: string | null
+          cover_photo_path: string | null
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
           location: string | null
           member_count: number
@@ -753,9 +765,12 @@ export type Database = {
           p_visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Returns: {
+          color: string | null
+          cover_photo_path: string | null
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
           location: string | null
           member_count: number
