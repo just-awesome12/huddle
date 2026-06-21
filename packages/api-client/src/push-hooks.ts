@@ -3,6 +3,8 @@ import {
   notificationQueryKeys,
   fetchNotificationPrefs,
   upsertNotificationPrefs,
+  fetchGroupMute,
+  setGroupMute,
   type NotificationPrefsInput,
   type NotificationPrefsRow,
 } from './push';
@@ -41,6 +43,29 @@ export function useUpdateNotificationPrefs(client: HuddleClient, userId: string)
     mutationFn: (prefs: NotificationPrefsInput) => upsertNotificationPrefs(client, prefs),
     onSuccess: (row) => {
       queryClient.setQueryData(notificationQueryKeys.prefs(userId), row);
+    },
+  });
+}
+
+/** Whether the current user has muted push for a group (Phase 15b). */
+export function useGroupMute(
+  client: HuddleClient,
+  groupId: string,
+  options?: Omit<UseQueryOptions<boolean, Error>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery({
+    queryKey: notificationQueryKeys.groupMute(groupId),
+    queryFn: () => fetchGroupMute(client, groupId),
+    ...options,
+  });
+}
+
+export function useSetGroupMute(client: HuddleClient, groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (muted: boolean) => setGroupMute(client, groupId, muted),
+    onSuccess: (_data, muted) => {
+      queryClient.setQueryData(notificationQueryKeys.groupMute(groupId), muted);
     },
   });
 }

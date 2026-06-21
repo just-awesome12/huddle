@@ -278,6 +278,42 @@ export type Database = {
           },
         ]
       }
+      group_notification_prefs: {
+        Row: {
+          group_id: string
+          muted: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          muted?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          muted?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_notification_prefs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_notification_prefs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_posts: {
         Row: {
           author_id: string | null

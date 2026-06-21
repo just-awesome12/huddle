@@ -241,6 +241,20 @@ try {
     'join_approved: event + deep-link to the group',
   );
 
+  // --- per-group mute (15b): c mutes the group → excluded from push ---
+  await admin
+    .from('group_notification_prefs')
+    .insert({ user_id: c.user.id, group_id: groupId, muted: true });
+  const rmute = await invoke({
+    type: 'INSERT',
+    table: 'decisions',
+    record: { id: `dm-${ts}`, group_id: groupId, run_by: a.user.id, chosen_idea_id: idea.id },
+  });
+  assert(
+    rmute.status === 200 && rmute.json?.recipientCount === 2,
+    `mute: c muted the group → picker_ran drops to 2 (b's 2 devices only), got ${rmute.json?.recipientCount}`,
+  );
+
   // --- wrong secret is rejected ---
   const r5 = await invoke(
     { type: 'INSERT', table: 'ideas', record: { id: idea.id, group_id: groupId, proposed_by: a.user.id } },

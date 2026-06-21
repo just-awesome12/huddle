@@ -44,17 +44,19 @@ export function shouldNotify(
   return (prefs ?? DEFAULT_PREFS)[event];
 }
 
-/** One device's eligibility input: who owns the token and their prefs. */
+/** One device's eligibility input: who owns the token, their prefs, and
+ * whether they've muted this group (Phase 15b — orthogonal to prefs). */
 export interface Recipient {
   userId: string;
   expoToken: string;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 /**
  * The tokens that should actually receive `event`: everyone except the
- * actor who triggered it, who hasn't opted out. A user with several
- * devices yields several tokens — all kept (each token is unique).
+ * actor who triggered it, who hasn't muted this group and hasn't opted
+ * out of the event. A user with several devices yields several tokens.
  */
 export function selectRecipientTokens(
   recipients: Recipient[],
@@ -62,7 +64,7 @@ export function selectRecipientTokens(
   actorId: string | null,
 ): string[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.expoToken);
 }
 
@@ -104,16 +106,17 @@ export interface WebPushSubscription {
   auth: string;
 }
 
-/** One browser's eligibility input: who owns the subscription + their prefs. */
+/** One browser's eligibility input: who owns the subscription, prefs, mute. */
 export interface WebSubscriptionRecipient {
   userId: string;
   subscription: WebPushSubscription;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 /**
  * The web subscriptions that should receive `event`: same rule as
- * selectRecipientTokens (everyone except the actor, who hasn't opted
+ * selectRecipientTokens (everyone except the actor, not muted, not opted
  * out), but carrying subscriptions instead of Expo tokens.
  */
 export function selectWebSubscriptions(
@@ -122,7 +125,7 @@ export function selectWebSubscriptions(
   actorId: string | null,
 ): WebPushSubscription[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.subscription);
 }
 

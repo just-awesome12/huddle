@@ -45,6 +45,7 @@ export interface Recipient {
   userId: string;
   expoToken: string;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 export function selectRecipientTokens(
@@ -53,7 +54,7 @@ export function selectRecipientTokens(
   actorId: string | null,
 ): string[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.expoToken);
 }
 
@@ -92,6 +93,7 @@ export interface WebSubscriptionRecipient {
   userId: string;
   subscription: WebPushSubscription;
   prefs: NotificationPrefs | null;
+  muted?: boolean;
 }
 
 export function selectWebSubscriptions(
@@ -100,7 +102,7 @@ export function selectWebSubscriptions(
   actorId: string | null,
 ): WebPushSubscription[] {
   return recipients
-    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
     .map((r) => r.subscription);
 }
 

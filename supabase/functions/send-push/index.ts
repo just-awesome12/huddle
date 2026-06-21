@@ -81,15 +81,25 @@ async function groupName(service: Service, groupId: string): Promise<string> {
 async function gatherRecipients(
   service: Service,
   userIds: string[],
+  groupId: string,
 ): Promise<{ recipients: Recipient[]; webRecipients: WebSubscriptionRecipient[] }> {
   if (userIds.length === 0) return { recipients: [], webRecipients: [] };
-  const [{ data: tokens }, { data: subs }, { data: prefs }] = await Promise.all([
+  const [{ data: tokens }, { data: subs }, { data: prefs }, { data: mutes }] = await Promise.all([
     service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
     service
       .from('web_push_subscriptions')
       .select('user_id, endpoint, p256dh, auth')
       .in('user_id', userIds),
     service.from('notification_prefs').select('*').in('user_id', userIds),
+    // Per-group mute (Phase 15b): only the muted rows for this group.
+    groupId
+      ? service
+          .from('group_notification_prefs')
+          .select('user_id')
+          .eq('group_id', groupId)
+          .eq('muted', true)
+          .in('user_id', userIds)
+      : Promise.resolve({ data: [] as { user_id: string }[] }),
   ]);
   const prefsByUser = new Map<string, NotificationPrefs>();
   for (const p of prefs ?? []) {
@@ -102,10 +112,12 @@ async function gatherRecipients(
       join_approved: p.join_approved as boolean,
     });
   }
+  const mutedUsers = new Set<string>((mutes ?? []).map((m) => m.user_id as string));
   const recipients = (tokens ?? []).map((t) => ({
     userId: t.user_id as string,
     expoToken: t.expo_token as string,
     prefs: prefsByUser.get(t.user_id as string) ?? null,
+    muted: mutedUsers.has(t.user_id as string),
   }));
   const webRecipients = (subs ?? []).map((s) => ({
     userId: s.user_id as string,
@@ -115,6 +127,7 @@ async function gatherRecipients(
       auth: s.auth as string,
     },
     prefs: prefsByUser.get(s.user_id as string) ?? null,
+    muted: mutedUsers.has(s.user_id as string),
   }));
   return { recipients, webRecipients };
 }
@@ -147,6 +160,8 @@ interface Resolved {
   event: NotificationEvent;
   actorId: string | null;
   recipientUserIds: string[];
+  /** The group the push originates in — used for per-group mute (15b). */
+  groupId: string;
   content: NotificationContent;
 }
 
@@ -165,6 +180,7 @@ async function resolve(
       event: 'new_idea',
       actorId: str(record.proposed_by),
       recipientUserIds: await memberIds(service, groupId),
+      groupId,
       content: {
         title: `New idea in ${name}`,
         body: str(record.title) ?? 'A new idea was added',
@@ -187,6 +203,7 @@ async function resolve(
       event: 'new_comment',
       actorId: str(record.author_id),
       recipientUserIds: await memberIds(service, groupId),
+      groupId,
       content: {
         title: `New comment in ${name}`,
         body: `${ideaTitle}: ${body}`,
@@ -210,6 +227,7 @@ async function resolve(
       event: 'picker_ran',
       actorId: str(record.run_by),
       recipientUserIds: await memberIds(service, groupId),
+      groupId,
       content: {
         title: `The picker chose for ${name}`,
         body: chosenTitle,
@@ -236,6 +254,7 @@ async function resolve(
       event: 'group_invite',
       actorId: invitedBy, // the inviter; the invitee is the recipient
       recipientUserIds: [invitedUserId],
+      groupId: groupId ?? '',
       content: {
         title: 'Group invite',
         body: `${inviterName} invited you to ${name}`,
@@ -258,6 +277,7 @@ async function resolve(
         event: 'join_request',
         actorId: requesterId,
         recipientUserIds: await adminIds(service, groupId),
+        groupId,
         content: {
           title: `Join request for ${name}`,
           body: `${who} wants to join`,
@@ -273,6 +293,7 @@ async function resolve(
         event: 'join_approved',
         actorId: str(record.decided_by),
         recipientUserIds: [requesterId],
+        groupId,
         content: {
           title: `You're in!`,
           body: `Your request to join ${name} was approved`,
@@ -342,6 +363,7 @@ Deno.serve(async (req) => {
     const { recipients, webRecipients } = await gatherRecipients(
       service,
       resolved.recipientUserIds,
+      resolved.groupId,
     );
     const tokens = selectRecipientTokens(recipients, resolved.event, resolved.actorId);
     const messages = buildExpoMessages(tokens, resolved.content);
