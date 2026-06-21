@@ -81,7 +81,27 @@ function FilterChip({ href, active, label }: { href: string; active: boolean; la
   );
 }
 
-function MiniAvatar({ seed, initial, ring }: { seed: string; initial: string; ring?: boolean }) {
+function MiniAvatar({
+  seed,
+  initial,
+  ring,
+  avatarUrl,
+}: {
+  seed: string;
+  initial: string;
+  ring?: boolean;
+  avatarUrl?: string | null;
+}) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt=""
+        aria-hidden
+        className={`h-8 w-8 shrink-0 rounded-full object-cover ${ring ? 'ring-2 ring-white/60' : ''}`}
+      />
+    );
+  }
   return (
     <span
       aria-hidden
@@ -252,6 +272,7 @@ export default async function GroupDetailPage({
                     key={m.userId}
                     seed={m.userId}
                     initial={(m.profile.display_name[0] ?? '?').toUpperCase()}
+                    avatarUrl={m.profile.avatar_url}
                     ring
                   />
                 ))}
@@ -578,6 +599,7 @@ export default async function GroupDetailPage({
               <MiniAvatar
                 seed={member.userId}
                 initial={(member.profile.display_name[0] ?? '?').toUpperCase()}
+                avatarUrl={member.profile.avatar_url}
               />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-display text-[14px] font-extrabold text-content">

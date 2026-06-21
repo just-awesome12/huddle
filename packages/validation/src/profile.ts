@@ -8,9 +8,12 @@ import { displayNameSchema } from './display-name';
  * upload the binary to Supabase Storage first, then update this field
  * with the public URL.
  */
+export const bioSchema = z.string().trim().max(160, 'Bio must be at most 160 characters');
+
 export const profileUpdateSchema = z.object({
   username: usernameSchema.optional(),
   displayName: displayNameSchema.optional(),
+  bio: bioSchema.optional(),
   avatarUrl: z
     .string()
     .trim()
