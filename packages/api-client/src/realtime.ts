@@ -24,7 +24,8 @@ export type RealtimeTable =
   | 'groups'
   | 'decisions'
   | 'idea_comments'
-  | 'idea_rsvps';
+  | 'idea_rsvps'
+  | 'group_posts';
 
 export interface RealtimeChange {
   table: RealtimeTable;
@@ -97,6 +98,7 @@ export function subscribeToGroup(
   bind('decisions', `group_id=eq.${groupId}`);
   bind('idea_comments', `group_id=eq.${groupId}`);
   bind('idea_rsvps', `group_id=eq.${groupId}`);
+  bind('group_posts', `group_id=eq.${groupId}`);
 
   channel.subscribe((status) => onStatus?.(status as RealtimeStatus));
 

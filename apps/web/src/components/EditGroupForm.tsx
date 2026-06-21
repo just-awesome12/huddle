@@ -6,15 +6,22 @@ import { EMPTY_GROUP_STATE } from '@/actions/groups-state';
 import { Button } from './Button';
 import { FormField } from './FormField';
 import { GroupFormFields, type GroupFieldDefaults } from './GroupFormFields';
+import { GroupIdentityFields } from './GroupIdentityFields';
 
 export function EditGroupForm({
   groupId,
   name,
   defaults,
+  storedEmoji,
+  storedColor,
+  coverUrl,
 }: {
   groupId: string;
   name: string;
   defaults: GroupFieldDefaults;
+  storedEmoji: string | null;
+  storedColor: string | null;
+  coverUrl: string | null;
 }) {
   const [state, formAction, pending] = useActionState(updateGroupAction, EMPTY_GROUP_STATE);
 
@@ -30,6 +37,12 @@ export function EditGroupForm({
         error={state.fieldErrors?.name?.[0]}
       />
       <GroupFormFields defaults={defaults} errors={state.fieldErrors} />
+      <GroupIdentityFields
+        groupId={groupId}
+        storedEmoji={storedEmoji}
+        storedColor={storedColor}
+        coverUrl={coverUrl}
+      />
       {state.formError && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {state.formError}

@@ -9,6 +9,7 @@ import {
   createGroup,
   renameGroup,
   updateGroup,
+  uploadGroupCover,
   deleteGroup,
   leaveGroup,
   removeMember,
@@ -25,6 +26,7 @@ import {
   type GroupSearchParams,
   type CreateGroupOptions,
   type UpdateGroupInput,
+  type CoverUpload,
 } from './groups';
 
 /**
@@ -117,6 +119,13 @@ export function useUpdateGroupFields(client: HuddleClient) {
       void queryClient.invalidateQueries({ queryKey: groupQueryKeys.all });
       void queryClient.invalidateQueries({ queryKey: groupQueryKeys.detail(groupId) });
     },
+  });
+}
+
+export function useUploadGroupCover(client: HuddleClient) {
+  return useMutation({
+    mutationFn: ({ groupId, params }: { groupId: string; params: CoverUpload }) =>
+      uploadGroupCover(client, groupId, params),
   });
 }
 

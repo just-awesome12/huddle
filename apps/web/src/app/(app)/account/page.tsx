@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { fetchBlockedProfiles } from '@huddle/api-client/moderation';
+import { fetchProfile } from '@huddle/api-client/profiles';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
+import { ProfileForm } from '@/components/ProfileForm';
 import { deleteAccountAction } from '@/actions/account';
 import { unblockUserAction } from '@/actions/moderation';
 
@@ -14,6 +16,7 @@ export default async function AccountPage() {
   if (!user) redirect('/sign-in');
 
   const blocked = await fetchBlockedProfiles(supabase);
+  const profile = await fetchProfile(supabase, user.id);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -22,7 +25,21 @@ export default async function AccountPage() {
       </Link>
 
       <h2 className="mt-4 text-xl font-medium">Account</h2>
-      <p className="mt-1 text-sm text-muted">{user.email}</p>
+      <p className="mt-1 text-sm text-muted">
+        @{profile.username} · {user.email}
+      </p>
+
+      <section className="mt-8">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Profile</h3>
+        <div className="mt-3">
+          <ProfileForm
+            userId={user.id}
+            displayName={profile.display_name}
+            bio={profile.bio}
+            avatarUrl={profile.avatar_url}
+          />
+        </div>
+      </section>
 
       <section className="mt-10">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Blocked users</h3>

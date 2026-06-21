@@ -4,7 +4,7 @@ import { searchPublicGroups, fetchMyGroups, fetchMyJoinRequests } from '@huddle/
 import { groupSearchSchema } from '@huddle/validation';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { requestJoinAction, withdrawJoinAction } from '@/actions/groups';
-import { groupEmoji, groupSoftBg } from '@/lib/group-visuals';
+import { groupEmojiFor, groupSoftBgFor } from '@/lib/group-visuals';
 
 export default async function DiscoverPage({
   searchParams,
@@ -112,10 +112,10 @@ export default async function DiscoverPage({
                   <div className="flex items-center gap-3">
                     <span
                       className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] text-[24px]"
-                      style={{ background: groupSoftBg(g.id) }}
+                      style={{ background: groupSoftBgFor(g.id, g.color) }}
                       aria-hidden
                     >
-                      {groupEmoji(g.id)}
+                      {groupEmojiFor(g.id, g.emoji)}
                     </span>
                     <div className="min-w-0">
                       <h2 className="truncate font-display text-[16px] font-extrabold text-content">

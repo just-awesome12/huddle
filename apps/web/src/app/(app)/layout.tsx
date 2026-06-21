@@ -30,7 +30,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <RealtimeProvider userId={user.id}>
       <div className="flex min-h-dvh bg-canvas">
-        <AppSidebar groups={groups.map((g) => ({ id: g.id, name: g.name }))} email={email} />
+        <AppSidebar
+          groups={groups.map((g) => ({ id: g.id, name: g.name, emoji: g.emoji, color: g.color }))}
+          email={email}
+        />
 
         <main className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-line bg-surface px-6 py-3.5">

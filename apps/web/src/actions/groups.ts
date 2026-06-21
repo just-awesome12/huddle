@@ -7,12 +7,14 @@ import { isHuddleError } from '@huddle/api-client/errors';
 import {
   createGroup,
   updateGroup,
+  uploadGroupCover,
   deleteGroup,
   leaveGroup,
   removeMember,
   requestToJoin,
   respondToJoinRequest,
   withdrawJoinRequest,
+  type UpdateGroupInput,
 } from '@huddle/api-client/groups';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import type { GroupActionState } from './groups-state';
@@ -25,8 +27,16 @@ function parseGroupForm(formData: FormData) {
     location: (formData.get('location') as string | null) ?? undefined,
     tags: String(formData.get('tags') ?? '').split(','),
     visibility: (formData.get('visibility') as string | null) ?? undefined,
+    emoji: (formData.get('emoji') as string | null) ?? undefined,
+    color: (formData.get('color') as string | null) ?? undefined,
   };
 }
+
+const COVER_EXT: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
 
 export async function createGroupAction(
   _prev: GroupActionState,
@@ -66,8 +76,19 @@ export async function updateGroupAction(
   }
 
   const supabase = await getSupabaseServerClient();
+  const patch: UpdateGroupInput = { ...parsed.data };
   try {
-    await updateGroup(supabase, groupId, parsed.data);
+    const cover = formData.get('cover');
+    if (cover instanceof File && cover.size > 0) {
+      const ext = COVER_EXT[cover.type];
+      if (!ext) return { formError: 'Cover must be a JPEG, PNG, or WebP image.' };
+      patch.cover_photo_path = await uploadGroupCover(supabase, groupId, {
+        data: cover,
+        contentType: cover.type,
+        ext,
+      });
+    }
+    await updateGroup(supabase, groupId, patch);
   } catch (e) {
     if (isHuddleError(e) && e.huddle.kind === 'unauthorized') {
       return { formError: 'Only group admins can edit a group.' };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,13 +10,21 @@ import {
   Text,
   View,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { updateGroupSchema, type GroupVisibility } from '@huddle/validation';
+import {
+  updateGroupSchema,
+  GROUP_EMOJIS,
+  GROUP_COLORS,
+  type GroupVisibility,
+} from '@huddle/validation';
 import {
   useGroup,
   useGroupMembers,
   useUpdateGroupFields,
+  useUploadGroupCover,
   useDeleteGroup,
   useJoinRequests,
   useRespondToJoinRequest,
@@ -26,6 +35,14 @@ import { Button } from '@/components/Button';
 import { FormField } from '@/components/FormField';
 import { GroupFormFields } from '@/components/GroupFormFields';
 import { ConfirmAction } from '@/components/ConfirmAction';
+
+/** Hermes has atob; convert base64 → ArrayBuffer without extra deps. */
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
 
 export default function GroupSettingsScreen() {
   const c = useColors();
@@ -38,6 +55,7 @@ export default function GroupSettingsScreen() {
   const group = useGroup(supabase, id);
   const members = useGroupMembers(supabase, id);
   const updateGroup = useUpdateGroupFields(supabase);
+  const uploadCover = useUploadGroupCover(supabase);
   const deleteGroup = useDeleteGroup(supabase);
   const requests = useJoinRequests(supabase, id);
   const respond = useRespondToJoinRequest(supabase);
@@ -47,9 +65,14 @@ export default function GroupSettingsScreen() {
   const [location, setLocation] = useState('');
   const [tags, setTags] = useState('');
   const [visibility, setVisibility] = useState<GroupVisibility>('invite_only');
+  const [emoji, setEmoji] = useState('');
+  const [color, setColor] = useState('');
+  const [cover, setCover] = useState<{ data: ArrayBuffer; uri: string } | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   // Seed the inputs once the group loads.
   useEffect(() => {
@@ -59,8 +82,41 @@ export default function GroupSettingsScreen() {
       setLocation(group.data.location ?? '');
       setTags((group.data.tags ?? []).join(', '));
       setVisibility(group.data.visibility);
+      setEmoji(group.data.emoji ?? '');
+      setColor(group.data.color ?? '');
+      setCoverUrl(group.data.cover_photo_path ?? null);
     }
   }, [group.data]);
+
+  const pickCover = async () => {
+    setFormError(null);
+    setBusy(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 1,
+      });
+      const asset = result.assets?.[0];
+      if (result.canceled || !asset) return;
+      const context = ImageManipulator.manipulate(asset.uri);
+      if (asset.width > 1200) context.resize({ width: 1200 });
+      const rendered = await context.renderAsync();
+      const out = await rendered.saveAsync({
+        format: SaveFormat.JPEG,
+        compress: 0.8,
+        base64: true,
+      });
+      if (!out.base64) {
+        setFormError('Could not process that image.');
+        return;
+      }
+      setCover({ data: base64ToArrayBuffer(out.base64), uri: out.uri });
+    } catch {
+      setFormError('Could not pick that image.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   if (group.isPending || members.isPending) {
     return (
@@ -90,7 +146,7 @@ export default function GroupSettingsScreen() {
     return <Redirect href={`/groups/${id}`} />;
   }
 
-  const onSave = () => {
+  const onSave = async () => {
     setFieldError(undefined);
     setFormError(null);
     setSaved(false);
@@ -101,6 +157,8 @@ export default function GroupSettingsScreen() {
       location,
       tags: tags.split(','),
       visibility,
+      ...(emoji ? { emoji } : {}),
+      ...(color ? { color } : {}),
     });
     if (!parsed.success) {
       const errors = parsed.error.flatten().fieldErrors;
@@ -109,13 +167,24 @@ export default function GroupSettingsScreen() {
       return;
     }
 
-    updateGroup.mutate(
-      { groupId: id, patch: parsed.data },
-      {
-        onSuccess: () => setSaved(true),
-        onError: () => setFormError('Could not save changes. Please try again.'),
-      },
-    );
+    setBusy(true);
+    try {
+      const patch = { ...parsed.data } as typeof parsed.data & { cover_photo_path?: string };
+      if (cover) {
+        patch.cover_photo_path = await uploadCover.mutateAsync({
+          groupId: id,
+          params: { data: cover.data, contentType: 'image/jpeg', ext: 'jpg' },
+        });
+      }
+      await updateGroup.mutateAsync({ groupId: id, patch });
+      if (patch.cover_photo_path) setCoverUrl(patch.cover_photo_path);
+      setCover(null);
+      setSaved(true);
+    } catch {
+      setFormError('Could not save changes. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const pending = requests.data ?? [];
@@ -153,6 +222,46 @@ export default function GroupSettingsScreen() {
             visibility={visibility}
             onChangeVisibility={setVisibility}
           />
+
+          <Text style={styles.pickerLabel}>Emoji</Text>
+          <View style={styles.pickerRow}>
+            {GROUP_EMOJIS.map((e) => (
+              <Pressable
+                key={e}
+                accessibilityRole="button"
+                accessibilityState={{ selected: e === emoji }}
+                onPress={() => setEmoji(e)}
+                style={[styles.emojiCell, e === emoji && styles.emojiCellOn]}
+              >
+                <Text style={styles.emojiText}>{e}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.pickerLabel}>Accent color</Text>
+          <View style={styles.pickerRow}>
+            {GROUP_COLORS.map((hex) => (
+              <Pressable
+                key={hex}
+                accessibilityRole="button"
+                accessibilityLabel={`Color ${hex}`}
+                accessibilityState={{ selected: hex === color }}
+                onPress={() => setColor(hex)}
+                style={[styles.swatch, { backgroundColor: hex }, hex === color && styles.swatchOn]}
+              />
+            ))}
+          </View>
+
+          <Text style={styles.pickerLabel}>Cover photo</Text>
+          <View style={styles.coverRow}>
+            {cover?.uri || coverUrl ? (
+              <Image source={{ uri: cover?.uri ?? coverUrl ?? '' }} style={styles.coverPreview} />
+            ) : (
+              <View style={[styles.coverPreview, { backgroundColor: c.surface2 }]} />
+            )}
+            <Button label="Choose cover" variant="secondary" loading={busy} onPress={pickCover} />
+          </View>
+
           {formError ? (
             <View style={styles.alert}>
               <Text style={styles.alertText} accessibilityRole="alert">
@@ -165,7 +274,7 @@ export default function GroupSettingsScreen() {
               <Text style={styles.successText}>Saved.</Text>
             </View>
           ) : null}
-          <Button label="Save changes" onPress={onSave} loading={updateGroup.isPending} />
+          <Button label="Save changes" onPress={onSave} loading={busy || updateGroup.isPending} />
         </View>
 
         {/* Join requests (public groups) */}
@@ -252,6 +361,22 @@ const makeStyles = (c: ThemeColors) =>
       textTransform: 'uppercase',
       color: c.muted,
     },
+    pickerLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginTop: 4 },
+    pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    emojiCell: {
+      width: 40,
+      height: 40,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: c.surface2,
+    },
+    emojiCellOn: { borderWidth: 2, borderColor: c.brand[600] },
+    emojiText: { fontSize: 20 },
+    swatch: { width: 34, height: 34, borderRadius: 17 },
+    swatchOn: { borderWidth: 3, borderColor: c.text },
+    coverRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    coverPreview: { width: 96, height: 56, borderRadius: 10 },
     dangerTitle: {
       fontSize: 12,
       fontWeight: '600',

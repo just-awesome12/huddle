@@ -65,6 +65,37 @@ export interface UpdateGroupInput {
   location?: string | null;
   tags?: string[];
   visibility?: GroupVisibility;
+  emoji?: string | null;
+  color?: string | null;
+  cover_photo_path?: string | null;
+}
+
+export interface CoverUpload {
+  data: Blob | ArrayBuffer | Uint8Array;
+  contentType: string;
+  /** File extension without the dot (jpg/png/webp). */
+  ext: string;
+}
+
+const GROUP_COVERS_BUCKET = 'group-covers';
+
+/**
+ * Upload a group cover to the public group-covers bucket under the
+ * group's folder (`${groupId}/...`, the path storage RLS authorizes
+ * against — admins only) and return its public URL. The caller saves it
+ * to cover_photo_path via updateGroup.
+ */
+export async function uploadGroupCover(
+  client: HuddleClient,
+  groupId: string,
+  params: CoverUpload,
+): Promise<string> {
+  const path = `${groupId}/cover-${Date.now()}.${params.ext}`;
+  const { error } = await client.storage
+    .from(GROUP_COVERS_BUCKET)
+    .upload(path, params.data, { contentType: params.contentType, upsert: true });
+  if (error) throwMapped(error);
+  return client.storage.from(GROUP_COVERS_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 // -----------------------------------------------------------------------

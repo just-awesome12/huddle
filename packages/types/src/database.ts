@@ -278,11 +278,53 @@ export type Database = {
           },
         ]
       }
+      group_posts: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          group_id: string
+          id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          group_id: string
+          id?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
+          color: string | null
+          cover_photo_path: string | null
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
           location: string | null
           member_count: number
@@ -292,9 +334,12 @@ export type Database = {
           visibility: Database["public"]["Enums"]["group_visibility"]
         }
         Insert: {
+          color?: string | null
+          cover_photo_path?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          emoji?: string | null
           id?: string
           location?: string | null
           member_count?: number
@@ -304,9 +349,12 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Update: {
+          color?: string | null
+          cover_photo_path?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          emoji?: string | null
           id?: string
           location?: string | null
           member_count?: number
@@ -563,6 +611,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string
           id: string
@@ -571,6 +620,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name: string
           id: string
@@ -579,6 +629,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string
           id?: string
@@ -723,9 +774,12 @@ export type Database = {
       accept_invite: {
         Args: { p_token: string }
         Returns: {
+          color: string | null
+          cover_photo_path: string | null
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
           location: string | null
           member_count: number
@@ -750,9 +804,12 @@ export type Database = {
           p_visibility?: Database["public"]["Enums"]["group_visibility"]
         }
         Returns: {
+          color: string | null
+          cover_photo_path: string | null
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
           location: string | null
           member_count: number

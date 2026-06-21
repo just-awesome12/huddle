@@ -55,3 +55,4 @@ android/app/build/
 # Misc
 *.tsbuildinfo
 .cache/
+.claude/

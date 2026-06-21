@@ -5,6 +5,11 @@ import { Button } from '@/components/Button';
 
 const ROWS: { href: string; title: string; subtitle: string }[] = [
   {
+    href: '/settings/profile',
+    title: 'Profile',
+    subtitle: 'Your name, bio, and photo',
+  },
+  {
     href: '/settings/notifications',
     title: 'Notifications',
     subtitle: 'Choose which pushes you receive',

@@ -63,6 +63,9 @@ export default async function GroupSettingsPage({ params }: { params: Promise<{ 
               tags: group.tags,
               visibility: group.visibility,
             }}
+            storedEmoji={group.emoji}
+            storedColor={group.color}
+            coverUrl={group.cover_photo_path}
           />
         </div>
       </section>

@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from './Logo';
-import { groupEmoji, groupSoftBg } from '@/lib/group-visuals';
+import { groupEmojiFor, groupSoftBgFor } from '@/lib/group-visuals';
 
 interface SidebarGroup {
   id: string;
   name: string;
+  emoji: string | null;
+  color: string | null;
 }
 
 /**
@@ -70,9 +72,9 @@ export function AppSidebar({ groups, email }: { groups: SidebarGroup[]; email: s
             >
               <span
                 className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[9px] text-base"
-                style={{ background: groupSoftBg(g.id) }}
+                style={{ background: groupSoftBgFor(g.id, g.color) }}
               >
-                {groupEmoji(g.id)}
+                {groupEmojiFor(g.id, g.emoji)}
               </span>
               <span className="min-w-0 flex-1 truncate text-content">{g.name}</span>
             </Link>
