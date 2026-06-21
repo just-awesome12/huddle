@@ -71,38 +71,20 @@ async function groupName(service: Service, groupId: string): Promise<string> {
   return (data?.name as string) ?? 'your group';
 }
 
-/** Build Recipient[] for a set of user ids (their tokens × their prefs). */
-async function recipientsForUsers(service: Service, userIds: string[]): Promise<Recipient[]> {
-  if (userIds.length === 0) return [];
-  const [{ data: tokens }, { data: prefs }] = await Promise.all([
-    service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
-    service.from('notification_prefs').select('*').in('user_id', userIds),
-  ]);
-  const prefsByUser = new Map<string, NotificationPrefs>();
-  for (const p of prefs ?? []) {
-    prefsByUser.set(p.user_id as string, {
-      new_idea: p.new_idea as boolean,
-      picker_ran: p.picker_ran as boolean,
-      group_invite: p.group_invite as boolean,
-      new_comment: p.new_comment as boolean,
-      join_request: p.join_request as boolean,
-      join_approved: p.join_approved as boolean,
-    });
-  }
-  return (tokens ?? []).map((t) => ({
-    userId: t.user_id as string,
-    expoToken: t.expo_token as string,
-    prefs: prefsByUser.get(t.user_id as string) ?? null,
-  }));
-}
-
-/** Build WebSubscriptionRecipient[] for a set of users (subs × prefs). */
-async function webSubscriptionsForUsers(
+/**
+ * Fetch both delivery channels for a set of users in ONE round trip:
+ * Expo tokens, web subscriptions, and prefs (fetched once and shared).
+ * Doing this as a single Promise.all keeps the per-request query count
+ * low — the edge runtime intermittently returned partial results when
+ * tokens/prefs and subs/prefs were fetched as two separate round trips.
+ */
+async function gatherRecipients(
   service: Service,
   userIds: string[],
-): Promise<WebSubscriptionRecipient[]> {
-  if (userIds.length === 0) return [];
-  const [{ data: subs }, { data: prefs }] = await Promise.all([
+): Promise<{ recipients: Recipient[]; webRecipients: WebSubscriptionRecipient[] }> {
+  if (userIds.length === 0) return { recipients: [], webRecipients: [] };
+  const [{ data: tokens }, { data: subs }, { data: prefs }] = await Promise.all([
+    service.from('push_tokens').select('user_id, expo_token').in('user_id', userIds),
     service
       .from('web_push_subscriptions')
       .select('user_id, endpoint, p256dh, auth')
@@ -120,7 +102,12 @@ async function webSubscriptionsForUsers(
       join_approved: p.join_approved as boolean,
     });
   }
-  return (subs ?? []).map((s) => ({
+  const recipients = (tokens ?? []).map((t) => ({
+    userId: t.user_id as string,
+    expoToken: t.expo_token as string,
+    prefs: prefsByUser.get(t.user_id as string) ?? null,
+  }));
+  const webRecipients = (subs ?? []).map((s) => ({
     userId: s.user_id as string,
     subscription: {
       endpoint: s.endpoint as string,
@@ -129,6 +116,7 @@ async function webSubscriptionsForUsers(
     },
     prefs: prefsByUser.get(s.user_id as string) ?? null,
   }));
+  return { recipients, webRecipients };
 }
 
 async function memberIds(service: Service, groupId: string): Promise<string[]> {
@@ -350,12 +338,15 @@ Deno.serve(async (req) => {
       return json({ ok: true, skipped: resolved.skip, recipientCount: 0 });
     }
 
-    const recipients = await recipientsForUsers(service, resolved.recipientUserIds);
+    // One round trip for both channels' recipients (Expo + web) + prefs.
+    const { recipients, webRecipients } = await gatherRecipients(
+      service,
+      resolved.recipientUserIds,
+    );
     const tokens = selectRecipientTokens(recipients, resolved.event, resolved.actorId);
     const messages = buildExpoMessages(tokens, resolved.content);
 
     // Web push (Phase 15): same recipient-selection rule, second channel.
-    const webRecipients = await webSubscriptionsForUsers(service, resolved.recipientUserIds);
     const webSubs = selectWebSubscriptions(webRecipients, resolved.event, resolved.actorId);
     const webPayload = buildWebPushPayload(resolved.content);
 
