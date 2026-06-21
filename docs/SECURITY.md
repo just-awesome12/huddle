@@ -96,6 +96,11 @@ Blocked on **OQ-2 (domain)** and a deployed environment. Track here:
 - [ ] **Production secrets**: real `TURNSTILE_SECRET_KEY` (+ unset test
       mode); real `HUDDLE_WEBHOOK_SECRET` and the deployed `send-push`
       URL for the pg_net triggers (currently dev fallbacks — D65).
+- [ ] **Web push (VAPID) keys** (Phase 15, D89): generate a production
+      VAPID keypair; set `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` on the
+      `send-push` function and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` on the web
+      build (committed dev keypair must not ship to prod). Missing keys
+      degrade gracefully (web channel off; Expo unaffected).
 - [ ] **CSP enforcement**: review report-only violations, switch to
       nonces, then enforce (drop `-Report-Only`).
 - [ ] **Sentry**: error monitoring with PII scrubbing (needs DSN).
