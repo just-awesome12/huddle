@@ -98,3 +98,46 @@ describe('notificationQueryKeys', () => {
     expect(notificationQueryKeys.prefs('user-1')).toEqual(['notification-prefs', 'user-1']);
   });
 });
+
+describe('saveWebPushSubscription', () => {
+  it('upserts the caller’s browser subscription keyed on endpoint', async () => {
+    const { saveWebPushSubscription } = await import('../src/push');
+    const client = makeClient();
+    await saveWebPushSubscription(client, {
+      endpoint: 'https://push.example/abc',
+      p256dh: 'p',
+      auth: 'a',
+      userAgent: 'Firefox',
+    });
+    const c = chainOf(client);
+    expect(c.upsert).toHaveBeenCalledTimes(1);
+    const [row, opts] = c.upsert!.mock.calls[0]!;
+    expect(row).toMatchObject({
+      user_id: 'user-1',
+      endpoint: 'https://push.example/abc',
+      p256dh: 'p',
+      auth: 'a',
+      user_agent: 'Firefox',
+    });
+    expect(opts).toEqual({ onConflict: 'endpoint' });
+  });
+
+  it('maps an RLS denial', async () => {
+    const { saveWebPushSubscription } = await import('../src/push');
+    const client = makeClient({ error: { code: '42501', message: 'denied' } });
+    await expect(
+      saveWebPushSubscription(client, { endpoint: 'e', p256dh: 'p', auth: 'a' }),
+    ).rejects.toMatchObject({ huddle: { kind: 'unauthorized' } });
+  });
+});
+
+describe('removeWebPushSubscription', () => {
+  it('deletes by endpoint', async () => {
+    const { removeWebPushSubscription } = await import('../src/push');
+    const client = makeClient();
+    await removeWebPushSubscription(client, 'https://push.example/abc');
+    const c = chainOf(client);
+    expect(c.delete).toHaveBeenCalled();
+    expect(c.eq).toHaveBeenCalledWith('endpoint', 'https://push.example/abc');
+  });
+});

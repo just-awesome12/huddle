@@ -81,6 +81,37 @@ export function buildExpoMessages(tokens: string[], content: NotificationContent
   }));
 }
 
+// Web Push (Phase 15) — second delivery channel, same selection rules.
+export interface WebPushSubscription {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+export interface WebSubscriptionRecipient {
+  userId: string;
+  subscription: WebPushSubscription;
+  prefs: NotificationPrefs | null;
+}
+
+export function selectWebSubscriptions(
+  recipients: WebSubscriptionRecipient[],
+  event: NotificationEvent,
+  actorId: string | null,
+): WebPushSubscription[] {
+  return recipients
+    .filter((r) => r.userId !== actorId && shouldNotify(r.prefs, event))
+    .map((r) => r.subscription);
+}
+
+export function buildWebPushPayload(content: NotificationContent): string {
+  return JSON.stringify({
+    title: content.title,
+    body: content.body,
+    ...(content.data ? { data: content.data } : {}),
+  });
+}
+
 export const EXPO_PUSH_CHUNK_SIZE = 100;
 
 export function chunk<T>(items: readonly T[], size: number): T[][] {
