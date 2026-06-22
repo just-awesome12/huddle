@@ -363,6 +363,7 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          pinned: boolean
         }
         Insert: {
           author_id?: string | null
@@ -370,6 +371,7 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
+          pinned?: boolean
         }
         Update: {
           author_id?: string | null
@@ -377,6 +379,7 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
+          pinned?: boolean
         }
         Relationships: [
           {
@@ -1009,6 +1012,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_post_pinned: {
+        Args: { p_pinned: boolean; p_post_id: string }
+        Returns: undefined
       }
     }
     Enums: {

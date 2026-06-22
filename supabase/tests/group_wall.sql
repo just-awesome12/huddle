@@ -7,12 +7,12 @@
 
 begin;
 
-select plan(10);
+select plan(14);
 
 select has_table('public', 'group_posts', 'group_posts table exists');
 select columns_are(
   'public', 'group_posts',
-  array['id', 'group_id', 'author_id', 'body', 'created_at'],
+  array['id', 'group_id', 'author_id', 'body', 'created_at', 'pinned'],
   'group_posts has the expected columns'
 );
 
@@ -82,6 +82,40 @@ select is(
   (select body from public.group_posts where id = '99990000-0000-0000-0000-0000000000b1'),
   'anyone free this weekend?',
   'posts are immutable (no UPDATE policy)'
+);
+
+-- ---------------------------------------------------------------------
+-- Pinning (15e): admin-only via the set_post_pinned RPC
+-- ---------------------------------------------------------------------
+set local role postgres;
+select is(
+  (select pinned from public.group_posts where id = '99990000-0000-0000-0000-0000000000b1'),
+  false,
+  'posts are unpinned by default'
+);
+
+-- A non-admin member cannot pin.
+set local role authenticated;
+set local "request.jwt.claims" to
+  '{"sub": "b0000000-0000-0000-0000-0000000000b1", "role": "authenticated"}';
+select throws_ok(
+  $$select public.set_post_pinned('99990000-0000-0000-0000-0000000000b1', true)$$,
+  '42501', null,
+  'a non-admin member cannot pin a post'
+);
+
+-- The admin can pin.
+set local "request.jwt.claims" to
+  '{"sub": "a0000000-0000-0000-0000-0000000000a1", "role": "authenticated"}';
+select lives_ok(
+  $$select public.set_post_pinned('99990000-0000-0000-0000-0000000000b1', true)$$,
+  'an admin can pin a post'
+);
+set local role postgres;
+select is(
+  (select pinned from public.group_posts where id = '99990000-0000-0000-0000-0000000000b1'),
+  true,
+  'the post is pinned after the admin pins it'
 );
 
 -- ---------------------------------------------------------------------

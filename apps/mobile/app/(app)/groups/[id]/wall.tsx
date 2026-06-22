@@ -18,6 +18,7 @@ import {
   useGroupPosts,
   useAddGroupPost,
   useDeleteGroupPost,
+  useSetPostPinned,
   type PostWithAuthor,
 } from '@huddle/api-client/posts-hooks';
 import { supabase } from '@/lib/supabase';
@@ -49,6 +50,7 @@ export default function GroupWallScreen() {
   const posts = useGroupPosts(supabase, id);
   const addPost = useAddGroupPost(supabase, id);
   const deletePost = useDeleteGroupPost(supabase, id);
+  const setPinned = useSetPostPinned(supabase, id);
 
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -72,10 +74,21 @@ export default function GroupWallScreen() {
     const name = item.author?.display_name ?? 'Former member';
     const canDelete = item.author?.id === myUserId || isAdmin;
     return (
-      <View style={styles.post}>
+      <View style={[styles.post, item.pinned && styles.postPinned]}>
+        {item.pinned ? <Text style={styles.pinnedTag}>📌 Pinned</Text> : null}
         <View style={styles.postHead}>
           <Text style={styles.author}>{name}</Text>
           <Text style={styles.time}>{timeAgo(item.created_at)}</Text>
+          {isAdmin ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={item.pinned ? 'Unpin post' : 'Pin post'}
+              onPress={() => setPinned.mutate({ postId: item.id, pinned: !item.pinned })}
+              style={styles.deleteBtn}
+            >
+              <Text style={styles.deleteText}>{item.pinned ? 'Unpin' : 'Pin'}</Text>
+            </Pressable>
+          ) : null}
           {canDelete ? (
             <Pressable
               accessibilityRole="button"
@@ -175,6 +188,15 @@ const makeStyles = (c: ThemeColors) =>
       borderWidth: 1,
       borderColor: c.border,
       padding: 12,
+    },
+    postPinned: { borderColor: c.accent[600], backgroundColor: c.accent[50] },
+    pinnedTag: {
+      fontSize: 11,
+      fontWeight: '800',
+      color: c.accent[600],
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 4,
     },
     postHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     author: { fontSize: 14, fontWeight: '700', color: c.text },

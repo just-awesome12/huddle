@@ -4,6 +4,7 @@ import {
   fetchGroupPosts,
   addGroupPost,
   deleteGroupPost,
+  setPostPinned,
   type PostWithAuthor,
 } from './posts';
 import type { HuddleClient } from './internal';
@@ -38,6 +39,17 @@ export function useDeleteGroupPost(client: HuddleClient, groupId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (postId: string) => deleteGroupPost(client, postId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: postQueryKeys.wall(groupId) });
+    },
+  });
+}
+
+export function useSetPostPinned(client: HuddleClient, groupId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, pinned }: { postId: string; pinned: boolean }) =>
+      setPostPinned(client, postId, pinned),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: postQueryKeys.wall(groupId) });
     },

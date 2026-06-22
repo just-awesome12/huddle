@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { postBodySchema } from '@huddle/validation';
-import { addGroupPost, deleteGroupPost } from '@huddle/api-client/posts';
+import { addGroupPost, deleteGroupPost, setPostPinned } from '@huddle/api-client/posts';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import type { PostActionState } from './posts-state';
 import type { GroupActionState } from './groups-state';
@@ -42,4 +42,18 @@ export async function deletePostAction(
   }
   revalidatePath(`/groups/${groupId}/wall`);
   return {};
+}
+
+/** Admin-only pin/unpin (15e). `pinned=true` to pin, anything else unpins. */
+export async function setPinnedAction(formData: FormData): Promise<void> {
+  const groupId = String(formData.get('groupId') ?? '');
+  const postId = String(formData.get('postId') ?? '');
+  const pinned = String(formData.get('pinned') ?? '') === 'true';
+  const supabase = await getSupabaseServerClient();
+  try {
+    await setPostPinned(supabase, postId, pinned);
+  } catch {
+    // admin-only / not found — revalidate reflects the truth.
+  }
+  revalidatePath(`/groups/${groupId}/wall`);
 }
