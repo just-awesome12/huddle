@@ -876,8 +876,17 @@ Scoped from a **3-round simulated user panel** (6 group personas: foodie crew, d
 - [x] **16b** Availability "when's free?" poll — a creator proposes dates, each member marks them yes/maybe/no, the group reads the overlap (best = most yes). `availability_polls`/`availability_dates`/`availability_responses` (migration 038), modeled on RSVP (D84); a "When's free?" section on the web polls page + the mobile polls screen. No realtime for v1. D100.
 - [x] **16c** @mentions — highlight `@username` in wall posts + idea comments (web + mobile), and **mention push**: send-push notifies the mentioned member via a new `mention` event (the wall pings only mentions; a comment also broadcasts new_comment with the mentioned excluded — no double-ping). `extractMentions` in `@huddle/core` (+ Deno mirror); migration 039 (`notification_prefs.mention`, `get_push_recipients`, `group_posts` trigger). D101.
 - [x] **16d** Lightweight small-group mode — an admin-toggled `groups.lite_mode` (migration 040) that trims the hub for couples/roommates: hides the Polls link, activity feed, presence, and do-again/reignite nudges (+ the history page's recap & fairness entry points); keeps the core (picker, new idea, wall, history). No new RLS (rides the admin-only `groups_update_admin` policy); a dedicated instant toggle (web Switch + Server Action, mobile Switch) since a partial-form checkbox can't distinguish "set false" from "no change". Web + mobile. D102.
-- [ ] **16e (blocked)** Email digest — needs the two infra unlocks below.
-- **Infra unlocks (the ceiling):** a scheduler (pg_cron/deploy → reminders/recurring/nudges/digest cadence) and an email provider (digest). Native mobile date picker needs a dev build.
+- [ ] **16e (blocked)** Email digest — still needs an email provider (the scheduler half is now unlocked by Phase 17).
+- **Infra unlocks (the ceiling):** ~~a scheduler~~ ✅ **unlocked in Phase 17 (pg_cron)**; an email provider (digest) is the remaining unlock. Native mobile date picker needs a dev build.
+
+---
+
+### Phase 17 — Scheduler (pg_cron) 🚧 IN PROGRESS
+
+The first time-driven infra: pg_cron is preloaded in the Supabase stack, so this is the long-deferred "scheduler" unlock (reminders / recurring / nudges / digest cadence) without a separate deploy.
+
+- [x] **17.1 / 17.2 Inactivity nudges** — migration 041 enables `pg_cron` + a daily `inactivity-nudges` job. `dispatch_inactivity_nudges()` finds quiet-but-stocked groups via the pure, pgTAP-tested `groups_needing_nudge(inactive_days, cooldown_days)` (no new ideas/decisions/comments/posts in N days, **≥2 on-radar ideas** so it's actionable, `groups.last_nudged_at` cooldown) and POSTs a synthetic `group_nudge` to send-push — **reusing the D65 fan-out seam** → a `nudge` event for members (prefs + per-group mute + Expo/web all apply; **no email provider needed**). `nudge` wired through `@huddle/core` (+ Deno mirror), `notification_prefs.nudge` (default-on) + `get_push_recipients` + the mobile prefs toggle. D103.
+- Deferred (build on this scheduler when wanted): recurring picks, "it's been a while" variants, the **email digest** (16e — now blocked only on an email provider), and invite/token cleanup jobs.
 
 ---
 
