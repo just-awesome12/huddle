@@ -869,8 +869,15 @@ Scoped from a **3-round simulated user panel** (6 group personas: foodie crew, d
 - [x] **15c** "Decide faster" speed cluster — inline name-only quick-add (D92), relative-date chips Today/Tomorrow/This weekend (D92), and the picker **"just decide" fallback** that pulls past `done` picks when < 2 on-radar ideas (D93, ≥2 rule D63 intact, default pick uniform D60). The existing "🎲 Pick for us" hub button is the decide-now entry. No schema. D92–D93.
 - [x] **15d** Lower the auth wall — **passwordless 6-digit OTP sign-in** that doubles as sign-up (D94; local `magic_link` email template renders `{{ .Token }}`, `verifyOtp({type:'email'})`, cross-device, no PKCE-cookie dep) on web + mobile, and **one-tap "✨ Add starter ideas"** in the empty group hub (D95, cold-start fix). Config-only (an email template); no app schema. D94–D95.
 - [x] **15e** Power tools — **saved/reusable candidate sets** for the picker (`candidate_sets`, migration 035; the schedulerless half of "recurring" — a named shortlist intersected with the live on-radar pool at pick time, D96), **pinned announcements** on the wall (`group_posts.pinned` + admin-only `set_post_pinned` RPC, migration 036, D97), and **bulk invite** (paste many emails → one each, no schema, D98). Web + mobile. Migrations 035–036. D96–D98.
-- **Phase 16 (queued):** availability "when's free?" poll, counted majority poll, email digest, @mentions, lightweight small-group mode.
-- **Infra unlocks (the ceiling):** a scheduler (pg_cron/deploy → reminders/recurring/nudges) and an email provider (digest). Native mobile date picker needs a dev build.
+
+### Phase 16 — Coordinate & decide (panel-driven) 🚧 IN PROGRESS
+
+- [x] **16a** Counted majority poll — a question + 2..10 options, one changeable vote per member, optional creator/admin close; the structured-vote complement to the random picker. `polls`/`poll_options`/`poll_votes` (migration 037), web `/groups/[id]/polls` + mobile screen. No realtime for v1 (counts refresh on revalidate). D99.
+- [ ] **16b** Availability "when's free?" poll — members mark which days work; the group sees the overlap.
+- [ ] **16c** @mentions (+ mention push, reuses the D65 fan-out seam) on comments/wall/posts.
+- [ ] **16d** Lightweight small-group mode — a simplified UX for couples/roommates.
+- [ ] **16e (blocked)** Email digest — needs the two infra unlocks below.
+- **Infra unlocks (the ceiling):** a scheduler (pg_cron/deploy → reminders/recurring/nudges/digest cadence) and an email provider (digest). Native mobile date picker needs a dev build.
 
 ---
 

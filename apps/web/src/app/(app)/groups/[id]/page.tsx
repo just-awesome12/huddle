@@ -336,6 +336,13 @@ export default async function GroupDetailPage({
               Wall
             </Link>
             <Link
+              href={`/groups/${id}/polls`}
+              data-testid="polls-link"
+              className="rounded-full border border-white/25 px-5 py-[13px] font-display text-[15px] font-extrabold text-white transition-colors hover:bg-white/10"
+            >
+              Polls
+            </Link>
+            <Link
               href={`/groups/${id}/history`}
               data-testid="history-link"
               className="rounded-full border border-white/25 px-5 py-[13px] font-display text-[15px] font-extrabold text-white transition-colors hover:bg-white/10"

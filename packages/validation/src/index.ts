@@ -21,3 +21,4 @@ export * from './moderation';
 export * from './comments';
 export * from './posts';
 export * from './candidate-sets';
+export * from './polls';

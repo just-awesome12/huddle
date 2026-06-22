@@ -20,6 +20,7 @@ import {
   createInviteSchema,
   acceptInviteSchema,
   parseEmailList,
+  createPollSchema,
   usernameSearchSchema,
   createIdeaSchema,
   updateIdeaSchema,
@@ -295,6 +296,36 @@ describe('parseEmailList', () => {
 
   it('returns empty for blank input', () => {
     expect(parseEmailList('   \n  ')).toEqual({ valid: [], invalid: [], overflow: false });
+  });
+});
+
+// =====================================================================
+// Counted polls (Phase 16)
+// =====================================================================
+
+describe('createPollSchema', () => {
+  const valid = { groupId: '11111111-1111-1111-1111-111111111111', question: 'Pizza or sushi?' };
+
+  it('accepts a question with 2+ unique options', () => {
+    expect(createPollSchema.parse({ ...valid, options: ['Pizza', 'Sushi'] }).options).toEqual([
+      'Pizza',
+      'Sushi',
+    ]);
+  });
+
+  it('rejects fewer than 2 options', () => {
+    expect(() => createPollSchema.parse({ ...valid, options: ['Only one'] })).toThrow(/at least 2/);
+  });
+
+  it('rejects duplicate options (case-insensitive)', () => {
+    expect(() => createPollSchema.parse({ ...valid, options: ['Pizza', 'pizza'] })).toThrow(
+      /unique/,
+    );
+  });
+
+  it('rejects more than 10 options', () => {
+    const opts = Array.from({ length: 11 }, (_, i) => `Option ${i}`);
+    expect(() => createPollSchema.parse({ ...valid, options: opts })).toThrow(/at most 10/);
   });
 });
 
