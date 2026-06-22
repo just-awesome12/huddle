@@ -874,7 +874,7 @@ Scoped from a **3-round simulated user panel** (6 group personas: foodie crew, d
 
 - [x] **16a** Counted majority poll — a question + 2..10 options, one changeable vote per member, optional creator/admin close; the structured-vote complement to the random picker. `polls`/`poll_options`/`poll_votes` (migration 037), web `/groups/[id]/polls` + mobile screen. No realtime for v1 (counts refresh on revalidate). D99.
 - [x] **16b** Availability "when's free?" poll — a creator proposes dates, each member marks them yes/maybe/no, the group reads the overlap (best = most yes). `availability_polls`/`availability_dates`/`availability_responses` (migration 038), modeled on RSVP (D84); a "When's free?" section on the web polls page + the mobile polls screen. No realtime for v1. D100.
-- [ ] **16c** @mentions (+ mention push, reuses the D65 fan-out seam) on comments/wall/posts.
+- [x] **16c** @mentions — highlight `@username` in wall posts + idea comments (web + mobile), and **mention push**: send-push notifies the mentioned member via a new `mention` event (the wall pings only mentions; a comment also broadcasts new_comment with the mentioned excluded — no double-ping). `extractMentions` in `@huddle/core` (+ Deno mirror); migration 039 (`notification_prefs.mention`, `get_push_recipients`, `group_posts` trigger). D101.
 - [ ] **16d** Lightweight small-group mode — a simplified UX for couples/roommates.
 - [ ] **16e (blocked)** Email digest — needs the two infra unlocks below.
 - **Infra unlocks (the ceiling):** a scheduler (pg_cron/deploy → reminders/recurring/nudges/digest cadence) and an email provider (digest). Native mobile date picker needs a dev build.
