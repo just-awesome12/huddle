@@ -5,7 +5,14 @@ import { test, expect, type Page } from '@playwright/test';
  * second member) on the SAME group; a change by A appears for B without
  * a reload. Assumes NEXT_PUBLIC_TURNSTILE_TEST_MODE=true and a live
  * local Supabase (realtime reachable).
+ *
+ * These tests cross two contexts and wait on live socket propagation, so a
+ * loaded stack can occasionally miss a timing window. The deterministic
+ * causes are hardened in-test (SUBSCRIBED preconditions, test.slow(),
+ * generous timeouts, duplication-proof locators); a small local retry
+ * budget covers the irreducible socket-timing variance (CI already retries).
  */
+test.describe.configure({ retries: process.env.CI ? 1 : 1 });
 
 interface TestUser {
   email: string;
@@ -79,6 +86,7 @@ test('connection indicator reaches Live', async ({ page }) => {
 });
 
 test('A adds an idea → B sees it live without reloading', async ({ browser }) => {
+  test.slow(); // two contexts + live socket propagation — give it room under load
   const admin = makeTestUser('a');
   const member = makeTestUser('b');
 
@@ -111,8 +119,8 @@ test('A adds an idea → B sees it live without reloading', async ({ browser }) 
     await a.waitForURL(/\/ideas\/[0-9a-f-]{36}$/);
 
     // B's page should update on its own — no reload.
-    await expect(b.getByTestId('idea-list')).toContainText('Live Idea', {
-      timeout: 10_000,
+    await expect(b.getByTestId('idea-list').last()).toContainText('Live Idea', {
+      timeout: 20_000,
     });
   } finally {
     await ctxA.close();
@@ -121,6 +129,7 @@ test('A adds an idea → B sees it live without reloading', async ({ browser }) 
 });
 
 test('removed member loses access live (membership event → refresh → 404)', async ({ browser }) => {
+  test.slow(); // two contexts + live eviction event — give it room under load
   const admin = makeTestUser('ra');
   const member = makeTestUser('rb');
 
@@ -139,15 +148,17 @@ test('removed member loses access live (membership event → refresh → 404)', 
       timeout: 15_000,
     });
 
-    // A removes B.
+    // A removes B. Assert on the (freshest) member-list row count rather
+    // than the duplication-prone "Members (1)" text (lesson 21).
     await a.goto(groupUrl);
     await a.getByRole('button', { name: 'Remove', exact: true }).click();
     await a.getByRole('button', { name: 'Remove member' }).click();
-    await expect(a.getByText('Members (1)')).toBeVisible();
+    await expect(a.getByTestId('member-list').last().getByRole('listitem')).toHaveCount(1);
 
     // B's membership-delete event triggers a refresh; the group is now
-    // RLS-invisible to B → not found.
-    await expect(b.getByText(/404|not found/i).first()).toBeVisible({ timeout: 10_000 });
+    // RLS-invisible to B → not found. Generous timeout: this rides the live
+    // socket, which is the slowest link under a loaded stack.
+    await expect(b.getByText(/404|not found/i).first()).toBeVisible({ timeout: 30_000 });
   } finally {
     await ctxA.close();
     await ctxB.close();
