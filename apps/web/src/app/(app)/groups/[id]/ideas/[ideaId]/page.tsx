@@ -24,6 +24,7 @@ import { AddCommentForm } from '@/components/AddCommentForm';
 import { AddToCalendar } from '@/components/AddToCalendar';
 import { VoteButton } from '@/components/VoteButton';
 import { GroupRealtime } from '@/components/GroupRealtime';
+import { MentionText } from '@/components/MentionText';
 import { Button } from '@/components/Button';
 import { personColor } from '@/lib/group-visuals';
 import type { IdeaCategory } from '@huddle/validation';
@@ -382,7 +383,7 @@ export default async function IdeaDetailPage({
                       </span>
                     </div>
                     <p className="mt-1 whitespace-pre-wrap text-[14.5px] leading-[1.5] text-muted">
-                      {comment.body}
+                      <MentionText text={comment.body} />
                     </p>
                     <div className="mt-2">
                       <ReactionBar

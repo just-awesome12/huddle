@@ -42,6 +42,7 @@ import { googleCalendarUrl } from '@/lib/calendar';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
+import { MentionText } from '@/components/MentionText';
 import { ConfirmAction } from '@/components/ConfirmAction';
 import { CategoryBadge, StatusBadge } from '@/components/IdeaBadges';
 
@@ -356,7 +357,7 @@ export default function IdeaDetailScreen() {
                       </Pressable>
                     ) : null}
                   </View>
-                  <Text style={styles.commentBody}>{cm.body}</Text>
+                  <MentionText text={cm.body} style={styles.commentBody} />
                   <View style={styles.commentReactions}>
                     <ReactionBar
                       groupId={id}
