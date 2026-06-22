@@ -2,10 +2,20 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroup, fetchGroupMembers } from '@huddle/api-client/groups';
 import { fetchGroupPolls, type PollWithResults } from '@huddle/api-client/polls';
+import {
+  fetchGroupAvailabilityPolls,
+  type AvailabilityPollWithResults,
+} from '@huddle/api-client/availability';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { PollComposer } from '@/components/PollComposer';
+import { AvailabilityComposer } from '@/components/AvailabilityComposer';
 import { votePollAction, setPollClosedAction, deletePollAction } from '@/actions/polls';
+import {
+  setAvailabilityAction,
+  setAvailabilityClosedAction,
+  deleteAvailabilityPollAction,
+} from '@/actions/availability';
 
 export default async function GroupPollsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,10 +28,12 @@ export default async function GroupPollsPage({ params }: { params: Promise<{ id:
   let group;
   let members;
   let polls: PollWithResults[];
+  let availability: AvailabilityPollWithResults[];
   try {
     group = await fetchGroup(supabase, id);
     members = await fetchGroupMembers(supabase, id);
     polls = await fetchGroupPolls(supabase, id, user.id);
+    availability = await fetchGroupAvailabilityPolls(supabase, id, user.id);
   } catch {
     notFound();
   }
@@ -132,6 +144,124 @@ export default async function GroupPollsPage({ params }: { params: Promise<{ id:
                         </button>
                       </form>
                       <form action={deletePollAction}>
+                        <input type="hidden" name="groupId" value={id} />
+                        <input type="hidden" name="pollId" value={poll.id} />
+                        <button type="submit" className="font-semibold hover:text-red-600">
+                          Delete
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
+              </li>
+            );
+          })
+        )}
+      </ul>
+
+      <h2 className="mt-10 font-display text-xl font-extrabold text-content">When&rsquo;s free?</h2>
+      <p className="mt-1 text-sm text-muted">
+        Propose some dates; everyone marks what works. The group sees the overlap.
+      </p>
+
+      <div className="mt-5 rounded-2xl border border-line bg-surface p-4">
+        <AvailabilityComposer groupId={id} />
+      </div>
+
+      <ul className="mt-6 flex flex-col gap-4" data-testid="availability-list">
+        {availability.length === 0 ? (
+          <li className="rounded-2xl border border-dashed border-line px-4 py-8 text-center text-sm text-muted">
+            No date polls yet.
+          </li>
+        ) : (
+          availability.map((poll) => {
+            const canManage = poll.createdBy === user.id || isAdmin;
+            const closed = poll.closedAt !== null;
+            const bestYes = Math.max(0, ...poll.dates.map((d) => d.yes));
+            return (
+              <li
+                key={poll.id}
+                className="rounded-2xl border border-line bg-surface p-4"
+                data-testid="availability-poll"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-display text-base font-extrabold text-content">
+                    {poll.title}
+                  </h3>
+                  {closed && (
+                    <span className="shrink-0 rounded-full bg-line px-2 py-0.5 text-[11px] font-bold uppercase text-muted">
+                      Closed
+                    </span>
+                  )}
+                </div>
+
+                <ul className="mt-3 flex flex-col gap-2">
+                  {poll.dates.map((d) => {
+                    const best = d.yes > 0 && d.yes === bestYes;
+                    const label = new Date(`${d.date}T00:00:00`).toLocaleDateString(undefined, {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    });
+                    return (
+                      <li
+                        key={d.id}
+                        data-testid="availability-date"
+                        className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-3 py-2 ${
+                          best ? 'border-brand-300 bg-brand-50' : 'border-line'
+                        }`}
+                      >
+                        <span className="min-w-[88px] text-sm font-semibold text-content">
+                          {label}
+                        </span>
+                        <span className="text-xs text-muted">
+                          ✓ {d.yes} · ~ {d.maybe} · ✗ {d.no}
+                        </span>
+                        {!closed && (
+                          <span className="ml-auto flex gap-1">
+                            {(['yes', 'maybe', 'no'] as const).map((s) => (
+                              <form key={s} action={setAvailabilityAction}>
+                                <input type="hidden" name="groupId" value={id} />
+                                <input type="hidden" name="pollId" value={poll.id} />
+                                <input type="hidden" name="dateId" value={d.id} />
+                                <input type="hidden" name="status" value={s} />
+                                <button
+                                  type="submit"
+                                  aria-label={`${s} for ${label}`}
+                                  data-active={d.myStatus === s ? 'true' : 'false'}
+                                  className={`rounded-md border px-2 py-1 text-xs font-semibold capitalize transition-colors ${
+                                    d.myStatus === s
+                                      ? 'border-brand-500 bg-brand-600 text-white'
+                                      : 'border-line text-muted hover:bg-brand-50'
+                                  }`}
+                                >
+                                  {s === 'yes' ? '✓' : s === 'maybe' ? '~' : '✗'}
+                                </button>
+                              </form>
+                            ))}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                <div className="mt-2 flex items-center gap-3 text-xs text-muted">
+                  <span>
+                    {poll.respondentCount} {poll.respondentCount === 1 ? 'person' : 'people'}{' '}
+                    answered
+                  </span>
+                  {canManage && (
+                    <>
+                      <form action={setAvailabilityClosedAction}>
+                        <input type="hidden" name="groupId" value={id} />
+                        <input type="hidden" name="pollId" value={poll.id} />
+                        <input type="hidden" name="closed" value={closed ? 'false' : 'true'} />
+                        <button type="submit" className="font-semibold hover:text-content">
+                          {closed ? 'Reopen' : 'Close'}
+                        </button>
+                      </form>
+                      <form action={deleteAvailabilityPollAction}>
                         <input type="hidden" name="groupId" value={id} />
                         <input type="hidden" name="pollId" value={poll.id} />
                         <button type="submit" className="font-semibold hover:text-red-600">

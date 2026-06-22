@@ -22,3 +22,4 @@ export * from './comments';
 export * from './posts';
 export * from './candidate-sets';
 export * from './polls';
+export * from './availability';

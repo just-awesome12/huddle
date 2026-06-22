@@ -34,6 +34,143 @@ export type Database = {
   }
   public: {
     Tables: {
+      availability_dates: {
+        Row: {
+          event_date: string
+          group_id: string
+          id: string
+          poll_id: string
+          position: number
+        }
+        Insert: {
+          event_date: string
+          group_id: string
+          id?: string
+          poll_id: string
+          position?: number
+        }
+        Update: {
+          event_date?: string
+          group_id?: string
+          id?: string
+          poll_id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_dates_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_dates_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "availability_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability_polls: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          title: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          id?: string
+          title: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_polls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_polls_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability_responses: {
+        Row: {
+          created_at: string
+          date_id: string
+          group_id: string
+          poll_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_id: string
+          group_id: string
+          poll_id: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_id?: string
+          group_id?: string
+          poll_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_responses_date_id_fkey"
+            columns: ["date_id"]
+            isOneToOne: false
+            referencedRelation: "availability_dates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_responses_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_responses_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "availability_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "availability_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocked_users: {
         Row: {
           blocked_id: string

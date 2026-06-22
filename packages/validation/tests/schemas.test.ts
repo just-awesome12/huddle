@@ -21,6 +21,7 @@ import {
   acceptInviteSchema,
   parseEmailList,
   createPollSchema,
+  createAvailabilityPollSchema,
   usernameSearchSchema,
   createIdeaSchema,
   updateIdeaSchema,
@@ -326,6 +327,38 @@ describe('createPollSchema', () => {
   it('rejects more than 10 options', () => {
     const opts = Array.from({ length: 11 }, (_, i) => `Option ${i}`);
     expect(() => createPollSchema.parse({ ...valid, options: opts })).toThrow(/at most 10/);
+  });
+});
+
+// =====================================================================
+// Availability polls (Phase 16b)
+// =====================================================================
+
+describe('createAvailabilityPollSchema', () => {
+  const base = { groupId: '11111111-1111-1111-1111-111111111111', title: 'Dinner?' };
+
+  it('accepts a title + valid unique dates', () => {
+    expect(
+      createAvailabilityPollSchema.parse({ ...base, dates: ['2026-07-01', '2026-07-02'] }).dates,
+    ).toEqual(['2026-07-01', '2026-07-02']);
+  });
+
+  it('rejects an impossible date', () => {
+    expect(() => createAvailabilityPollSchema.parse({ ...base, dates: ['2026-02-31'] })).toThrow(
+      /valid date/,
+    );
+  });
+
+  it('rejects duplicate dates', () => {
+    expect(() =>
+      createAvailabilityPollSchema.parse({ ...base, dates: ['2026-07-01', '2026-07-01'] }),
+    ).toThrow(/unique/);
+  });
+
+  it('rejects an empty date list', () => {
+    expect(() => createAvailabilityPollSchema.parse({ ...base, dates: [] })).toThrow(
+      /at least one/,
+    );
   });
 });
 
