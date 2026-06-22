@@ -28,6 +28,44 @@ export const createInviteSchema = z
 
 export type CreateInviteInput = z.infer<typeof createInviteSchema>;
 
+/** Max emails accepted in one bulk-invite submission (15e). */
+export const BULK_INVITE_MAX = 50;
+
+const singleEmail = z.string().trim().toLowerCase().email();
+
+/**
+ * Bulk invite (Phase 15e): split a free-text blob (commas, semicolons,
+ * spaces, or newlines) into a deduped, validated email list. Returns the
+ * `valid` set (capped at BULK_INVITE_MAX) and the `invalid` tokens so the
+ * caller can invite the good ones and report the rest (partial success).
+ */
+export function parseEmailList(raw: string): {
+  valid: string[];
+  invalid: string[];
+  overflow: boolean;
+} {
+  const tokens = raw
+    .split(/[\s,;]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+
+  const valid: string[] = [];
+  const invalid: string[] = [];
+  const seen = new Set<string>();
+  for (const token of tokens) {
+    const parsed = singleEmail.safeParse(token);
+    if (!parsed.success) {
+      invalid.push(token);
+    } else if (!seen.has(parsed.data)) {
+      seen.add(parsed.data);
+      valid.push(parsed.data);
+    }
+  }
+
+  const overflow = valid.length > BULK_INVITE_MAX;
+  return { valid: valid.slice(0, BULK_INVITE_MAX), invalid, overflow };
+}
+
 export const acceptInviteSchema = z.object({
   token: inviteTokenSchema,
 });

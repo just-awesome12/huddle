@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Share, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import QRCode from 'react-native-qrcode-svg';
-import { createInviteSchema } from '@huddle/validation';
+import { createInviteSchema, parseEmailList } from '@huddle/validation';
 import { useGroup, useGroupMembers } from '@huddle/api-client/groups-hooks';
 import {
   useGroupInvites,
@@ -48,6 +56,39 @@ export default function GroupInviteScreen() {
   const [formError, setFormError] = useState<string | null>(null);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Bulk invite (15e): paste many emails, invite each.
+  const [bulkEmails, setBulkEmails] = useState('');
+  const [bulkResult, setBulkResult] = useState<string | null>(null);
+  const [bulkPending, setBulkPending] = useState(false);
+
+  const onBulkInvite = async () => {
+    setBulkResult(null);
+    const { valid, invalid } = parseEmailList(bulkEmails);
+    if (valid.length === 0) {
+      setBulkResult(
+        invalid.length > 0 ? 'No valid email addresses found.' : 'Enter at least one email.',
+      );
+      return;
+    }
+    setBulkPending(true);
+    let sent = 0;
+    const skipped: string[] = [];
+    for (const invitedEmail of valid) {
+      try {
+        await createInvite.mutateAsync({ groupId: id, invitedEmail });
+        sent += 1;
+      } catch {
+        skipped.push(invitedEmail);
+      }
+    }
+    setBulkPending(false);
+    setBulkEmails('');
+    const parts = [`Sent ${sent} invite${sent === 1 ? '' : 's'}.`];
+    if (skipped.length > 0) parts.push(`Skipped (already members): ${skipped.join(', ')}`);
+    if (invalid.length > 0) parts.push(`Not valid: ${invalid.join(', ')}`);
+    setBulkResult(parts.join(' '));
+  };
 
   // Add-by-username search (debounced; queries Supabase directly —
   // the perimeter rate limit for this path lands in Phase 9).
@@ -199,6 +240,27 @@ export default function GroupInviteScreen() {
             </View>
 
             <View style={styles.card}>
+              <Text style={styles.label}>Invite several people</Text>
+              <TextInput
+                multiline
+                numberOfLines={3}
+                value={bulkEmails}
+                onChangeText={setBulkEmails}
+                placeholder="alice@example.com, bob@example.com…"
+                placeholderTextColor={c.faint}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                style={styles.bulkInput}
+              />
+              <Text style={styles.bulkHint}>
+                Separate emails with commas, spaces, or new lines.
+              </Text>
+              {bulkResult ? <Text style={styles.bulkResult}>{bulkResult}</Text> : null}
+              <Button label="Send invites" onPress={onBulkInvite} loading={bulkPending} />
+            </View>
+
+            <View style={styles.card}>
               <FormField
                 label="Add by username"
                 autoCapitalize="none"
@@ -325,6 +387,21 @@ const makeStyles = (c: ThemeColors) =>
     },
     alert: { backgroundColor: c.dangerBg, padding: 10, borderRadius: 8 },
     alertText: { color: c.dangerText, fontSize: 13 },
+    label: { fontSize: 13, fontWeight: '600', color: c.text },
+    bulkInput: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: c.text,
+      backgroundColor: c.surface,
+      minHeight: 72,
+      textAlignVertical: 'top',
+    },
+    bulkHint: { fontSize: 12, color: c.muted },
+    bulkResult: { fontSize: 13, color: c.text },
     linkBlock: {
       marginTop: 4,
       gap: 10,

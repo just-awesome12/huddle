@@ -19,6 +19,7 @@ import {
   normalizeTags,
   createInviteSchema,
   acceptInviteSchema,
+  parseEmailList,
   usernameSearchSchema,
   createIdeaSchema,
   updateIdeaSchema,
@@ -272,6 +273,28 @@ describe('otpVerifySchema', () => {
     expect(() => otpVerifySchema.parse({ email: 'a@huddle.test', token: 'abcdef' })).toThrow(
       /6-digit/,
     );
+  });
+});
+
+// =====================================================================
+// Bulk invite (Phase 15e)
+// =====================================================================
+
+describe('parseEmailList', () => {
+  it('splits on commas, spaces, and newlines; lowercases + dedupes', () => {
+    const r = parseEmailList('Alice@x.com, bob@x.com\nalice@x.com  carol@x.com');
+    expect(r.valid).toEqual(['alice@x.com', 'bob@x.com', 'carol@x.com']);
+    expect(r.invalid).toEqual([]);
+  });
+
+  it('separates unparseable tokens', () => {
+    const r = parseEmailList('good@x.com, nope, also-bad@');
+    expect(r.valid).toEqual(['good@x.com']);
+    expect(r.invalid).toEqual(['nope', 'also-bad@']);
+  });
+
+  it('returns empty for blank input', () => {
+    expect(parseEmailList('   \n  ')).toEqual({ valid: [], invalid: [], overflow: false });
   });
 });
 
