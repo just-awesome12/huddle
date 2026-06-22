@@ -6,7 +6,7 @@ This document gets a developer from a fresh clone to a running dev environment. 
 
 | Tool         | Required version | Verify               |
 | ------------ | ---------------- | -------------------- |
-| Node.js      | ≥ 20.18.0 LTS    | `node -v`            |
+| Node.js      | ≥ 24.0.0         | `node -v`            |
 | pnpm         | ≥ 9.15.0         | `pnpm -v`            |
 | Git          | any recent       | `git --version`      |
 | Supabase CLI | latest           | `supabase --version` |

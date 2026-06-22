@@ -8,8 +8,8 @@ A growing list of real errors we hit and how we fixed them. If you hit something
 
 ### Symptom: `ERR_PNPM_UNSUPPORTED_ENGINE` on `pnpm install`
 
-**Cause:** Node version below 20.18.0.
-**Fix:** Install Node 20 LTS or newer. With `nvm`: `nvm install 20 && nvm use 20`.
+**Cause:** Node version below 24.0.0.
+**Fix:** Install Node 24 or newer. With `nvm`: `nvm install 24 && nvm use 24` (the repo's `.nvmrc` pins 24).
 
 ### Symptom: `ERR_PNPM_NO_LOCKFILE` on CI
 
