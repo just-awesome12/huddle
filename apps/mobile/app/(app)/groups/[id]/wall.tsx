@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/Button';
+import { MentionText } from '@/components/MentionText';
 
 function timeAgo(iso: string): string {
   const secs = Math.max(1, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
@@ -100,7 +101,7 @@ export default function GroupWallScreen() {
             </Pressable>
           ) : null}
         </View>
-        <Text style={styles.body}>{item.body}</Text>
+        <MentionText text={item.body} style={styles.body} />
       </View>
     );
   };

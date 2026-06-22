@@ -790,6 +790,7 @@ export type Database = {
           group_invite: boolean
           join_approved: boolean
           join_request: boolean
+          mention: boolean
           new_comment: boolean
           new_idea: boolean
           picker_ran: boolean
@@ -802,6 +803,7 @@ export type Database = {
           group_invite?: boolean
           join_approved?: boolean
           join_request?: boolean
+          mention?: boolean
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean
@@ -814,6 +816,7 @@ export type Database = {
           group_invite?: boolean
           join_approved?: boolean
           join_request?: boolean
+          mention?: boolean
           new_comment?: boolean
           new_idea?: boolean
           picker_ran?: boolean

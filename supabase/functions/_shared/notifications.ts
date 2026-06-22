@@ -16,7 +16,8 @@ export type NotificationEvent =
   | 'join_request'
   | 'join_approved'
   | 'reaction'
-  | 'rsvp';
+  | 'rsvp'
+  | 'mention';
 
 export interface NotificationPrefs {
   new_idea: boolean;
@@ -27,6 +28,7 @@ export interface NotificationPrefs {
   join_approved: boolean;
   reaction: boolean;
   rsvp: boolean;
+  mention: boolean;
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
@@ -38,7 +40,23 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   join_approved: true,
   reaction: true,
   rsvp: true,
+  mention: true,
 };
+
+export function extractMentions(text: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const re = /@([a-z0-9_]{3,30})/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const name = m[1]!.toLowerCase();
+    if (!seen.has(name)) {
+      seen.add(name);
+      out.push(name);
+    }
+  }
+  return out;
+}
 
 export function shouldNotify(
   prefs: NotificationPrefs | null | undefined,
@@ -58,9 +76,14 @@ export function selectRecipientTokens(
   recipients: Recipient[],
   event: NotificationEvent,
   actorId: string | null,
+  excludeUserIds: readonly string[] = [],
 ): string[] {
+  const excluded = new Set(excludeUserIds);
   return recipients
-    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
+    .filter(
+      (r) =>
+        r.userId !== actorId && !excluded.has(r.userId) && !r.muted && shouldNotify(r.prefs, event),
+    )
     .map((r) => r.expoToken);
 }
 
@@ -106,9 +129,14 @@ export function selectWebSubscriptions(
   recipients: WebSubscriptionRecipient[],
   event: NotificationEvent,
   actorId: string | null,
+  excludeUserIds: readonly string[] = [],
 ): WebPushSubscription[] {
+  const excluded = new Set(excludeUserIds);
   return recipients
-    .filter((r) => r.userId !== actorId && !r.muted && shouldNotify(r.prefs, event))
+    .filter(
+      (r) =>
+        r.userId !== actorId && !excluded.has(r.userId) && !r.muted && shouldNotify(r.prefs, event),
+    )
     .map((r) => r.subscription);
 }
 

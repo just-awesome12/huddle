@@ -25,6 +25,7 @@ import {
   selectWebSubscriptions,
   buildWebPushPayload,
   chunk,
+  extractMentions,
   EXPO_PUSH_CHUNK_SIZE,
   type NotificationEvent,
   type NotificationPrefs,
@@ -131,6 +132,7 @@ async function gatherRecipients(
       join_approved: p.join_approved,
       reaction: p.reaction,
       rsvp: p.rsvp,
+      mention: p.mention,
     });
   }
   const mutedUsers = new Set<string>(gathered.muted ?? []);
@@ -169,14 +171,48 @@ interface Resolved {
   /** The group the push originates in — used for per-group mute (15b). */
   groupId: string;
   content: NotificationContent;
+  /** Users to drop from this dispatch — used so a mentioned member gets the
+   * `mention` push, not also the broadcast `new_comment` (16c). */
+  excludeUserIds?: string[];
 }
 
-/** Turn a webhook record into the event, recipients, and message content. */
+/**
+ * Resolve @usernames in `body` to the ids of group members (minus the
+ * author). Used to target the `mention` event (16c).
+ */
+async function mentionedMemberIds(
+  service: Service,
+  groupId: string,
+  body: string,
+  authorId: string | null,
+): Promise<string[]> {
+  const usernames = extractMentions(body);
+  if (usernames.length === 0) return [];
+  const { data: profiles } = await service
+    .from('profiles')
+    .select('id, username')
+    .in('username', usernames);
+  const candidateIds = (profiles ?? []).map((p) => p.id as string).filter((id) => id !== authorId);
+  if (candidateIds.length === 0) return [];
+  const { data: members } = await service
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', groupId)
+    .in('user_id', candidateIds);
+  return (members ?? []).map((m) => m.user_id as string);
+}
+
+/**
+ * Turn a webhook record into one OR MORE dispatches. Most events are a
+ * single dispatch; a comment with @mentions is two (mention + the
+ * broadcast new_comment, with the mentioned members excluded from the
+ * latter so they aren't double-notified).
+ */
 async function resolve(
   service: Service,
   table: string,
   record: Record<string, unknown>,
-): Promise<Resolved | { skip: string }> {
+): Promise<Resolved | Resolved[] | { skip: string }> {
   if (table === 'ideas') {
     const groupId = str(record.group_id);
     const ideaId = str(record.id);
@@ -200,22 +236,71 @@ async function resolve(
     const groupId = str(record.group_id);
     const ideaId = str(record.idea_id);
     if (!groupId || !ideaId) return { skip: 'missing idea_comments fields' };
-    const [name, idea] = await Promise.all([
+    const authorId = str(record.author_id);
+    const body = str(record.body) ?? 'New comment';
+    const [name, idea, mentioned] = await Promise.all([
       groupName(service, groupId),
       service.from('ideas').select('title').eq('id', ideaId).maybeSingle(),
+      mentionedMemberIds(service, groupId, body, authorId),
     ]);
     const ideaTitle = (idea.data?.title as string) ?? 'an idea';
-    const body = str(record.body) ?? 'New comment';
+    const path = `/groups/${groupId}/ideas/${ideaId}`;
+    // Broadcast new_comment to members, minus anyone we'll @mention.
+    const dispatches: Resolved[] = [
+      {
+        event: 'new_comment',
+        actorId: authorId,
+        scope: 'members',
+        explicitUserIds: [],
+        groupId,
+        excludeUserIds: mentioned,
+        content: {
+          title: `New comment in ${name}`,
+          body: `${ideaTitle}: ${body}`,
+          data: { path },
+        },
+      },
+    ];
+    if (mentioned.length > 0) {
+      const who = authorId ? await displayName(service, authorId) : 'Someone';
+      dispatches.push({
+        event: 'mention',
+        actorId: authorId,
+        scope: 'explicit',
+        explicitUserIds: mentioned,
+        groupId,
+        content: {
+          title: `${who} mentioned you in ${name}`,
+          body: `${ideaTitle}: ${body}`,
+          data: { path },
+        },
+      });
+    }
+    return dispatches;
+  }
+
+  if (table === 'group_posts') {
+    // The wall doesn't broadcast — only @mentions ping (16c).
+    const groupId = str(record.group_id);
+    if (!groupId) return { skip: 'missing group_posts fields' };
+    const authorId = str(record.author_id);
+    const body = str(record.body) ?? '';
+    const mentioned = await mentionedMemberIds(service, groupId, body, authorId);
+    if (mentioned.length === 0) return { skip: 'wall post has no mentions' };
+    const [name, who] = await Promise.all([
+      groupName(service, groupId),
+      authorId ? displayName(service, authorId) : Promise.resolve('Someone'),
+    ]);
     return {
-      event: 'new_comment',
-      actorId: str(record.author_id),
-      scope: 'members',
-      explicitUserIds: [],
+      event: 'mention',
+      actorId: authorId,
+      scope: 'explicit',
+      explicitUserIds: mentioned,
       groupId,
       content: {
-        title: `New comment in ${name}`,
-        body: `${ideaTitle}: ${body}`,
-        data: { path: `/groups/${groupId}/ideas/${ideaId}` },
+        title: `${who} mentioned you in ${name}`,
+        body,
+        data: { path: `/groups/${groupId}/wall` },
       },
     };
   }
@@ -407,6 +492,120 @@ async function resolve(
   return { skip: `unsupported table: ${table}` };
 }
 
+interface DispatchResult {
+  event: NotificationEvent;
+  recipientCount: number;
+  webRecipientCount: number;
+  dispatched: boolean;
+  selectedTokens: string[];
+  sampleMessage: unknown;
+  sampleWebSubscription: unknown;
+  sampleWebPayload: string | null;
+  pruned: number;
+  prunedWeb: number;
+}
+
+/**
+ * Gather + select + (send or dry-run) a single dispatch. Selection honours
+ * the actor exclusion, prefs, mutes (in @huddle/core) AND this dispatch's
+ * excludeUserIds (mention dual-dispatch, 16c). Side-effecting sends never
+ * throw out — failures are logged + best-effort, like before.
+ */
+async function processDispatch(
+  service: Service,
+  d: Resolved,
+  dryRun: boolean,
+  isLocal: boolean,
+): Promise<DispatchResult> {
+  const { recipients, webRecipients } = await gatherRecipients(
+    service,
+    d.groupId,
+    d.scope,
+    d.explicitUserIds,
+  );
+  const exclude = d.excludeUserIds ?? [];
+  const tokens = selectRecipientTokens(recipients, d.event, d.actorId, exclude);
+  const messages = buildExpoMessages(tokens, d.content);
+  const webSubs = selectWebSubscriptions(webRecipients, d.event, d.actorId, exclude);
+  const webPayload = buildWebPushPayload(d.content);
+
+  const summary = {
+    event: d.event,
+    recipientCount: tokens.length,
+    webRecipientCount: webSubs.length,
+    selectedTokens: tokens,
+    sampleMessage: messages[0] ?? null,
+    sampleWebSubscription: webSubs[0] ?? null,
+    sampleWebPayload: webSubs.length > 0 ? webPayload : null,
+  };
+  if (dryRun) {
+    return { ...summary, dispatched: false, pruned: 0, prunedWeb: 0 };
+  }
+
+  // --- Dispatch to Expo, chunked; prune dead tokens ---
+  const expoUrl = Deno.env.get('EXPO_PUSH_URL') ?? DEFAULT_EXPO_URL;
+  const deadTokens: string[] = [];
+  for (const batch of chunk(messages, EXPO_PUSH_CHUNK_SIZE)) {
+    try {
+      const resp = await fetch(expoUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(batch),
+      });
+      const body = await resp.json().catch(() => null);
+      const tickets = Array.isArray(body?.data) ? body.data : [];
+      tickets.forEach((ticket: { status?: string; details?: { error?: string } }, i: number) => {
+        if (ticket?.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
+          const dead = batch[i]?.to;
+          if (dead) deadTokens.push(dead);
+        }
+      });
+    } catch (e) {
+      console.error('send-push: Expo dispatch failed', e);
+    }
+  }
+  if (deadTokens.length > 0) {
+    await service.from('push_tokens').delete().in('expo_token', deadTokens);
+  }
+
+  // --- Dispatch to web subscribers via VAPID; prune gone (404/410) ---
+  const deadWeb: string[] = [];
+  if (webSubs.length > 0) {
+    const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY') ?? (isLocal ? DEV_VAPID_PUBLIC : '');
+    const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY') ?? (isLocal ? DEV_VAPID_PRIVATE : '');
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:notifications@huddleapp.local';
+    if (!vapidPublic || !vapidPrivate) {
+      console.error(
+        'send-push: VAPID keys required for web push in production; skipping web channel',
+      );
+    } else {
+      try {
+        const webpush = (await import('npm:web-push@3.6.7')).default;
+        webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+        for (const s of webSubs) {
+          try {
+            await webpush.sendNotification(
+              { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+              webPayload,
+            );
+          } catch (err) {
+            const status = (err as { statusCode?: number })?.statusCode;
+            if (status === 404 || status === 410) deadWeb.push(s.endpoint);
+            else console.error('send-push: web push send failed', status, err);
+          }
+        }
+      } catch (e) {
+        console.error('send-push: web-push module/dispatch failed', e);
+      }
+    }
+    if (deadWeb.length > 0) {
+      await service.from('web_push_subscriptions').delete().in('endpoint', deadWeb);
+    }
+  }
+
+  return { ...summary, dispatched: true, pruned: deadTokens.length, prunedWeb: deadWeb.length };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
@@ -450,112 +649,31 @@ Deno.serve(async (req) => {
 
   try {
     const resolved = await resolve(service, table, record);
-    if ('skip' in resolved) {
+    if (!Array.isArray(resolved) && 'skip' in resolved) {
       return json({ ok: true, skipped: resolved.skip, recipientCount: 0 });
     }
-
-    // One round trip for both channels' recipients (Expo + web) + prefs.
-    const { recipients, webRecipients } = await gatherRecipients(
-      service,
-      resolved.groupId,
-      resolved.scope,
-      resolved.explicitUserIds,
-    );
-    const tokens = selectRecipientTokens(recipients, resolved.event, resolved.actorId);
-    const messages = buildExpoMessages(tokens, resolved.content);
-
-    // Web push (Phase 15): same recipient-selection rule, second channel.
-    const webSubs = selectWebSubscriptions(webRecipients, resolved.event, resolved.actorId);
-    const webPayload = buildWebPushPayload(resolved.content);
-
-    if (dryRun) {
-      return json({
-        ok: true,
-        event: resolved.event,
-        recipientCount: tokens.length,
-        webRecipientCount: webSubs.length,
-        dispatched: false,
-        selectedTokens: tokens,
-        sampleMessage: messages[0] ?? null,
-        sampleWebSubscription: webSubs[0] ?? null,
-        sampleWebPayload: webSubs.length > 0 ? webPayload : null,
-      });
+    // One record can fan out to several dispatches (e.g. a comment →
+    // new_comment + mention, 16c). Each is gathered + selected + sent
+    // independently; the top-level fields mirror the FIRST dispatch for
+    // back-compat, and `dispatches` carries them all.
+    const dispatches = Array.isArray(resolved) ? resolved : [resolved];
+    const results: DispatchResult[] = [];
+    for (const d of dispatches) {
+      results.push(await processDispatch(service, d, dryRun, isLocal));
     }
 
-    // --- Dispatch to Expo, chunked; prune dead tokens ---
-    const expoUrl = Deno.env.get('EXPO_PUSH_URL') ?? DEFAULT_EXPO_URL;
-    const deadTokens: string[] = [];
-    for (const batch of chunk(messages, EXPO_PUSH_CHUNK_SIZE)) {
-      try {
-        const resp = await fetch(expoUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(batch),
-        });
-        const body = await resp.json().catch(() => null);
-        const tickets = Array.isArray(body?.data) ? body.data : [];
-        tickets.forEach((ticket: { status?: string; details?: { error?: string } }, i: number) => {
-          if (ticket?.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
-            const dead = batch[i]?.to;
-            if (dead) deadTokens.push(dead);
-          }
-        });
-      } catch (e) {
-        // A dispatch failure must not 500 the webhook (it can't retry the
-        // INSERT). Log and move on; receipts/cleanup are best-effort.
-        console.error('send-push: Expo dispatch failed', e);
-      }
-    }
-    if (deadTokens.length > 0) {
-      await service.from('push_tokens').delete().in('expo_token', deadTokens);
-    }
-
-    // --- Dispatch to web subscribers via VAPID; prune gone (404/410) ---
-    // web-push is imported lazily so the function still boots (and dry-run
-    // works) even if the npm dep can't load in the edge runtime; a web
-    // dispatch failure is best-effort and never 500s the webhook.
-    const deadWeb: string[] = [];
-    if (webSubs.length > 0) {
-      const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY') ?? (isLocal ? DEV_VAPID_PUBLIC : '');
-      const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY') ?? (isLocal ? DEV_VAPID_PRIVATE : '');
-      const vapidSubject = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:notifications@huddleapp.local';
-      if (!vapidPublic || !vapidPrivate) {
-        console.error(
-          'send-push: VAPID keys required for web push in production; skipping web channel',
-        );
-      } else {
-        try {
-          const webpush = (await import('npm:web-push@3.6.7')).default;
-          webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
-          for (const s of webSubs) {
-            try {
-              await webpush.sendNotification(
-                { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-                webPayload,
-              );
-            } catch (err) {
-              const status = (err as { statusCode?: number })?.statusCode;
-              if (status === 404 || status === 410) deadWeb.push(s.endpoint);
-              else console.error('send-push: web push send failed', status, err);
-            }
-          }
-        } catch (e) {
-          console.error('send-push: web-push module/dispatch failed', e);
-        }
-      }
-      if (deadWeb.length > 0) {
-        await service.from('web_push_subscriptions').delete().in('endpoint', deadWeb);
-      }
-    }
-
+    const primary = results[0] ?? null;
     return json({
       ok: true,
-      event: resolved.event,
-      recipientCount: tokens.length,
-      webRecipientCount: webSubs.length,
-      dispatched: true,
-      pruned: deadTokens.length,
-      prunedWeb: deadWeb.length,
+      dispatched: !dryRun,
+      event: primary?.event ?? null,
+      recipientCount: primary?.recipientCount ?? 0,
+      webRecipientCount: primary?.webRecipientCount ?? 0,
+      selectedTokens: primary?.selectedTokens ?? [],
+      sampleMessage: primary?.sampleMessage ?? null,
+      sampleWebSubscription: primary?.sampleWebSubscription ?? null,
+      sampleWebPayload: primary?.sampleWebPayload ?? null,
+      dispatches: results,
     });
   } catch (e) {
     console.error('send-push: unhandled', e);

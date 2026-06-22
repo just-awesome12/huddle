@@ -14,7 +14,8 @@ type PrefKey =
   | 'join_request'
   | 'join_approved'
   | 'reaction'
-  | 'rsvp';
+  | 'rsvp'
+  | 'mention';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
   {
@@ -53,6 +54,11 @@ const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
     title: 'RSVPs',
     subtitle: "When someone's going to an idea you proposed",
   },
+  {
+    key: 'mention',
+    title: 'Mentions',
+    subtitle: 'When someone @mentions you in a comment or post',
+  },
 ];
 
 export default function NotificationSettingsScreen() {
@@ -76,6 +82,7 @@ export default function NotificationSettingsScreen() {
     join_approved: row?.join_approved ?? true,
     reaction: row?.reaction ?? true,
     rsvp: row?.rsvp ?? true,
+    mention: row?.mention ?? true,
   };
 
   const toggle = (key: PrefKey) => {

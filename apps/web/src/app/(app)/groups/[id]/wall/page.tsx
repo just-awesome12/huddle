@@ -7,6 +7,7 @@ import { GroupRealtime } from '@/components/GroupRealtime';
 import { PostComposer } from '@/components/PostComposer';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 import { deletePostAction, setPinnedAction } from '@/actions/posts';
+import { MentionText } from '@/components/MentionText';
 import { personColor } from '@/lib/group-visuals';
 
 /** Compact relative time ("just now", "5m ago", "3d ago", then a date). */
@@ -106,7 +107,7 @@ export default async function GroupWallPage({ params }: { params: Promise<{ id: 
                   <span className="text-xs text-muted">{timeAgo(post.created_at)}</span>
                 </div>
                 <p className="mt-2 whitespace-pre-wrap break-words text-sm text-content">
-                  {post.body}
+                  <MentionText text={post.body} />
                 </p>
                 {(canDelete || isAdmin) && (
                   <div className="mt-2 flex items-center gap-3">

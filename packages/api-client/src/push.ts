@@ -21,6 +21,7 @@ export interface NotificationPrefsInput {
   join_approved: boolean;
   reaction: boolean;
   rsvp: boolean;
+  mention: boolean;
 }
 
 export const notificationQueryKeys = {

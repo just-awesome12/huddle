@@ -6,6 +6,7 @@ import {
   selectWebSubscriptions,
   buildWebPushPayload,
   chunk,
+  extractMentions,
   DEFAULT_PREFS,
   type NotificationPrefs,
   type Recipient,
@@ -22,7 +23,31 @@ const allOff: NotificationPrefs = {
   join_approved: false,
   reaction: false,
   rsvp: false,
+  mention: false,
 };
+
+describe('extractMentions', () => {
+  it('returns unique lowercased usernames', () => {
+    expect(extractMentions('hey @Alice and @bob_2, cc @alice')).toEqual(['alice', 'bob_2']);
+  });
+  it('ignores too-short tokens and bare @', () => {
+    expect(extractMentions('@ab no @ yes @abc')).toEqual(['abc']);
+  });
+  it('returns [] when there are no mentions', () => {
+    expect(extractMentions('nothing here')).toEqual([]);
+  });
+});
+
+describe('selectRecipientTokens excludeUserIds', () => {
+  it('excludes listed users (used for mention dual-dispatch)', () => {
+    const recipients: Recipient[] = [
+      { userId: 'u1', expoToken: 't1', prefs: null },
+      { userId: 'u2', expoToken: 't2', prefs: null },
+      { userId: 'u3', expoToken: 't3', prefs: null },
+    ];
+    expect(selectRecipientTokens(recipients, 'new_comment', null, ['u2'])).toEqual(['t1', 't3']);
+  });
+});
 
 describe('shouldNotify', () => {
   it('treats a missing prefs row as opted-in to everything', () => {
@@ -155,6 +180,7 @@ describe('Deno mirror drift guard', () => {
         join_approved: false,
         reaction: true,
         rsvp: false,
+        mention: true,
       },
     },
   ];
@@ -168,10 +194,17 @@ describe('Deno mirror drift guard', () => {
       'join_approved',
       'reaction',
       'rsvp',
+      'mention',
     ] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),
       );
+    }
+  });
+
+  it('extractMentions matches the mirror', () => {
+    for (const text of ['hey @alice and @bob_2', 'no mentions', '@me @me dup', '@ab tooShort']) {
+      expect(extractMentions(text)).toEqual(mirror.extractMentions(text));
     }
   });
   it('buildExpoMessages and chunk match the mirror', () => {

@@ -57,6 +57,26 @@ test('member can post to the wall and delete their post', async ({ page }) => {
   await expect(page.getByText('No posts yet. Start the conversation.')).toBeVisible();
 });
 
+test('@mentions are highlighted in wall posts (16c)', async ({ page }) => {
+  await signUp(page, makeTestUser());
+
+  await page.goto('/groups/new');
+  await page.getByLabel('Group name').fill('Mention Crew');
+  await page.getByRole('button', { name: 'Create group' }).click();
+  await page.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
+
+  await page.getByTestId('wall-link').click();
+  await page.waitForURL(/\/wall$/);
+
+  await page.getByLabel('Write something').fill('hey @movie_night who is in?');
+  await page.getByRole('button', { name: 'Post' }).click();
+
+  const mention = page.getByTestId('mention');
+  await expect(mention).toHaveText('@movie_night');
+  // The surrounding text is preserved around the highlighted token.
+  await expect(page.getByTestId('wall-post')).toContainText('hey @movie_night who is in?');
+});
+
 test('an admin can pin and unpin a post (15e)', async ({ page }) => {
   await signUp(page, makeTestUser());
 
