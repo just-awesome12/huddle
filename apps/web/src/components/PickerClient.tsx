@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import type { IdeaCategory } from '@huddle/validation';
 import { runPickerAction } from '@/actions/picker';
+import { saveCandidateSetAction, deleteCandidateSetAction } from '@/actions/candidate-sets';
 import { Button } from './Button';
 import { Confetti } from './Confetti';
 import { CategoryBadge, CATEGORY_LABELS } from './IdeaBadges';
@@ -13,6 +14,14 @@ export interface PickableIdea {
   id: string;
   title: string;
   category: IdeaCategory;
+}
+
+/** A saved reusable shortlist (Phase 15e). */
+export interface SavedSet {
+  id: string;
+  name: string;
+  idea_ids: string[];
+  created_by: string | null;
 }
 
 const CATEGORY_EMOJI: Record<IdeaCategory, string> = {
@@ -33,11 +42,17 @@ export function PickerClient({
   groupId,
   ideas,
   fallbackIdeas = [],
+  savedSets = [],
+  currentUserId,
 }: {
   groupId: string;
   ideas: PickableIdea[];
   /** Past picks used only when an unfiltered run has < 2 on-radar ideas (15c). */
   fallbackIdeas?: PickableIdea[];
+  /** Reusable saved shortlists for this group (15e). */
+  savedSets?: SavedSet[];
+  /** Who's viewing — gates the per-set delete control to the author. */
+  currentUserId?: string;
 }) {
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
@@ -86,6 +101,38 @@ export function PickerClient({
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
+    });
+  }
+
+  // --- Saved sets (15e) -------------------------------------------------
+  const [setName, setSetName] = useState('');
+  const [saveSetError, setSaveSetError] = useState<string | null>(null);
+  const [setsPending, startSetsTransition] = useTransition();
+
+  const ideaIdSet = useMemo(() => new Set(ideas.map((i) => i.id)), [ideas]);
+
+  /** Load a saved set into the shortlist (clears the category filter). */
+  function loadSet(set: SavedSet) {
+    const live = set.idea_ids.filter((id) => ideaIdSet.has(id));
+    setCategory('');
+    setUseShortlist(true);
+    setSelected(new Set(live));
+    setError(null);
+  }
+
+  function handleSaveSet() {
+    const ids = [...selected];
+    setSaveSetError(null);
+    startSetsTransition(async () => {
+      const res = await saveCandidateSetAction({ groupId, name: setName.trim(), ideaIds: ids });
+      if (res.ok) setSetName('');
+      else setSaveSetError(res.error ?? 'Could not save that set.');
+    });
+  }
+
+  function handleDeleteSet(setId: string) {
+    startSetsTransition(async () => {
+      await deleteCandidateSetAction({ groupId, setId });
     });
   }
 
@@ -175,6 +222,42 @@ export function PickerClient({
         </div>
       </div>
 
+      {/* Saved sets (15e) — one-tap reusable shortlists. */}
+      {savedSets.length > 0 && (
+        <div data-testid="picker-saved-sets">
+          <h3 className="font-display text-[12px] font-extrabold uppercase tracking-[0.1em] text-muted">
+            Saved sets
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {savedSets.map((set) => (
+              <span
+                key={set.id}
+                className="inline-flex items-center gap-1 rounded-full border border-line bg-surface pl-1 text-sm"
+              >
+                <button
+                  type="button"
+                  onClick={() => loadSet(set)}
+                  className="rounded-full px-3 py-1 font-medium text-content hover:bg-brand-50"
+                >
+                  ▶ {set.name}
+                </button>
+                {currentUserId && set.created_by === currentUserId && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSet(set.id)}
+                    disabled={setsPending}
+                    aria-label={`Delete set ${set.name}`}
+                    className="pr-2 text-faint hover:text-red-600"
+                  >
+                    ×
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Toggles: shortlist + fair mode */}
       <div className="flex flex-col gap-3">
         <label className="flex items-center gap-2 text-sm font-medium text-content">
@@ -229,6 +312,35 @@ export function PickerClient({
               </li>
             ))}
           </ul>
+
+          {/* Save the current shortlist as a reusable set (15e). */}
+          {selected.size >= 2 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                value={setName}
+                onChange={(e) => setSetName(e.target.value)}
+                placeholder="Name this set (e.g. Friday dinner)"
+                maxLength={60}
+                aria-label="Saved set name"
+                className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-2 text-sm placeholder:text-faint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSaveSet}
+                loading={setsPending}
+                disabled={setName.trim().length === 0}
+              >
+                Save set
+              </Button>
+            </div>
+          )}
+          {saveSetError && (
+            <p className="mt-1 text-xs text-red-600" role="alert">
+              {saveSetError}
+            </p>
+          )}
         </div>
       )}
 

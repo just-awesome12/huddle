@@ -41,6 +41,8 @@
     "./reactions-hooks": "./src/reactions-hooks.ts",
     "./posts": "./src/posts.ts",
     "./posts-hooks": "./src/posts-hooks.ts",
+    "./candidate-sets": "./src/candidate-sets.ts",
+    "./candidate-sets-hooks": "./src/candidate-sets-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {
