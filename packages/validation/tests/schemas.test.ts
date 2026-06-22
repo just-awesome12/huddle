@@ -3,6 +3,8 @@ import {
   signUpSchema,
   signInSchema,
   passwordResetRequestSchema,
+  otpRequestSchema,
+  otpVerifySchema,
   usernameSchema,
   displayNameSchema,
   profileUpdateSchema,
@@ -230,6 +232,46 @@ describe('passwordResetRequestSchema', () => {
 
   it('rejects malformed email', () => {
     expect(() => passwordResetRequestSchema.parse({ email: 'nope' })).toThrow(/valid email/);
+  });
+});
+
+// =====================================================================
+// Passwordless OTP (Phase 15d)
+// =====================================================================
+
+describe('otpRequestSchema', () => {
+  it('lowercases + trims the email', () => {
+    expect(otpRequestSchema.parse({ email: '  Alice@Huddle.TEST ' })).toEqual({
+      email: 'alice@huddle.test',
+    });
+  });
+
+  it('rejects a malformed email', () => {
+    expect(() => otpRequestSchema.parse({ email: 'nope' })).toThrow(/valid email/);
+  });
+});
+
+describe('otpVerifySchema', () => {
+  it('accepts a 6-digit code', () => {
+    expect(otpVerifySchema.parse({ email: 'a@huddle.test', token: '123456' })).toEqual({
+      email: 'a@huddle.test',
+      token: '123456',
+    });
+  });
+
+  it('strips spaces from a pasted code', () => {
+    expect(otpVerifySchema.parse({ email: 'a@huddle.test', token: ' 123 456 ' }).token).toBe(
+      '123456',
+    );
+  });
+
+  it('rejects a non-6-digit code', () => {
+    expect(() => otpVerifySchema.parse({ email: 'a@huddle.test', token: '12345' })).toThrow(
+      /6-digit/,
+    );
+    expect(() => otpVerifySchema.parse({ email: 'a@huddle.test', token: 'abcdef' })).toThrow(
+      /6-digit/,
+    );
   });
 });
 

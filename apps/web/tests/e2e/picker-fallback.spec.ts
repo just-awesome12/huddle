@@ -46,7 +46,7 @@ test('picker falls back to a past pick when there is only 1 on-radar idea', asyn
 
   // Quick-add an idea, mark it done → it becomes the fallback pool.
   await page.getByLabel('Quick-add an idea').fill('Old Plan');
-  await page.getByRole('button', { name: 'Add' }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
   await page.getByTestId('idea-list').getByText('Old Plan').click();
   await page.waitForURL(/\/ideas\/[0-9a-f-]{36}$/);
   await page.getByRole('button', { name: 'Mark done' }).click();
@@ -55,7 +55,7 @@ test('picker falls back to a past pick when there is only 1 on-radar idea', asyn
   // Back to the hub, add a single on-radar idea.
   await page.goto(hubUrl);
   await page.getByLabel('Quick-add an idea').fill('New Plan');
-  await page.getByRole('button', { name: 'Add' }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
   await expect(page.getByTestId('idea-list').getByText('New Plan')).toBeVisible();
 
   // The picker is available (1 on-radar + 1 done) and announces the fallback.

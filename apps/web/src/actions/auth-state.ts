@@ -29,3 +29,20 @@ export interface AuthActionState {
  * empty object literal at each call site.
  */
 export const EMPTY_AUTH_STATE: AuthActionState = {};
+
+/**
+ * State for the OTP request step (Phase 15d). Unlike the other auth
+ * actions, a successful request does NOT redirect — it advances the form
+ * to the code-entry step — so it needs a success channel:
+ * - `otpSent` flips true once the code email is on its way.
+ * - `email` is echoed back so the code step can submit it and show
+ *   "sent to <email>".
+ */
+export interface OtpRequestState {
+  fieldErrors?: Record<string, string[] | undefined>;
+  formError?: string;
+  otpSent?: boolean;
+  email?: string;
+}
+
+export const EMPTY_OTP_STATE: OtpRequestState = {};

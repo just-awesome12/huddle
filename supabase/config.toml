@@ -33,6 +33,15 @@ enable_signup = true
 enable_signup = true
 enable_confirmations = false  # turn on before launch; off for dev convenience
 
+# Passwordless OTP sign-in (Phase 15d, D94): the magic-link template is
+# overridden to render the 6-digit {{ .Token }} instead of a click-through
+# link, so signInWithOtp emails a code that verifyOtp({type:'email'})
+# accepts. Cross-device + no PKCE-cookie dependency. Prod sets the same
+# template in the Supabase dashboard.
+[auth.email.template.magic_link]
+subject = "Your Huddle sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
 [storage]
 enabled = true
 file_size_limit = "10MiB"

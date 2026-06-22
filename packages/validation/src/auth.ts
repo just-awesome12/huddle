@@ -71,3 +71,31 @@ export const passwordResetRequestSchema = z.object({
 });
 
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>;
+
+/**
+ * Passwordless sign-in (Phase 15d). `signInWithOtp` emails a 6-digit code
+ * (the local magic_link template renders `{{ .Token }}`); `verifyOtp`
+ * completes it. Doubles as sign-up — a brand-new email creates the account
+ * and lands in onboarding (placeholder username, D31/D32).
+ */
+export const otpRequestSchema = z.object({
+  email: emailSchema,
+});
+
+export type OtpRequestInput = z.infer<typeof otpRequestSchema>;
+
+/**
+ * OTP verification. Supabase's default email OTP is 6 digits; the code is
+ * trimmed and any spaces a paste might add are stripped before the digit
+ * check, so a fat-fingered "123 456" still validates.
+ */
+export const otpVerifySchema = z.object({
+  email: emailSchema,
+  token: z
+    .string({ required_error: 'Enter the 6-digit code' })
+    .trim()
+    .transform((v) => v.replace(/\s+/g, ''))
+    .refine((v) => /^\d{6}$/.test(v), 'Enter the 6-digit code from your email'),
+});
+
+export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;

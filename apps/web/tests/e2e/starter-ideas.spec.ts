@@ -1,15 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 
-/** Phase 15c — inline quick-add (name-only) on the hub. */
+/** Phase 15d — one-tap starter ideas from the empty group hub (cold-start fix). */
 
 function makeTestUser() {
   const ts = Date.now();
   const r = Math.floor(Math.random() * 10000);
   return {
-    email: `e2e_qadd_${ts}_${r}@huddle.test`,
+    email: `e2e_starter_${ts}_${r}@huddle.test`,
     password: 'password123',
-    username: `e2e_qadd_${ts}_${r}`.slice(0, 30),
-    displayName: 'Quick Adder',
+    username: `e2e_starter_${ts}_${r}`.slice(0, 30),
+    displayName: 'Starter Seeder',
   };
 }
 
@@ -31,22 +31,21 @@ async function signUp(page: Page, user: ReturnType<typeof makeTestUser>) {
   await page.waitForURL('/groups');
 }
 
-test('quick-add creates an idea from just a title, staying on the hub', async ({ page }) => {
+test('the empty hub offers one-tap starter ideas', async ({ page }) => {
   await signUp(page, makeTestUser());
 
   await page.goto('/groups/new');
-  await page.getByLabel('Group name').fill('Snack Squad');
+  await page.getByLabel('Group name').fill('Cold Start Crew');
   await page.getByRole('button', { name: 'Create group' }).click();
   await page.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
 
-  const input = page.getByLabel('Quick-add an idea');
-  await input.fill('Tacos al pastor');
-  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  // Fresh group → empty state with the seed CTA.
+  await expect(page.getByText('No ideas yet')).toBeVisible();
+  await page.getByRole('button', { name: /Add starter ideas/ }).click();
 
-  // The idea appears in the list, and we stayed on the hub (not the form).
-  await expect(page.getByTestId('idea-list').getByText('Tacos al pastor')).toBeVisible();
-  await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/);
-
-  // The input clears, ready for the next one.
-  await expect(input).toHaveValue('');
+  // The hub fills with the starter ideas.
+  const list = page.getByTestId('idea-list');
+  await expect(list.getByText('Movie night')).toBeVisible();
+  await expect(list.getByText('Game night')).toBeVisible();
+  await expect(page.getByText('No ideas yet')).toHaveCount(0);
 });

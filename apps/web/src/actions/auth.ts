@@ -3,11 +3,11 @@
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { signUpSchema, signInSchema } from '@huddle/validation';
+import { signUpSchema, signInSchema, otpRequestSchema, otpVerifySchema } from '@huddle/validation';
 import { mapSupabaseError } from '@huddle/api-client/errors';
 import { verifyTurnstileToken, TURNSTILE_TEST_SECRET } from '@huddle/api-client/turnstile';
 import { getSupabaseServerClient } from '@/lib/supabase';
-import type { AuthActionState } from './auth-state';
+import type { AuthActionState, OtpRequestState } from './auth-state';
 
 /**
  * Turnstile test-mode bypass: when the configured secret matches
@@ -138,6 +138,103 @@ export async function signInAction(
 }
 
 // =====================================================================
+// Passwordless OTP (Phase 15d) — sign in / sign up with an email code
+// =====================================================================
+
+/**
+ * Step 1: email a 6-digit code. `shouldCreateUser` defaults true, so an
+ * unknown email creates the account — OTP doubles as sign-up, and a brand
+ * new user lands in onboarding via the placeholder username (D31/D32).
+ *
+ * On success we do NOT redirect (the user still has to enter the code);
+ * we flip `otpSent` so the form advances to the code step. We surface the
+ * same "check your email" outcome whether or not the address exists, so
+ * this isn't an account-enumeration oracle.
+ */
+export async function requestOtpAction(
+  _prev: OtpRequestState,
+  formData: FormData,
+): Promise<OtpRequestState> {
+  const parsed = otpRequestSchema.safeParse({ email: formData.get('email') });
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: parsed.data.email,
+    options: { shouldCreateUser: true },
+  });
+
+  if (error) {
+    const mapped = mapSupabaseError(error);
+    // Rate-limit is the one error worth surfacing distinctly.
+    if (mapped.message.toLowerCase().includes('rate limit')) {
+      return {
+        email: parsed.data.email,
+        formError: 'Too many requests. Please wait a moment and try again.',
+      };
+    }
+    return { email: parsed.data.email, formError: friendlyAuthErrorMessage(mapped) };
+  }
+
+  return { otpSent: true, email: parsed.data.email };
+}
+
+/**
+ * Step 2: verify the code. `type: 'email'` matches the OTP issued by
+ * signInWithOtp. On success the ssr client persists the session cookies
+ * and we redirect (respecting the ?next= deep-link round-trip).
+ */
+export async function verifyOtpAction(
+  _prev: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const parsed = otpVerifySchema.safeParse({
+    email: formData.get('email'),
+    token: formData.get('token'),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  const { data: verified, error } = await supabase.auth.verifyOtp({
+    email: parsed.data.email,
+    token: parsed.data.token,
+    type: 'email',
+  });
+
+  if (error) {
+    const mapped = mapSupabaseError(error);
+    const lower = mapped.message.toLowerCase();
+    if (lower.includes('expired') || lower.includes('invalid')) {
+      return {
+        fieldErrors: { token: ['That code is invalid or has expired. Request a new one.'] },
+      };
+    }
+    return { formError: friendlyAuthErrorMessage(mapped) };
+  }
+
+  // A brand-new email creates the account with a placeholder username
+  // (D31). The proxy's onboarding gate doesn't apply on this action's
+  // soft redirect (unlike OAuth's callback route), so decide here: send
+  // unfinished users to /onboarding, everyone else into the app.
+  if (verified.user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', verified.user.id)
+      .maybeSingle();
+    if (profile?.username && /^u_[0-9a-f]{12}$/.test(profile.username)) {
+      redirect('/onboarding');
+    }
+  }
+
+  redirect(safeNextPath(formData.get('next'), '/groups'));
+}
+
+// =====================================================================
 // Sign out
 // =====================================================================
 
@@ -158,10 +255,10 @@ export async function signOutAction(): Promise<void> {
  * paths pass; anything else — absolute URLs, protocol-relative '//',
  * missing — falls back to '/'. Prevents open-redirect via ?next=.
  */
-function safeNextPath(raw: unknown): string {
-  if (typeof raw !== 'string' || raw.length === 0) return '/';
+function safeNextPath(raw: unknown, fallback = '/'): string {
+  if (typeof raw !== 'string' || raw.length === 0) return fallback;
   if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) {
-    return '/';
+    return fallback;
   }
   return raw;
 }

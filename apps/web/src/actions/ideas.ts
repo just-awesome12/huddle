@@ -20,6 +20,7 @@ import {
   isAllowedPhotoType,
 } from '@huddle/api-client/ideas';
 import { getSupabaseServerClient } from '@/lib/supabase';
+import { STARTER_IDEAS } from '@/lib/starter-ideas';
 import type { SupabaseClient, Database } from '@huddle/api-client/server';
 import type { IdeaActionState } from './ideas-state';
 
@@ -148,6 +149,27 @@ export async function quickAddIdeaAction(
 
   revalidatePath(`/groups/${groupId}`);
   return { ok: true };
+}
+
+/**
+ * Seed a few starter ideas into an empty group (Phase 15d). One tap from
+ * the empty hub so a brand-new group isn't a cold start — the picker works
+ * and there's something to react to. Best-effort per idea; revalidate so
+ * the list appears.
+ */
+export async function addStarterIdeasAction(formData: FormData): Promise<void> {
+  const groupId = String(formData.get('groupId') ?? '');
+  if (!groupId) return;
+
+  const supabase = await getSupabaseServerClient();
+  for (const idea of STARTER_IDEAS) {
+    try {
+      await createIdea(supabase, { groupId, title: idea.title, category: idea.category });
+    } catch {
+      // ignore — partial seeding is fine; the user can add more by hand.
+    }
+  }
+  revalidatePath(`/groups/${groupId}`);
 }
 
 export async function updateIdeaAction(

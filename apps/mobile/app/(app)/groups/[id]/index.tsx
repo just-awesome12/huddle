@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { groupErrorMessage } from '@/lib/group-errors';
+import { STARTER_IDEAS } from '@/lib/starter-ideas';
 import { Button } from '@/components/Button';
 import { RoleBadge } from '@/components/RoleBadge';
 import { ConfirmAction } from '@/components/ConfirmAction';
@@ -122,6 +123,19 @@ export default function GroupDetailScreen() {
       { groupId: id, title, category: 'other' },
       { onSuccess: () => setQuickTitle('') },
     );
+  };
+
+  // Seed starter ideas into an empty group (15d) — one tap from the empty
+  // state so the hub isn't a cold start. Best-effort per idea; the hook
+  // invalidates the ideas query so the list fills in.
+  const onAddStarters = async () => {
+    for (const idea of STARTER_IDEAS) {
+      try {
+        await createIdea.mutateAsync({ groupId: id, title: idea.title, category: idea.category });
+      } catch {
+        // ignore — partial seeding is fine.
+      }
+    }
   };
 
   useGroupRealtime(id);
@@ -384,11 +398,21 @@ export default function GroupDetailScreen() {
               ) : ideas.isError ? (
                 <Text style={styles.mutedText}>Couldn&apos;t load ideas.</Text>
               ) : ideas.data.length === 0 ? (
-                <Text style={styles.mutedText}>
-                  {filters.status || filters.category
-                    ? 'Nothing matches these filters.'
-                    : 'No ideas yet. Add the first one!'}
-                </Text>
+                <View style={styles.emptyIdeas}>
+                  <Text style={styles.mutedText}>
+                    {filters.status || filters.category
+                      ? 'Nothing matches these filters.'
+                      : 'No ideas yet. Add the first one!'}
+                  </Text>
+                  {!filters.status && !filters.category ? (
+                    <Button
+                      label="✨ Add starter ideas"
+                      variant="secondary"
+                      onPress={onAddStarters}
+                      loading={createIdea.isPending}
+                    />
+                  ) : null}
+                </View>
               ) : (
                 ideas.data.map((idea) => (
                   <Pressable
@@ -659,6 +683,7 @@ const makeStyles = (c: ThemeColors) =>
     },
     chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
     mutedText: { fontSize: 13, color: c.muted },
+    emptyIdeas: { gap: 12, alignItems: 'flex-start' },
     ideaRow: {
       flexDirection: 'row',
       alignItems: 'center',
