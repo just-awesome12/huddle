@@ -103,19 +103,27 @@ test('invite → accept → both see members → admin removes → access revoke
     await joinerPage.getByRole('button', { name: 'Accept invite' }).click();
     await joinerPage.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
 
-    // Joiner sees both members; own role badge is Member.
-    await expect(joinerPage.getByText('Members (2)')).toBeVisible();
-    await expect(joinerPage.getByTestId('member-list').getByText(admin.displayName)).toBeVisible();
-    await expect(joinerPage.getByTestId('role-badge-member')).toBeVisible();
+    // Joiner sees both members; own role badge is Member. Assert on the
+    // member-list ROW COUNT (scoped to .last() — GroupRealtime's
+    // router.refresh() can briefly leave a stale duplicate list in the DOM,
+    // which trips strict locators; lesson 21) rather than the generic
+    // "Members (N)" text, which has the same duplication risk.
+    const joinerList = joinerPage.getByTestId('member-list').last();
+    await expect(joinerList.getByRole('listitem')).toHaveCount(2);
+    await expect(joinerList.getByText(admin.displayName)).toBeVisible();
+    await expect(joinerPage.getByTestId('role-badge-member').last()).toBeVisible();
 
     // Admin: sees the new member, removes them.
     await page.goto(groupUrl);
-    await expect(page.getByText('Members (2)')).toBeVisible();
-    await expect(page.getByTestId('member-list').getByText(joiner.displayName)).toBeVisible();
+    const adminList = page.getByTestId('member-list').last();
+    await expect(adminList.getByRole('listitem')).toHaveCount(2);
+    await expect(adminList.getByText(joiner.displayName)).toBeVisible();
     await page.getByRole('button', { name: 'Remove', exact: true }).click();
     await page.getByRole('button', { name: 'Remove member' }).click();
-    await expect(page.getByText('Members (1)')).toBeVisible();
-    await expect(page.getByTestId('member-list').getByText(joiner.displayName)).not.toBeVisible();
+    // After removal the (freshest) list has exactly one row: the admin.
+    const adminListAfter = page.getByTestId('member-list').last();
+    await expect(adminListAfter.getByRole('listitem')).toHaveCount(1);
+    await expect(adminListAfter.getByText(admin.displayName)).toBeVisible();
 
     // Joiner: access is gone — group page now 404s.
     await joinerPage.reload();
