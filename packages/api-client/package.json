@@ -45,6 +45,8 @@
     "./candidate-sets-hooks": "./src/candidate-sets-hooks.ts",
     "./polls": "./src/polls.ts",
     "./polls-hooks": "./src/polls-hooks.ts",
+    "./availability": "./src/availability.ts",
+    "./availability-hooks": "./src/availability-hooks.ts",
     "./realtime": "./src/realtime.ts"
   },
   "scripts": {
