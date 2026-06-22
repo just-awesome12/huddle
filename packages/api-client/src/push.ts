@@ -11,7 +11,12 @@ import { throwMapped, requireUserId, type HuddleClient } from './internal';
 type NotificationPrefsRow = Database['public']['Tables']['notification_prefs']['Row'];
 type PushPlatform = Database['public']['Enums']['push_platform'];
 
-/** Editable preference fields (mirrors @huddle/core NotificationPrefs). */
+/**
+ * Editable preference fields. The push events mirror @huddle/core
+ * NotificationPrefs; `digest` is the separate weekly-EMAIL opt-out (16e) —
+ * stored in the same table but not a push event, so it's not in the core
+ * push-selection type.
+ */
 export interface NotificationPrefsInput {
   new_idea: boolean;
   picker_ran: boolean;
@@ -23,6 +28,7 @@ export interface NotificationPrefsInput {
   rsvp: boolean;
   mention: boolean;
   nudge: boolean;
+  digest: boolean;
 }
 
 export const notificationQueryKeys = {

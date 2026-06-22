@@ -5,3 +5,4 @@
 
 export * from './picker';
 export * from './notifications';
+export * from './digest';

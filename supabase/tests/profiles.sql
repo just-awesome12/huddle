@@ -30,7 +30,8 @@ select has_table('public', 'profiles', 'profiles table exists');
 
 select columns_are(
   'public', 'profiles',
-  array['id', 'username', 'display_name', 'avatar_url', 'bio', 'created_at', 'updated_at'],
+  array['id', 'username', 'display_name', 'avatar_url', 'bio', 'created_at', 'updated_at',
+        'last_digest_at'],
   'profiles has the expected columns'
 );
 
