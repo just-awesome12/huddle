@@ -10,6 +10,7 @@ import {
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { deleteGroupAction, respondJoinRequestAction } from '@/actions/groups';
 import { EditGroupForm } from '@/components/EditGroupForm';
+import { LiteModeToggle } from '@/components/LiteModeToggle';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 
 export default async function GroupSettingsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -67,6 +68,13 @@ export default async function GroupSettingsPage({ params }: { params: Promise<{ 
             storedColor={group.color}
             coverUrl={group.cover_photo_path}
           />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Group mode</h3>
+        <div className="mt-3">
+          <LiteModeToggle groupId={id} initialLite={group.lite_mode} />
         </div>
       </section>
 

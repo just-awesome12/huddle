@@ -156,6 +156,9 @@ export default async function GroupDetailPage({
     redirect('/discover');
   }
   const isAdmin = myMembership.role === 'admin';
+  // Lite mode (16d): a trimmed hub for small groups — no polls, activity
+  // feed, do-again / reignite nudges, or presence. Admin-toggled in settings.
+  const lite = group.lite_mode;
   const hasFilters = !!(filters.status || filters.category);
 
   let voteCounts: Record<string, number> = {};
@@ -306,10 +309,12 @@ export default async function GroupDetailPage({
                   />
                 ))}
               </span>
-              <GroupPresence
-                groupId={id}
-                me={{ userId: user.id, displayName: myMembership.profile.display_name }}
-              />
+              {!lite && (
+                <GroupPresence
+                  groupId={id}
+                  me={{ userId: user.id, displayName: myMembership.profile.display_name }}
+                />
+              )}
             </div>
           </div>
 
@@ -335,13 +340,15 @@ export default async function GroupDetailPage({
             >
               Wall
             </Link>
-            <Link
-              href={`/groups/${id}/polls`}
-              data-testid="polls-link"
-              className="rounded-full border border-white/25 px-5 py-[13px] font-display text-[15px] font-extrabold text-white transition-colors hover:bg-white/10"
-            >
-              Polls
-            </Link>
+            {!lite && (
+              <Link
+                href={`/groups/${id}/polls`}
+                data-testid="polls-link"
+                className="rounded-full border border-white/25 px-5 py-[13px] font-display text-[15px] font-extrabold text-white transition-colors hover:bg-white/10"
+              >
+                Polls
+              </Link>
+            )}
             <Link
               href={`/groups/${id}/history`}
               data-testid="history-link"
@@ -392,7 +399,7 @@ export default async function GroupDetailPage({
       {/* ===== Body ===== */}
       <div className="mx-auto max-w-[1080px] px-6 pb-20 pt-6 md:px-8">
         {/* What's happening — activity feed */}
-        {activity.length > 0 && (
+        {!lite && activity.length > 0 && (
           <section className="mb-7" data-testid="activity-feed">
             <h3 className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
               What&apos;s happening
@@ -592,7 +599,7 @@ export default async function GroupDetailPage({
         )}
 
         {/* Do it again? */}
-        {doAgain.length > 0 && (
+        {!lite && doAgain.length > 0 && (
           <section className="mt-10" data-testid="do-again">
             <h3 className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
               Do it again?
@@ -618,7 +625,7 @@ export default async function GroupDetailPage({
         )}
 
         {/* Unfinished business */}
-        {reignite.length > 0 && (
+        {!lite && reignite.length > 0 && (
           <section className="mt-10" data-testid="reignite">
             <h3 className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
               Unfinished business

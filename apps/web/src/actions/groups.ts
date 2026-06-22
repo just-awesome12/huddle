@@ -102,6 +102,27 @@ export async function updateGroupAction(
   return { success: true };
 }
 
+/**
+ * Toggle lite mode for a group (16d). A dedicated on/off action rather than
+ * a checkbox in the partial-update form, where an unchecked box ("set false")
+ * is indistinguishable from "no change". Admin-gated by RLS.
+ */
+export async function setLiteModeAction(
+  groupId: string,
+  liteMode: boolean,
+): Promise<{ ok: boolean }> {
+  const supabase = await getSupabaseServerClient();
+  try {
+    await updateGroup(supabase, groupId, { lite_mode: liteMode });
+  } catch {
+    return { ok: false };
+  }
+  revalidatePath('/groups');
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath(`/groups/${groupId}/settings`);
+  return { ok: true };
+}
+
 /** Discovery: request to join a public group (plain action). */
 export async function requestJoinAction(formData: FormData): Promise<void> {
   const groupId = String(formData.get('groupId') ?? '');
