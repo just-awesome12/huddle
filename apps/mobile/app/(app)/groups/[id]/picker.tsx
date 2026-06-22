@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useColors, type ThemeColors } from '@/context/ThemeContext';
@@ -13,8 +14,19 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGroup } from '@huddle/api-client/groups-hooks';
 import { useGroupIdeas } from '@huddle/api-client/ideas-hooks';
 import { useRunPicker, PickerError } from '@huddle/api-client/decisions-hooks';
-import type { IdeaCategory } from '@huddle/validation';
+import {
+  useGroupCandidateSets,
+  useCreateCandidateSet,
+  useDeleteCandidateSet,
+  type CandidateSetRow,
+} from '@huddle/api-client/candidate-sets-hooks';
+import {
+  candidateSetNameSchema,
+  candidateSetIdeaIdsSchema,
+  type IdeaCategory,
+} from '@huddle/validation';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { useGroupRealtime } from '@/context/RealtimeContext';
 import { Button } from '@/components/Button';
 import { CategoryBadge, CATEGORY_LABELS } from '@/components/IdeaBadges';
@@ -63,15 +75,23 @@ export default function PickerScreen() {
 
   useGroupRealtime(id);
 
+  const { session } = useAuth();
+  const myUserId = session?.user.id;
+
   const group = useGroup(supabase, id);
   const ideasQuery = useGroupIdeas(supabase, id, { status: 'on_radar' });
   const doneQuery = useGroupIdeas(supabase, id, { status: 'done' });
   const runPicker = useRunPicker(supabase);
+  const setsQuery = useGroupCandidateSets(supabase, id);
+  const createSet = useCreateCandidateSet(supabase, id);
+  const deleteSet = useDeleteCandidateSet(supabase, id);
 
   const [category, setCategory] = useState<IdeaCategory | ''>('');
   const [useShortlist, setUseShortlist] = useState(false);
   const [fair, setFair] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [setName, setSetName] = useState('');
+  const [saveSetError, setSaveSetError] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -127,6 +147,32 @@ export default function PickerScreen() {
       else next.add(ideaId);
       return next;
     });
+  };
+
+  // Saved sets (15e): load one into the shortlist, or save the current one.
+  const savedSets = setsQuery.data ?? [];
+  const ideaIdSet = useMemo(() => new Set(ideas.map((i) => i.id)), [ideas]);
+
+  const loadSet = (set: CandidateSetRow) => {
+    setCategory('');
+    setUseShortlist(true);
+    setSelected(new Set(set.idea_ids.filter((x) => ideaIdSet.has(x))));
+    setError(null);
+  };
+
+  const onSaveSet = () => {
+    setSaveSetError(null);
+    const name = candidateSetNameSchema.safeParse(setName);
+    const ids = candidateSetIdeaIdsSchema.safeParse([...selected]);
+    if (!name.success) {
+      setSaveSetError(name.error.issues[0]?.message ?? 'Name this set');
+      return;
+    }
+    if (!ids.success) {
+      setSaveSetError(ids.error.issues[0]?.message ?? 'Pick at least 2 ideas');
+      return;
+    }
+    createSet.mutate({ name: name.data, ideaIds: ids.data }, { onSuccess: () => setSetName('') });
   };
 
   const handlePick = async () => {
@@ -240,6 +286,30 @@ export default function PickerScreen() {
               ))}
             </View>
 
+            {savedSets.length > 0 ? (
+              <>
+                <Text style={styles.sectionTitle}>Saved sets</Text>
+                <View style={styles.chipsRow}>
+                  {savedSets.map((set) => (
+                    <View key={set.id} style={styles.setChip}>
+                      <Pressable onPress={() => loadSet(set)}>
+                        <Text style={styles.setChipLabel}>▶ {set.name}</Text>
+                      </Pressable>
+                      {myUserId && set.created_by === myUserId ? (
+                        <Pressable
+                          onPress={() => deleteSet.mutate(set.id)}
+                          accessibilityLabel={`Delete set ${set.name}`}
+                          hitSlop={8}
+                        >
+                          <Text style={styles.setChipDelete}>×</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  ))}
+                </View>
+              </>
+            ) : null}
+
             <Pressable
               accessibilityRole="checkbox"
               accessibilityState={{ checked: useShortlist }}
@@ -314,6 +384,28 @@ export default function PickerScreen() {
                 );
               })}
             </View>
+
+            {/* Save the current shortlist as a reusable set (15e). */}
+            {useShortlist && selected.size >= 2 ? (
+              <View style={styles.saveSetRow}>
+                <TextInput
+                  value={setName}
+                  onChangeText={setSetName}
+                  placeholder="Name this set (e.g. Friday dinner)"
+                  placeholderTextColor={c.faint}
+                  maxLength={60}
+                  style={styles.saveSetInput}
+                />
+                <Button
+                  label="Save set"
+                  variant="secondary"
+                  onPress={onSaveSet}
+                  loading={createSet.isPending}
+                  disabled={setName.trim().length === 0}
+                />
+              </View>
+            ) : null}
+            {saveSetError ? <Text style={styles.saveSetError}>{saveSetError}</Text> : null}
 
             {error ? (
               <View style={styles.alert}>
@@ -405,6 +497,32 @@ const makeStyles = (c: ThemeColors) =>
     },
     checkboxOn: { backgroundColor: c.brand[600], borderColor: c.brand[600] },
     checkmark: { color: c.surface, fontSize: 13, fontWeight: '700' },
+    setChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.surface2,
+    },
+    setChipLabel: { fontSize: 13, fontWeight: '600', color: c.text },
+    setChipDelete: { fontSize: 16, color: c.faint, fontWeight: '700' },
+    saveSetRow: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 8 },
+    saveSetInput: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: c.text,
+      backgroundColor: c.surface,
+    },
+    saveSetError: { fontSize: 12, color: c.danger, marginTop: 4 },
     candidateList: { gap: 8, marginTop: 4 },
     candidate: {
       flexDirection: 'row',

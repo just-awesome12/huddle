@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { createInviteSchema, acceptInviteSchema } from '@huddle/validation';
+import { createInviteSchema, acceptInviteSchema, parseEmailList } from '@huddle/validation';
 import { isHuddleError } from '@huddle/api-client/errors';
 import {
   createInvite,
@@ -11,7 +11,7 @@ import {
   inviteErrorKind,
 } from '@huddle/api-client/invites';
 import { getSupabaseServerClient } from '@/lib/supabase';
-import type { InviteActionState } from './invites-state';
+import type { InviteActionState, BulkInviteState } from './invites-state';
 
 export async function createInviteAction(
   _prev: InviteActionState,
@@ -50,6 +50,46 @@ export async function createInviteAction(
 
   revalidatePath(`/groups/${parsed.data.groupId}/invite`);
   return { createdToken: token };
+}
+
+/**
+ * Bulk invite (15e): paste many emails at once. Partial success — invite
+ * every parseable, non-duplicate email; report unparseable tokens and any
+ * that couldn't be invited (e.g. already a member). RLS still enforces
+ * admin-only invite creation.
+ */
+export async function bulkInviteAction(
+  _prev: BulkInviteState,
+  formData: FormData,
+): Promise<BulkInviteState> {
+  const groupId = String(formData.get('groupId') ?? '');
+  const { valid, invalid } = parseEmailList(String(formData.get('emails') ?? ''));
+
+  if (valid.length === 0) {
+    return {
+      error: invalid.length > 0 ? 'No valid email addresses found.' : 'Enter at least one email.',
+      invalid,
+    };
+  }
+
+  const supabase = await getSupabaseServerClient();
+  let sent = 0;
+  const skipped: string[] = [];
+  for (const email of valid) {
+    try {
+      await createInvite(supabase, { groupId, invitedEmail: email });
+      sent += 1;
+    } catch (e) {
+      if (isHuddleError(e) && e.huddle.kind === 'unauthorized') {
+        return { error: 'Only group admins can create invites.' };
+      }
+      // already-a-member (conflict) or any other per-email failure.
+      skipped.push(email);
+    }
+  }
+
+  revalidatePath(`/groups/${groupId}/invite`);
+  return { sent, invalid, skipped };
 }
 
 export async function revokeInviteAction(

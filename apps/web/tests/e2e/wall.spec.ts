@@ -56,3 +56,40 @@ test('member can post to the wall and delete their post', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete' }).click();
   await expect(page.getByText('No posts yet. Start the conversation.')).toBeVisible();
 });
+
+test('an admin can pin and unpin a post (15e)', async ({ page }) => {
+  await signUp(page, makeTestUser());
+
+  await page.goto('/groups/new');
+  await page.getByLabel('Group name').fill('Pin Crew');
+  await page.getByRole('button', { name: 'Create group' }).click();
+  await page.waitForURL(/\/groups\/[0-9a-f-]{36}$/);
+
+  await page.getByTestId('wall-link').click();
+  await page.waitForURL(/\/wall$/);
+
+  await page.getByLabel('Write something').fill('Trip is ON for the 14th!');
+  await page.getByRole('button', { name: 'Post' }).click();
+
+  const post = page.getByTestId('wall-post').filter({ hasText: 'Trip is ON' });
+  await expect(post).toHaveAttribute('data-pinned', 'false');
+
+  // Pin → the post shows the pinned badge.
+  await post.getByRole('button', { name: /Pin/ }).click();
+  await expect(page.getByTestId('wall-post').filter({ hasText: 'Trip is ON' })).toHaveAttribute(
+    'data-pinned',
+    'true',
+  );
+  await expect(page.getByText('📌 Pinned')).toBeVisible();
+
+  // Unpin.
+  await page
+    .getByTestId('wall-post')
+    .filter({ hasText: 'Trip is ON' })
+    .getByRole('button', { name: 'Unpin' })
+    .click();
+  await expect(page.getByTestId('wall-post').filter({ hasText: 'Trip is ON' })).toHaveAttribute(
+    'data-pinned',
+    'false',
+  );
+});

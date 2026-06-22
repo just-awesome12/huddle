@@ -6,7 +6,7 @@ import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { PostComposer } from '@/components/PostComposer';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
-import { deletePostAction } from '@/actions/posts';
+import { deletePostAction, setPinnedAction } from '@/actions/posts';
 import { personColor } from '@/lib/group-visuals';
 
 /** Compact relative time ("just now", "5m ago", "3d ago", then a date). */
@@ -74,9 +74,17 @@ export default async function GroupWallPage({ params }: { params: Promise<{ id: 
             return (
               <li
                 key={post.id}
-                className="rounded-2xl border border-line bg-surface p-4"
+                className={`rounded-2xl border p-4 ${
+                  post.pinned ? 'border-accent-300 bg-accent-50' : 'border-line bg-surface'
+                }`}
                 data-testid="wall-post"
+                data-pinned={post.pinned ? 'true' : 'false'}
               >
+                {post.pinned && (
+                  <p className="mb-1.5 font-display text-[11px] font-extrabold uppercase tracking-[0.08em] text-accent-600">
+                    📌 Pinned
+                  </p>
+                )}
                 <div className="flex items-center gap-2.5">
                   {post.author?.avatar_url ? (
                     <img
@@ -100,16 +108,31 @@ export default async function GroupWallPage({ params }: { params: Promise<{ id: 
                 <p className="mt-2 whitespace-pre-wrap break-words text-sm text-content">
                   {post.body}
                 </p>
-                {canDelete && (
-                  <div className="mt-2">
-                    <ConfirmActionForm
-                      action={deletePostAction}
-                      fields={{ groupId: id, postId: post.id }}
-                      buttonLabel="Delete"
-                      confirmPrompt="Delete this post?"
-                      confirmLabel="Delete"
-                      variant="secondary"
-                    />
+                {(canDelete || isAdmin) && (
+                  <div className="mt-2 flex items-center gap-3">
+                    {isAdmin && (
+                      <form action={setPinnedAction}>
+                        <input type="hidden" name="groupId" value={id} />
+                        <input type="hidden" name="postId" value={post.id} />
+                        <input type="hidden" name="pinned" value={post.pinned ? 'false' : 'true'} />
+                        <button
+                          type="submit"
+                          className="text-xs font-semibold text-muted hover:text-content"
+                        >
+                          {post.pinned ? 'Unpin' : '📌 Pin'}
+                        </button>
+                      </form>
+                    )}
+                    {canDelete && (
+                      <ConfirmActionForm
+                        action={deletePostAction}
+                        fields={{ groupId: id, postId: post.id }}
+                        buttonLabel="Delete"
+                        confirmPrompt="Delete this post?"
+                        confirmLabel="Delete"
+                        variant="secondary"
+                      />
+                    )}
                   </div>
                 )}
               </li>

@@ -9,6 +9,7 @@ import { fetchGroupInvites, type GroupInviteWithInvitee } from '@huddle/api-clie
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { revokeInviteAction } from '@/actions/invites';
 import { InviteCreator } from '@/components/InviteCreator';
+import { BulkInviteForm } from '@/components/BulkInviteForm';
 import { UsernameSearch } from '@/components/UsernameSearch';
 import { ConfirmActionForm } from '@/components/ConfirmActionForm';
 
@@ -57,6 +58,10 @@ export default async function GroupInvitePage({ params }: { params: Promise<{ id
 
       <section className="mt-6">
         <InviteCreator groupId={id} />
+      </section>
+
+      <section className="mt-10 border-t border-line pt-6">
+        <BulkInviteForm groupId={id} />
       </section>
 
       <section className="mt-10 border-t border-line pt-6">

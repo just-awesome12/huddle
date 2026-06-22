@@ -67,6 +67,48 @@ export type Database = {
           },
         ]
       }
+      candidate_sets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          group_id: string
+          id: string
+          idea_ids: string[]
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          id?: string
+          idea_ids?: string[]
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          id?: string
+          idea_ids?: string[]
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_sets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_sets_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decisions: {
         Row: {
           candidate_idea_ids: string[]
@@ -321,6 +363,7 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          pinned: boolean
         }
         Insert: {
           author_id?: string | null
@@ -328,6 +371,7 @@ export type Database = {
           created_at?: string
           group_id: string
           id?: string
+          pinned?: boolean
         }
         Update: {
           author_id?: string | null
@@ -335,6 +379,7 @@ export type Database = {
           created_at?: string
           group_id?: string
           id?: string
+          pinned?: boolean
         }
         Relationships: [
           {
@@ -967,6 +1012,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_post_pinned: {
+        Args: { p_pinned: boolean; p_post_id: string }
+        Returns: undefined
       }
     }
     Enums: {

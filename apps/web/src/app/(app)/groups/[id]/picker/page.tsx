@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { fetchGroup } from '@huddle/api-client/groups';
 import { fetchGroupIdeas } from '@huddle/api-client/ideas';
+import { fetchGroupCandidateSets, type CandidateSetRow } from '@huddle/api-client/candidate-sets';
 import { getSupabaseServerClient } from '@/lib/supabase';
 import { GroupRealtime } from '@/components/GroupRealtime';
 import { PickerClient, type PickableIdea } from '@/components/PickerClient';
@@ -20,10 +21,12 @@ export default async function PickerPage({ params }: { params: Promise<{ id: str
   let group;
   let pickable: PickableIdea[];
   let fallbackPool: PickableIdea[] = [];
+  let savedSets: CandidateSetRow[] = [];
   try {
     group = await fetchGroup(supabase, id);
     const ideas = await fetchGroupIdeas(supabase, id, { status: 'on_radar' });
     pickable = ideas.map((i) => ({ id: i.id, title: i.title, category: i.category }));
+    savedSets = await fetchGroupCandidateSets(supabase, id);
     // Past picks (done ideas) as the "just decide" fallback pool (15c) —
     // only needed when there aren't 2 on-radar ideas to pick between.
     if (pickable.length < 2) {
@@ -93,7 +96,13 @@ export default async function PickerPage({ params }: { params: Promise<{ id: str
               PICKER
             </span>
           </div>
-          <PickerClient groupId={id} ideas={pickable} fallbackIdeas={fallbackPool} />
+          <PickerClient
+            groupId={id}
+            ideas={pickable}
+            fallbackIdeas={fallbackPool}
+            savedSets={savedSets}
+            currentUserId={user.id}
+          />
         </div>
 
         <p className="mt-4 text-[13px] text-brand-100">
