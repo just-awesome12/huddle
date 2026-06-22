@@ -17,7 +17,8 @@ export type NotificationEvent =
   | 'join_approved'
   | 'reaction'
   | 'rsvp'
-  | 'mention';
+  | 'mention'
+  | 'nudge';
 
 export interface NotificationPrefs {
   new_idea: boolean;
@@ -29,6 +30,7 @@ export interface NotificationPrefs {
   reaction: boolean;
   rsvp: boolean;
   mention: boolean;
+  nudge: boolean;
 }
 
 export const DEFAULT_PREFS: NotificationPrefs = {
@@ -41,6 +43,7 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   reaction: true,
   rsvp: true,
   mention: true,
+  nudge: true,
 };
 
 export function extractMentions(text: string): string[] {

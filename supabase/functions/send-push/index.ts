@@ -133,6 +133,7 @@ async function gatherRecipients(
       reaction: p.reaction,
       rsvp: p.rsvp,
       mention: p.mention,
+      nudge: p.nudge,
     });
   }
   const mutedUsers = new Set<string>(gathered.muted ?? []);
@@ -485,6 +486,26 @@ async function resolve(
         title: `Someone's in — ${name}`,
         body: `${who} is going to ${title}`,
         data: { path: `/groups/${groupId}/ideas/${ideaId}` },
+      },
+    };
+  }
+
+  if (table === 'group_nudge') {
+    // Synthetic payload from the pg_cron inactivity-nudge job (Phase 17) —
+    // not a real row. System-generated, so there's no actor to exclude.
+    const groupId = str(record.group_id);
+    if (!groupId) return { skip: 'missing group_nudge fields' };
+    const name = await groupName(service, groupId);
+    return {
+      event: 'nudge',
+      actorId: null,
+      scope: 'members',
+      explicitUserIds: [],
+      groupId,
+      content: {
+        title: `${name} has been quiet`,
+        body: `It's been a while — got plans? Pick something to do.`,
+        data: { path: `/groups/${groupId}` },
       },
     };
   }

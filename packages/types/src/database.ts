@@ -544,6 +544,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           id: string
+          last_nudged_at: string | null
           lite_mode: boolean
           location: string | null
           member_count: number
@@ -560,6 +561,7 @@ export type Database = {
           description?: string | null
           emoji?: string | null
           id?: string
+          last_nudged_at?: string | null
           lite_mode?: boolean
           location?: string | null
           member_count?: number
@@ -576,6 +578,7 @@ export type Database = {
           description?: string | null
           emoji?: string | null
           id?: string
+          last_nudged_at?: string | null
           lite_mode?: boolean
           location?: string | null
           member_count?: number
@@ -796,6 +799,7 @@ export type Database = {
           mention: boolean
           new_comment: boolean
           new_idea: boolean
+          nudge: boolean
           picker_ran: boolean
           reaction: boolean
           rsvp: boolean
@@ -809,6 +813,7 @@ export type Database = {
           mention?: boolean
           new_comment?: boolean
           new_idea?: boolean
+          nudge?: boolean
           picker_ran?: boolean
           reaction?: boolean
           rsvp?: boolean
@@ -822,6 +827,7 @@ export type Database = {
           mention?: boolean
           new_comment?: boolean
           new_idea?: boolean
+          nudge?: boolean
           picker_ran?: boolean
           reaction?: boolean
           rsvp?: boolean
@@ -1186,6 +1192,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           id: string
+          last_nudged_at: string | null
           lite_mode: boolean
           location: string | null
           member_count: number
@@ -1217,6 +1224,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           id: string
+          last_nudged_at: string | null
           lite_mode: boolean
           location: string | null
           member_count: number
@@ -1232,6 +1240,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      dispatch_inactivity_nudges: {
+        Args: { p_cooldown_days?: number; p_inactive_days?: number }
+        Returns: number
+      }
       generate_invite_token: { Args: never; Returns: string }
       get_push_recipients: {
         Args: {
@@ -1240,6 +1252,10 @@ export type Database = {
           p_scope: string
         }
         Returns: Json
+      }
+      groups_needing_nudge: {
+        Args: { p_cooldown_days?: number; p_inactive_days?: number }
+        Returns: string[]
       }
       is_group_admin: { Args: { p_group_id: string }; Returns: boolean }
       is_group_member: { Args: { p_group_id: string }; Returns: boolean }
