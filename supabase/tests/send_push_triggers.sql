@@ -8,7 +8,7 @@
 -- =====================================================================
 
 begin;
-select plan(4);
+select plan(5);
 
 select has_function(
   'public', 'notify_send_push',
@@ -28,6 +28,12 @@ select has_trigger(
 select has_trigger(
   'public', 'group_invites', 'group_invites_send_push',
   'group_invites has the send-push fan-out trigger'
+);
+
+-- 16c: wall posts join the fan-out seam (for @mention push).
+select has_trigger(
+  'public', 'group_posts', 'group_posts_send_push',
+  'group_posts has the send-push fan-out trigger'
 );
 
 select * from finish();

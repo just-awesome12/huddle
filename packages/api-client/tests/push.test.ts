@@ -86,6 +86,7 @@ describe('upsertNotificationPrefs', () => {
       join_approved: true,
       reaction: true,
       rsvp: true,
+      mention: true,
     });
     expect(out).toEqual(row);
     const c = chainOf(client);

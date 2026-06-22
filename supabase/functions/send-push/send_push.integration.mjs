@@ -301,6 +301,62 @@ try {
     `rsvp: "going" notifies the proposer (a), got ${rrsvp.json?.recipientCount}`,
   );
 
+  // --- mention (16c): a wall post @mentioning b notifies only b ---
+  const rwall = await invoke({
+    type: 'INSERT',
+    table: 'group_posts',
+    record: {
+      id: `wp-${ts}`,
+      group_id: groupId,
+      author_id: a.user.id,
+      body: `hey @sp_b_${ts} are you in?`,
+    },
+  });
+  assert(
+    rwall.status === 200 && rwall.json?.event === 'mention' && rwall.json?.recipientCount === 2,
+    `mention(wall): @b notified (b's 2 devices), got ${rwall.json?.recipientCount}`,
+  );
+  assert(
+    rwall.json?.sampleMessage?.data?.path === `/groups/${groupId}/wall`,
+    'mention(wall): deep-link to the wall',
+  );
+
+  // A wall post with no @mention pushes nothing (the wall doesn't broadcast).
+  const rwall0 = await invoke({
+    type: 'INSERT',
+    table: 'group_posts',
+    record: { id: `wp0-${ts}`, group_id: groupId, author_id: a.user.id, body: 'just chatting' },
+  });
+  assert(
+    rwall0.status === 200 && rwall0.json?.skipped,
+    'mention(wall): a post with no mention is skipped',
+  );
+
+  // --- mention (16c): a comment @mentioning b → b gets `mention`, others
+  // still get `new_comment` (b excluded from the broadcast, no double-ping) ---
+  const rcm = await invoke({
+    type: 'INSERT',
+    table: 'idea_comments',
+    record: {
+      id: `cm-${ts}`,
+      group_id: groupId,
+      idea_id: idea.id,
+      author_id: a.user.id,
+      body: `@sp_b_${ts} what do you think?`,
+    },
+  });
+  const cmDispatches = rcm.json?.dispatches ?? [];
+  const cmMention = cmDispatches.find((d) => d.event === 'mention');
+  const cmComment = cmDispatches.find((d) => d.event === 'new_comment');
+  assert(
+    rcm.status === 200 && cmMention?.recipientCount === 2,
+    `mention(comment): @b notified via mention (2 devices), got ${cmMention?.recipientCount}`,
+  );
+  assert(
+    cmComment?.recipientCount === 1,
+    `mention(comment): new_comment excludes the mentioned b → only c (1), got ${cmComment?.recipientCount}`,
+  );
+
   // --- per-group mute (15b): c mutes the group → excluded from push ---
   await admin
     .from('group_notification_prefs')
