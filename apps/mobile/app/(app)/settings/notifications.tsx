@@ -15,7 +15,8 @@ type PrefKey =
   | 'join_approved'
   | 'reaction'
   | 'rsvp'
-  | 'mention';
+  | 'mention'
+  | 'nudge';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
   {
@@ -59,6 +60,11 @@ const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
     title: 'Mentions',
     subtitle: 'When someone @mentions you in a comment or post',
   },
+  {
+    key: 'nudge',
+    title: 'Quiet-group nudges',
+    subtitle: "An occasional reminder when a group's gone quiet but has ideas waiting",
+  },
 ];
 
 export default function NotificationSettingsScreen() {
@@ -83,6 +89,7 @@ export default function NotificationSettingsScreen() {
     reaction: row?.reaction ?? true,
     rsvp: row?.rsvp ?? true,
     mention: row?.mention ?? true,
+    nudge: row?.nudge ?? true,
   };
 
   const toggle = (key: PrefKey) => {
