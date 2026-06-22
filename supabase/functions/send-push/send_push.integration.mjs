@@ -251,6 +251,24 @@ try {
     'join_approved: event + deep-link to the group',
   );
 
+  // --- group_nudge (Phase 17): scheduled inactivity nudge → all members ---
+  // scope 'members', system-generated (no actor exclusion) → every member's
+  // devices: a(1) + b(2) + c(1) = 4. c only opted out of new_idea, so nudge
+  // still reaches them.
+  const rn = await invoke({
+    type: 'SCHEDULED',
+    table: 'group_nudge',
+    record: { group_id: groupId },
+  });
+  assert(
+    rn.status === 200 && rn.json?.recipientCount === 4,
+    `group_nudge: 4 recipients (all members' devices), got ${rn.json?.recipientCount}`,
+  );
+  assert(
+    rn.json?.event === 'nudge' && rn.json?.sampleMessage?.data?.path === `/groups/${groupId}`,
+    'group_nudge: nudge event + deep-link to the group',
+  );
+
   // --- reaction (15b.2): targeted to the idea's proposer (a), minus self ---
   const rreact = await invoke({
     type: 'INSERT',

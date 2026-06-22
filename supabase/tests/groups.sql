@@ -26,7 +26,7 @@ select columns_are(
   'public', 'groups',
   array['id', 'name', 'created_by', 'created_at', 'updated_at',
         'visibility', 'description', 'location', 'tags', 'member_count',
-        'emoji', 'color', 'cover_photo_path', 'lite_mode'],
+        'emoji', 'color', 'cover_photo_path', 'lite_mode', 'last_nudged_at'],
   'groups has the expected columns'
 );
 

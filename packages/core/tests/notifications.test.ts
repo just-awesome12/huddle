@@ -24,6 +24,7 @@ const allOff: NotificationPrefs = {
   reaction: false,
   rsvp: false,
   mention: false,
+  nudge: false,
 };
 
 describe('extractMentions', () => {
@@ -181,6 +182,7 @@ describe('Deno mirror drift guard', () => {
         reaction: true,
         rsvp: false,
         mention: true,
+        nudge: true,
       },
     },
   ];
@@ -195,6 +197,7 @@ describe('Deno mirror drift guard', () => {
       'reaction',
       'rsvp',
       'mention',
+      'nudge',
     ] as const) {
       expect(selectRecipientTokens(recipients, ev, 'a')).toEqual(
         mirror.selectRecipientTokens(recipients, ev, 'a'),

@@ -87,6 +87,7 @@ describe('upsertNotificationPrefs', () => {
       reaction: true,
       rsvp: true,
       mention: true,
+      nudge: true,
     });
     expect(out).toEqual(row);
     const c = chainOf(client);

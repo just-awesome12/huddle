@@ -22,6 +22,7 @@ export interface NotificationPrefsInput {
   reaction: boolean;
   rsvp: boolean;
   mention: boolean;
+  nudge: boolean;
 }
 
 export const notificationQueryKeys = {

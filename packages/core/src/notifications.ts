@@ -17,7 +17,8 @@ export type NotificationEvent =
   | 'join_approved'
   | 'reaction'
   | 'rsvp'
-  | 'mention';
+  | 'mention'
+  | 'nudge';
 
 /** A user's per-event preferences. Columns mirror notification_prefs. */
 export interface NotificationPrefs {
@@ -30,6 +31,7 @@ export interface NotificationPrefs {
   reaction: boolean;
   rsvp: boolean;
   mention: boolean;
+  nudge: boolean;
 }
 
 /** Absent prefs row = opted in to everything (D: missing row = default-on). */
@@ -43,6 +45,7 @@ export const DEFAULT_PREFS: NotificationPrefs = {
   reaction: true,
   rsvp: true,
   mention: true,
+  nudge: true,
 };
 
 /**
