@@ -87,6 +87,11 @@ list.
 
 ## 5. Deferred to perimeter / ops (needs domain + accounts)
 
+> **The working go-live checklist is now `docs/LAUNCH.md`** — it consolidates
+> this list with the rest of launch (accounts, deploy, secrets table, mobile,
+> assets) and is the single source of truth. The items below stay here for
+> their security rationale.
+
 Blocked on **OQ-2 (domain)** and a deployed environment. Track here:
 
 - [ ] **Cloudflare**: move DNS, enable proxy (orange cloud), Bot Fight
