@@ -41,7 +41,7 @@ test('quick-add creates an idea from just a title, staying on the hub', async ({
 
   const input = page.getByLabel('Quick-add an idea');
   await input.fill('Tacos al pastor');
-  await page.getByRole('button', { name: 'Add' }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
 
   // The idea appears in the list, and we stayed on the hub (not the form).
   await expect(page.getByTestId('idea-list').getByText('Tacos al pastor')).toBeVisible();
