@@ -75,13 +75,15 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
               🎉 {decisions.length} {decisions.length === 1 ? 'plan' : 'plans'}, finally decided
             </span>
           )}
-          <Link
-            href={`/groups/${id}/recap`}
-            data-testid="recap-link"
-            className="font-display text-[13.5px] font-extrabold text-muted hover:text-brand-ink"
-          >
-            Recap
-          </Link>
+          {!group.lite_mode && (
+            <Link
+              href={`/groups/${id}/recap`}
+              data-testid="recap-link"
+              className="font-display text-[13.5px] font-extrabold text-muted hover:text-brand-ink"
+            >
+              Recap
+            </Link>
+          )}
         </div>
       </div>
 
@@ -160,7 +162,7 @@ export default async function HistoryPage({ params }: { params: Promise<{ id: st
         </ul>
       )}
 
-      {fairness.length > 0 && (
+      {!group.lite_mode && fairness.length > 0 && (
         <section className="mt-10" data-testid="fairness">
           <h3 className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-muted">
             Who gets picked

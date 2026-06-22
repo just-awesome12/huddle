@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
@@ -67,6 +68,7 @@ export default function GroupSettingsScreen() {
   const [visibility, setVisibility] = useState<GroupVisibility>('invite_only');
   const [emoji, setEmoji] = useState('');
   const [color, setColor] = useState('');
+  const [lite, setLite] = useState(false);
   const [cover, setCover] = useState<{ data: ArrayBuffer; uri: string } | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | undefined>(undefined);
@@ -84,9 +86,21 @@ export default function GroupSettingsScreen() {
       setVisibility(group.data.visibility);
       setEmoji(group.data.emoji ?? '');
       setColor(group.data.color ?? '');
+      setLite(group.data.lite_mode);
       setCoverUrl(group.data.cover_photo_path ?? null);
     }
   }, [group.data]);
+
+  // Lite mode (16d): a dedicated instant toggle (separate from the form's
+  // Save button), optimistic with revert — mirrors the web settings toggle.
+  const toggleLite = async (next: boolean) => {
+    setLite(next);
+    try {
+      await updateGroup.mutateAsync({ groupId: id, patch: { lite_mode: next } });
+    } catch {
+      setLite(!next);
+    }
+  };
 
   const pickCover = async () => {
     setFormError(null);
@@ -277,6 +291,26 @@ export default function GroupSettingsScreen() {
           <Button label="Save changes" onPress={onSave} loading={busy || updateGroup.isPending} />
         </View>
 
+        {/* Group mode (16d) */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Group mode</Text>
+          <View style={styles.liteRow}>
+            <View style={styles.liteText}>
+              <Text style={styles.liteLabel}>Lite mode</Text>
+              <Text style={styles.muted}>
+                A simpler hub for small groups — hides polls, the activity feed, and re-engagement
+                nudges. Great for couples or roommates.
+              </Text>
+            </View>
+            <Switch
+              value={lite}
+              onValueChange={toggleLite}
+              trackColor={{ true: c.brand[600] }}
+              accessibilityLabel="Lite mode"
+            />
+          </View>
+        </View>
+
         {/* Join requests (public groups) */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Join requests ({pending.length})</Text>
@@ -361,6 +395,14 @@ const makeStyles = (c: ThemeColors) =>
       textTransform: 'uppercase',
       color: c.muted,
     },
+    liteRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12,
+    },
+    liteText: { flex: 1 },
+    liteLabel: { fontSize: 15, fontWeight: '700', color: c.text, marginBottom: 2 },
     pickerLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginTop: 4 },
     pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     emojiCell: {

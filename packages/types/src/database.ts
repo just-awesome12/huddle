@@ -544,6 +544,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           id: string
+          lite_mode: boolean
           location: string | null
           member_count: number
           name: string
@@ -559,6 +560,7 @@ export type Database = {
           description?: string | null
           emoji?: string | null
           id?: string
+          lite_mode?: boolean
           location?: string | null
           member_count?: number
           name: string
@@ -574,6 +576,7 @@ export type Database = {
           description?: string | null
           emoji?: string | null
           id?: string
+          lite_mode?: boolean
           location?: string | null
           member_count?: number
           name?: string
@@ -1183,6 +1186,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           id: string
+          lite_mode: boolean
           location: string | null
           member_count: number
           name: string
@@ -1213,6 +1217,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           id: string
+          lite_mode: boolean
           location: string | null
           member_count: number
           name: string

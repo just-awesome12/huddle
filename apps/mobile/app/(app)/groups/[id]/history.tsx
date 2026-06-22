@@ -52,11 +52,13 @@ export default function HistoryScreen() {
       <View style={styles.headerBar}>
         <Button label="← Back" variant="ghost" onPress={() => router.replace(`/groups/${id}`)} />
         <View style={styles.headerActions}>
-          <Button
-            label="Recap"
-            variant="ghost"
-            onPress={() => router.push(`/groups/${id}/recap`)}
-          />
+          {!group.data?.lite_mode ? (
+            <Button
+              label="Recap"
+              variant="ghost"
+              onPress={() => router.push(`/groups/${id}/recap`)}
+            />
+          ) : null}
           <Button label="Run picker" onPress={() => router.push(`/groups/${id}/picker`)} />
         </View>
       </View>
@@ -68,7 +70,7 @@ export default function HistoryScreen() {
         ListHeaderComponent={<Text style={styles.title}>Decision history</Text>}
         ListFooterComponent={(() => {
           const members = fairness.data ?? [];
-          if (members.length === 0) return null;
+          if (group.data?.lite_mode || members.length === 0) return null;
           const due = members.filter((m) => m.proposed > 0 && m.picked === 0);
           return (
             <View style={styles.fairnessBlock}>

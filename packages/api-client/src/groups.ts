@@ -68,6 +68,7 @@ export interface UpdateGroupInput {
   emoji?: string | null;
   color?: string | null;
   cover_photo_path?: string | null;
+  lite_mode?: boolean;
 }
 
 export interface CoverUpload {

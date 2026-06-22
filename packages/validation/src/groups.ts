@@ -107,7 +107,11 @@ export const createGroupSchema = z.object({
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
 
 // Partial for edits — every field optional; only the provided ones change.
-export const updateGroupSchema = createGroupSchema.partial();
+// `liteMode` is edit-only (a group starts standard; an admin opts in later),
+// so it lives here rather than on createGroupSchema.
+export const updateGroupSchema = createGroupSchema.partial().extend({
+  liteMode: z.boolean().optional(),
+});
 
 export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;
 

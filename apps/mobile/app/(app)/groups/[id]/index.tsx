@@ -221,6 +221,10 @@ export default function GroupDetailScreen() {
     .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0))
     .slice(0, 3);
 
+  // Lite mode (16d): a trimmed hub for small groups — no polls, activity
+  // feed, do-again / reignite nudges, or presence.
+  const lite = group.data.lite_mode;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -256,7 +260,7 @@ export default function GroupDetailScreen() {
                     {group.data.visibility === 'public' ? '🌍 Public' : '🔒 Invite-only'}
                   </Text>
                 </View>
-                {present.length > 0 ? (
+                {!lite && present.length > 0 ? (
                   <View style={styles.presenceBadge}>
                     <View style={styles.presenceDot} />
                     <Text style={styles.presenceText}>{present.length} here</Text>
@@ -289,11 +293,13 @@ export default function GroupDetailScreen() {
                   variant="ghost"
                   onPress={() => router.push(`/groups/${id}/wall`)}
                 />
-                <Button
-                  label="Polls"
-                  variant="ghost"
-                  onPress={() => router.push(`/groups/${id}/polls`)}
-                />
+                {!lite && (
+                  <Button
+                    label="Polls"
+                    variant="ghost"
+                    onPress={() => router.push(`/groups/${id}/polls`)}
+                  />
+                )}
                 <Button
                   label="History"
                   variant="ghost"
@@ -307,7 +313,7 @@ export default function GroupDetailScreen() {
                 />
               </View>
 
-              {(activity.data?.length ?? 0) > 0 ? (
+              {!lite && (activity.data?.length ?? 0) > 0 ? (
                 <View style={styles.activityBlock}>
                   <Text style={styles.sectionTitle}>What&apos;s happening</Text>
                   {activity.data!.map((a) => (
@@ -459,7 +465,7 @@ export default function GroupDetailScreen() {
                 ))
               )}
 
-              {doAgain.length > 0 ? (
+              {!lite && doAgain.length > 0 ? (
                 <View style={styles.upcomingBlock}>
                   <Text style={styles.sectionTitle}>Do it again?</Text>
                   {doAgain.map((idea) => (
@@ -482,7 +488,7 @@ export default function GroupDetailScreen() {
                 </View>
               ) : null}
 
-              {reignite.length > 0 ? (
+              {!lite && reignite.length > 0 ? (
                 <View style={styles.upcomingBlock}>
                   <Text style={styles.sectionTitle}>Unfinished business</Text>
                   {reignite.map((idea) => (

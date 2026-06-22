@@ -7,11 +7,12 @@
 
 begin;
 
-select plan(7);
+select plan(10);
 
 select has_column('public', 'groups', 'emoji', 'groups.emoji exists');
 select has_column('public', 'groups', 'color', 'groups.color exists');
 select has_column('public', 'groups', 'cover_photo_path', 'groups.cover_photo_path exists');
+select has_column('public', 'groups', 'lite_mode', 'groups.lite_mode exists (16d)');
 
 select is(
   (select public from storage.buckets where id = 'group-covers'),
@@ -69,6 +70,36 @@ select throws_ok(
     values ('group-covers', '9b00aa01-0000-0000-0000-000000000001/evil.jpg')$$,
   '42501', null,
   'a non-admin member cannot upload a group cover'
+);
+
+
+-- ---------------------------------------------------------------------
+-- Lite mode (16d): an admin can toggle it; a non-admin member cannot.
+-- Rides the existing admin-only groups UPDATE policy (groups_update_admin)
+-- — no dedicated lite_mode policy. A member's UPDATE matches no row under
+-- the USING clause, so it is a silent no-op rather than an error.
+-- ---------------------------------------------------------------------
+set local "request.jwt.claims" to
+  '{"sub": "decade0b-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "role": "authenticated"}';
+update public.groups set lite_mode = true
+  where id = '9b00aa01-0000-0000-0000-000000000001';
+set local role postgres;
+select is(
+  (select lite_mode from public.groups where id = '9b00aa01-0000-0000-0000-000000000001'),
+  false,
+  'a non-admin member cannot enable lite mode (UPDATE is a no-op)'
+);
+
+set local role authenticated;
+set local "request.jwt.claims" to
+  '{"sub": "decade0a-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "role": "authenticated"}';
+update public.groups set lite_mode = true
+  where id = '9b00aa01-0000-0000-0000-000000000001';
+set local role postgres;
+select is(
+  (select lite_mode from public.groups where id = '9b00aa01-0000-0000-0000-000000000001'),
+  true,
+  'an admin can enable lite mode'
 );
 
 
