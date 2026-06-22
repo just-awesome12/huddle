@@ -793,6 +793,7 @@ export type Database = {
       }
       notification_prefs: {
         Row: {
+          digest: boolean
           group_invite: boolean
           join_approved: boolean
           join_request: boolean
@@ -807,6 +808,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          digest?: boolean
           group_invite?: boolean
           join_approved?: boolean
           join_request?: boolean
@@ -821,6 +823,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          digest?: boolean
           group_invite?: boolean
           join_approved?: boolean
           join_request?: boolean
@@ -985,6 +988,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          last_digest_at: string | null
           updated_at: string
           username: string
         }
@@ -994,6 +998,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          last_digest_at?: string | null
           updated_at?: string
           username: string
         }
@@ -1003,6 +1008,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          last_digest_at?: string | null
           updated_at?: string
           username?: string
         }
@@ -1240,10 +1246,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      digest_eligible_users: {
+        Args: { p_cooldown_days?: number }
+        Returns: {
+          email: string
+          last_digest_at: string
+          user_id: string
+        }[]
+      }
       dispatch_inactivity_nudges: {
         Args: { p_cooldown_days?: number; p_inactive_days?: number }
         Returns: number
       }
+      dispatch_weekly_digest: { Args: never; Returns: undefined }
       generate_invite_token: { Args: never; Returns: string }
       get_push_recipients: {
         Args: {
@@ -1251,6 +1266,10 @@ export type Database = {
           p_group_id: string
           p_scope: string
         }
+        Returns: Json
+      }
+      get_user_digest: {
+        Args: { p_since: string; p_user: string }
         Returns: Json
       }
       groups_needing_nudge: {

@@ -75,6 +75,14 @@ verify_jwt = false
 enabled = true
 verify_jwt = true
 
+# send-digest (Phase 16e): invoked by the weekly pg_cron job (pg_net), not
+# users. Like send-push, verify_jwt is off; it authenticates via the
+# x-huddle-webhook-secret header (dev fallback locally; the shared secret in
+# prod) and reads recipients as service_role.
+[functions.send-digest]
+enabled = true
+verify_jwt = false
+
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
