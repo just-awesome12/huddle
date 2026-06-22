@@ -362,6 +362,12 @@ describe('updateGroup', () => {
     });
   });
 
+  it('passes the lite_mode flag through (16d)', async () => {
+    const client = makeClient({ queryData: makeGroup({ lite_mode: true }) });
+    await updateGroup(client as never, 'group-1', { lite_mode: true });
+    expect(client._chain.update).toHaveBeenCalledWith({ lite_mode: true });
+  });
+
   it('maps RLS denial to unauthorized', async () => {
     const client = makeClient({
       queryData: null,

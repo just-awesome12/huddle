@@ -495,6 +495,11 @@ describe('updateGroupSchema', () => {
   it('rejects an invalid name when provided', () => {
     expect(() => updateGroupSchema.parse({ name: '' })).toThrow(/required/);
   });
+
+  it('accepts the edit-only liteMode flag (16d)', () => {
+    expect(updateGroupSchema.parse({ liteMode: true })).toEqual({ liteMode: true });
+    expect(() => updateGroupSchema.parse({ liteMode: 'yes' })).toThrow();
+  });
 });
 
 describe('groupMemberRoleSchema', () => {
