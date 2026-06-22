@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SignInForm } from '@/components/SignInForm';
+import { SignInMethods } from '@/components/SignInMethods';
 import { OAuthProviderButtons } from '@/components/OAuthProviderButtons';
 
 export default async function SignInPage({
@@ -25,7 +25,7 @@ export default async function SignInPage({
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <SignInForm next={next} />
+      <SignInMethods next={next} />
 
       <p className="text-center text-sm text-muted">
         New to Huddle?{' '}
