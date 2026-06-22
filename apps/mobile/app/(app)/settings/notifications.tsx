@@ -16,7 +16,8 @@ type PrefKey =
   | 'reaction'
   | 'rsvp'
   | 'mention'
-  | 'nudge';
+  | 'nudge'
+  | 'digest';
 
 const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
   {
@@ -65,6 +66,11 @@ const ROWS: { key: PrefKey; title: string; subtitle: string }[] = [
     title: 'Quiet-group nudges',
     subtitle: "An occasional reminder when a group's gone quiet but has ideas waiting",
   },
+  {
+    key: 'digest',
+    title: 'Weekly email digest',
+    subtitle: 'A Monday email recapping the week across your groups',
+  },
 ];
 
 export default function NotificationSettingsScreen() {
@@ -90,6 +96,7 @@ export default function NotificationSettingsScreen() {
     rsvp: row?.rsvp ?? true,
     mention: row?.mention ?? true,
     nudge: row?.nudge ?? true,
+    digest: row?.digest ?? true,
   };
 
   const toggle = (key: PrefKey) => {
