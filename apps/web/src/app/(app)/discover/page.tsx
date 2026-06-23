@@ -43,7 +43,7 @@ export default async function DiscoverPage({
   return (
     <div className="mx-auto max-w-[1080px]">
       <h1 className="font-display text-[clamp(24px,3vw,32px)] font-black tracking-[-0.02em] text-content">
-        Discover huddles
+        Discover powwows
       </h1>
       <p className="mt-1.5 text-[15px] text-muted">
         Find public groups by name, place, or vibe — then ask to join.

@@ -1,6 +1,7 @@
-# LAUNCH.md — Huddle go-live runbook
+# LAUNCH.md — Powwow go-live runbook
 
-Single consolidated checklist for taking Huddle to production (web + mobile).
+Single consolidated checklist for taking Powwow (the app; internal codename
+"Huddle" — D105) to production (web + mobile).
 Supersedes the scattered launch notes in `docs/SECURITY.md` §5 and the
 ROADMAP "Remaining Phase 10" section — those stay as context; **this is the
 working list.**
@@ -61,8 +62,8 @@ prep/automate · ⏳ = needs a prior item first.
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | send-push              | Prod web-push keypair (D89). Missing → web push degrades off (Expo unaffected).                                                                |
 | `VAPID_SUBJECT`                          | send-push              | `mailto:` contact for the push service.                                                                                                        |
 | `RESEND_API_KEY`                         | send-digest            | Resend key (16e/D104). Missing → digest logs + no-ops.                                                                                         |
-| `RESEND_FROM`                            | send-digest            | e.g. `Huddle <digest@yourdomain>` — must be on the verified domain.                                                                            |
-| `DIGEST_APP_URL`                         | send-digest            | Prod web base for email links (default `https://huddle.app`).                                                                                  |
+| `RESEND_FROM`                            | send-digest            | e.g. `Powwow <digest@powwow.co>` — must be on the verified domain.                                                                             |
+| `DIGEST_APP_URL`                         | send-digest            | Prod web base for email links (default `https://powwow.co`).                                                                                   |
 
 **Vault secrets** (SQL: `select vault.create_secret('<value>','<name>')`) — so
 the pg_cron jobs + DB-webhook triggers reach the deployed functions:

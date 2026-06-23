@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service — Huddle',
+  title: 'Terms of Service — Powwow',
 };
 
 /**
@@ -26,7 +26,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-lg font-semibold">1. Acceptance</h2>
           <p className="mt-2 text-muted">
-            By creating an account or using Huddle (the &ldquo;Service&rdquo;), you agree to these
+            By creating an account or using Powwow (the &ldquo;Service&rdquo;), you agree to these
             Terms. If you don&rsquo;t agree, don&rsquo;t use the Service.
           </p>
         </section>

@@ -38,7 +38,7 @@ export function AppSidebar({ groups, email }: { groups: SidebarGroup[]; email: s
           className="flex w-full items-center justify-center gap-2 rounded-[12px] bg-accent-600 py-[11px] font-display text-sm font-extrabold text-white transition hover:brightness-110"
           style={{ boxShadow: '0 12px 22px -12px var(--color-accent-400)' }}
         >
-          <span className="text-base leading-none">+</span> New huddle
+          <span className="text-base leading-none">+</span> New powwow
         </Link>
       </div>
 
@@ -58,7 +58,7 @@ export function AppSidebar({ groups, email }: { groups: SidebarGroup[]; email: s
       </nav>
 
       <div className="px-5 pb-2 pt-4 font-display text-[11px] font-extrabold tracking-[0.13em] text-faint">
-        YOUR HUDDLES
+        YOUR POWWOWS
       </div>
 
       <div className="flex flex-col gap-[3px] overflow-y-auto px-3" data-testid="sidebar-groups">
@@ -80,7 +80,7 @@ export function AppSidebar({ groups, email }: { groups: SidebarGroup[]; email: s
             </Link>
           );
         })}
-        {groups.length === 0 && <p className="px-3 py-2 text-xs text-faint">No huddles yet.</p>}
+        {groups.length === 0 && <p className="px-3 py-2 text-xs text-faint">No powwows yet.</p>}
       </div>
 
       <div className="flex-1" />

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Huddle",
-    "slug": "huddle",
+    "name": "Powwow",
+    "slug": "powwow",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "huddle",
+    "scheme": "powwow",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "icon": "./assets/images/icon.png",
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.huddleapp.huddle"
+      "bundleIdentifier": "co.powwow.app"
     },
     "android": {
-      "package": "com.huddleapp.huddle",
+      "package": "co.powwow.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundImage": "./assets/images/adaptive-icon-background.png"

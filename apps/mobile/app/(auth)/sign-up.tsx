@@ -113,7 +113,7 @@ export default function SignUpScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.title}>Huddle</Text>
+          <Text style={styles.title}>Powwow</Text>
           <Text style={styles.heading}>Create your account</Text>
           <Text style={styles.muted}>Pick a username and a display name your group will see.</Text>
 

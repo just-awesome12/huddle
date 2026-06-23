@@ -54,7 +54,7 @@ async function sendEmail(
   text: string,
 ): Promise<{ sent: boolean; error?: string }> {
   const apiKey = Deno.env.get('RESEND_API_KEY');
-  const from = Deno.env.get('RESEND_FROM') ?? 'Huddle <onboarding@resend.dev>';
+  const from = Deno.env.get('RESEND_FROM') ?? 'Powwow <onboarding@resend.dev>';
   if (!apiKey) {
     console.log(`send-digest: would email ${to} — "${subject}" (no RESEND_API_KEY; skipping send)`);
     return { sent: false };
@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     return json({ error: 'internal' }, 500);
   }
 
-  const appUrl = Deno.env.get('DIGEST_APP_URL') ?? 'https://huddle.app';
+  const appUrl = Deno.env.get('DIGEST_APP_URL') ?? 'https://powwow.co';
   const since = new Date(Date.now() - WINDOW_DAYS * 86_400_000).toISOString();
 
   const { data: eligibleRaw, error: eligErr } = await service.rpc('digest_eligible_users', {

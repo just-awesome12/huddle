@@ -7,8 +7,8 @@ import type { MetadataRoute } from 'next';
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Huddle',
-    short_name: 'Huddle',
+    name: 'Powwow',
+    short_name: 'Powwow',
     description: 'Group-based idea sharing for events, activities, food, and places.',
     start_url: '/',
     display: 'standalone',

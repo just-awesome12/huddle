@@ -171,7 +171,7 @@ export default function GroupInviteScreen() {
   const share = async () => {
     if (!inviteUrl) return;
     try {
-      await Share.share({ message: `Join "${group.data.name}" on Huddle: ${inviteUrl}` });
+      await Share.share({ message: `Join "${group.data.name}" on Powwow: ${inviteUrl}` });
     } catch {
       // Share sheet unavailable (e.g. web preview without navigator.share)
       // — Copy is right next to it.

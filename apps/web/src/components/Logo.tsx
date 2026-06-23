@@ -15,9 +15,9 @@ export function Logo({
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
       {/* Mark is a fixed-height PNG; width scales to its aspect ratio. */}
-      <img src="/logo.png" alt="Huddle" className="h-8 w-auto shrink-0" />
+      <img src="/logo.png" alt="Powwow" className="h-8 w-auto shrink-0" />
       {wordmark && (
-        <span className="font-display text-lg font-bold tracking-wide text-brand-ink">HUDDLE</span>
+        <span className="font-display text-lg font-bold tracking-wide text-brand-ink">POWWOW</span>
       )}
     </span>
   );

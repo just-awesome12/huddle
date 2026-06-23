@@ -135,7 +135,7 @@ export default function SignInScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.title}>Huddle</Text>
+          <Text style={styles.title}>Powwow</Text>
           <Text style={styles.heading}>Sign in</Text>
           <Text style={styles.muted}>Welcome back.</Text>
 

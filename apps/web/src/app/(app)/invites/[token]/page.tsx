@@ -31,7 +31,7 @@ export default async function AcceptInvitePage({ params }: { params: Promise<{ t
     return (
       <StatusCard
         title="Invalid invite link"
-        body="This link doesn't look like a Huddle invite. Check that the full link was copied."
+        body="This link doesn't look like a Powwow invite. Check that the full link was copied."
       />
     );
   }

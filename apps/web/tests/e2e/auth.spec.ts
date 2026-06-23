@@ -81,7 +81,7 @@ test('protected routes still redirect to /sign-in when signed out', async ({ pag
 test('sign-up creates an account and lands on the app shell', async ({ page }) => {
   const user = makeTestUser();
   await signUp(page, user);
-  await expect(page.getByRole('heading', { name: 'Your huddles' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your powwows' })).toBeVisible();
   await expect(page.getByTestId('signed-in-email')).toHaveText(user.email);
 });
 
@@ -90,7 +90,7 @@ test('signed-in user is redirected away from /sign-in', async ({ page }) => {
   await signUp(page, user);
   await page.goto('/sign-in');
   await page.waitForURL('/groups');
-  await expect(page.getByRole('heading', { name: 'Your huddles' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your powwows' })).toBeVisible();
 });
 
 test('sign-out returns to /sign-in', async ({ page }) => {
@@ -107,7 +107,7 @@ test('sign-in after sign-out lands on the app shell again', async ({ page }) => 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.waitForURL('/sign-in');
   await signIn(page, user);
-  await expect(page.getByRole('heading', { name: 'Your huddles' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your powwows' })).toBeVisible();
 });
 
 test('sign-in with bad password shows an error', async ({ page }) => {
