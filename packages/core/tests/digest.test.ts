@@ -67,7 +67,7 @@ describe('buildDigestEmail', () => {
   };
 
   it('subjects a multi-group recap with the count', () => {
-    expect(buildDigestEmail(digest).subject).toBe('Your Huddle weekly recap (2 groups)');
+    expect(buildDigestEmail(digest).subject).toBe('Your Powwow weekly recap (2 groups)');
   });
 
   it('subjects a single-group recap with the group name', () => {
@@ -83,7 +83,7 @@ describe('buildDigestEmail', () => {
     expect(text).toContain('## Roommates');
     expect(text).toMatch(/turn off these weekly emails/i);
     expect(html).toContain('Foodies');
-    expect(html).toContain('Open Huddle');
+    expect(html).toContain('Open Powwow');
   });
 
   it('falls back to a generic greeting without a display name', () => {

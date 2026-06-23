@@ -47,7 +47,7 @@ const ACTIVITY_META: Record<ActivityKind, { emoji: string; verb: string }> = {
   idea_voted: { emoji: '❤', verb: 'loved' },
   comment_added: { emoji: '💬', verb: 'commented on' },
   picker_ran: { emoji: '🎲', verb: 'ran the picker →' },
-  member_joined: { emoji: '👋', verb: 'joined the huddle' },
+  member_joined: { emoji: '👋', verb: 'joined the powwow' },
 };
 
 /** Compact relative time ("just now", "5m ago", "3d ago", then a date). */

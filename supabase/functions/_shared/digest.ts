@@ -64,13 +64,13 @@ function esc(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-export function buildDigestEmail(digest: UserDigest, appUrl = 'https://huddle.app'): DigestEmail {
+export function buildDigestEmail(digest: UserDigest, appUrl = 'https://powwow.co'): DigestEmail {
   const groupCount = digest.groups.length;
   const greeting = digest.displayName ? `Hi ${digest.displayName},` : 'Hi there,';
   const subject =
     groupCount === 1
       ? `Your week in ${digest.groups[0]!.name}`
-      : `Your Huddle weekly recap (${groupCount} groups)`;
+      : `Your Powwow weekly recap (${groupCount} groups)`;
 
   const textParts = [greeting, '', "Here's what happened in your groups this week:", ''];
   for (const g of digest.groups) {
@@ -78,7 +78,7 @@ export function buildDigestEmail(digest: UserDigest, appUrl = 'https://huddle.ap
     for (const line of groupSummaryLines(g)) textParts.push(`  - ${line}`);
     textParts.push('');
   }
-  textParts.push(`Open Huddle: ${appUrl}/groups`);
+  textParts.push(`Open Powwow: ${appUrl}/groups`);
   textParts.push('');
   textParts.push('You can turn off these weekly emails in your notification settings.');
   const text = textParts.join('\n');
@@ -100,7 +100,7 @@ export function buildDigestEmail(digest: UserDigest, appUrl = 'https://huddle.ap
   <p style="font-size:15px;color:#374151;">Here's what happened in your groups this week:</p>
   ${groupsHtml}
   <p style="margin-top:24px;">
-    <a href="${appUrl}/groups" style="background:#6d28d9;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9999px;font-weight:700;font-size:14px;">Open Huddle</a>
+    <a href="${appUrl}/groups" style="background:#6d28d9;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9999px;font-weight:700;font-size:14px;">Open Powwow</a>
   </p>
   <p style="margin-top:24px;font-size:12px;color:#9ca3af;">You can turn off these weekly emails in your notification settings.</p>
 </div>`;

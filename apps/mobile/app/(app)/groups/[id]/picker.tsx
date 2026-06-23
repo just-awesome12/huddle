@@ -260,14 +260,14 @@ export default function PickerScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.title}>Random picker</Text>
         <Text style={styles.subtitle}>
-          Can&rsquo;t agree? Let Huddle choose from your on-the-radar ideas.
+          Can&rsquo;t agree? Let Powwow choose from your on-the-radar ideas.
         </Text>
 
         {ideas.length + doneIdeas.length < 2 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>Not enough ideas yet</Text>
             <Text style={styles.mutedText}>
-              Add at least two on-the-radar ideas, then come back to let Huddle choose.
+              Add at least two on-the-radar ideas, then come back to let Powwow choose.
             </Text>
             <Button label="Add an idea" onPress={() => router.push(`/groups/${id}/ideas/new`)} />
           </View>

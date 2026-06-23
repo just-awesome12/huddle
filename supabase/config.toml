@@ -24,7 +24,7 @@ site_url = "http://localhost:3000"
 additional_redirect_urls = [
   "http://localhost:3000/**",
   "http://127.0.0.1:3000/**",
-  "huddle://**"
+  "powwow://**"
 ]
 jwt_expiry = 3600
 enable_signup = true
@@ -39,7 +39,7 @@ enable_confirmations = false  # turn on before launch; off for dev convenience
 # accepts. Cross-device + no PKCE-cookie dependency. Prod sets the same
 # template in the Supabase dashboard.
 [auth.email.template.magic_link]
-subject = "Your Huddle sign-in code"
+subject = "Your Powwow sign-in code"
 content_path = "./supabase/templates/magic_link.html"
 
 [storage]

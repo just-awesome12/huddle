@@ -60,7 +60,7 @@ test('sign-up with Turnstile + immediate profile finalization', async ({ page })
   // because the server action set username/display_name immediately
   // after signup.
   await page.waitForURL('/groups');
-  await expect(page.getByRole('heading', { name: 'Your huddles' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your powwows' })).toBeVisible();
 });
 
 test('finished users on /onboarding are redirected home', async ({ page }) => {

@@ -75,7 +75,7 @@ export default async function PickerPage({ params }: { params: Promise<{ id: str
           Let the picker decide
         </h1>
         <p className="mt-3 text-[17px] text-brand-100">
-          {pickable.length} {pickable.length === 1 ? 'idea' : 'ideas'} in the huddle — time to
+          {pickable.length} {pickable.length === 1 ? 'idea' : 'ideas'} in the powwow — time to
           settle this.
         </p>
 

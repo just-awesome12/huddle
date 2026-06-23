@@ -50,9 +50,9 @@ export function buildIcs(event: CalendarEvent): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Huddle//Huddle//EN',
+    'PRODID:-//Powwow//Powwow//EN',
     'BEGIN:VEVENT',
-    `UID:${start}-${Math.random().toString(36).slice(2)}@huddle`,
+    `UID:${start}-${Math.random().toString(36).slice(2)}@powwow`,
     `DTSTART;VALUE=DATE:${start}`,
     `DTEND;VALUE=DATE:${end}`,
     `SUMMARY:${escapeIcs(event.title)}`,

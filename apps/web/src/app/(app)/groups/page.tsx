@@ -68,7 +68,7 @@ export default async function GroupsPage() {
     .slice(0, 4);
 
   const subBits = [
-    `${groups.length} ${groups.length === 1 ? 'huddle' : 'huddles'}`,
+    `${groups.length} ${groups.length === 1 ? 'powwow' : 'powwows'}`,
     invitesForMe.length > 0
       ? `${invitesForMe.length} ${invitesForMe.length === 1 ? 'invite' : 'invites'} waiting`
       : null,
@@ -96,7 +96,7 @@ export default async function GroupsPage() {
             className="inline-flex items-center gap-2 rounded-full bg-accent-600 px-5 py-3 font-display text-[14.5px] font-extrabold text-white transition-transform hover:-translate-y-0.5"
             style={{ boxShadow: '0 14px 26px -12px var(--color-accent-600)' }}
           >
-            Start a huddle
+            Start a powwow
           </Link>
         </div>
       </div>
@@ -138,11 +138,11 @@ export default async function GroupsPage() {
         </section>
       )}
 
-      {/* Your huddles */}
+      {/* Your powwows */}
       <div className="mt-9 flex items-center justify-between">
-        <h2 className="font-display text-[20px] font-black text-content">Your huddles</h2>
+        <h2 className="font-display text-[20px] font-black text-content">Your powwows</h2>
         <span className="text-[13.5px] font-bold text-muted">
-          {groups.length} {groups.length === 1 ? 'huddle' : 'huddles'}
+          {groups.length} {groups.length === 1 ? 'powwow' : 'powwows'}
         </span>
       </div>
 
@@ -150,7 +150,7 @@ export default async function GroupsPage() {
         <div className="mt-4 rounded-[22px] border-2 border-dashed border-line px-6 py-12 text-center">
           <p className="font-display text-[15px] font-extrabold text-content">No groups yet</p>
           <p className="mt-1 text-sm text-muted">
-            Create a huddle to start collecting ideas with your people.
+            Create a powwow to start collecting ideas with your people.
           </p>
         </div>
       ) : (
@@ -180,7 +180,7 @@ export default async function GroupsPage() {
                 <RoleBadge role={group.myRole} />
               </div>
               <div className="flex items-center justify-between border-t border-line pt-[14px]">
-                <span className="text-[13.5px] font-bold text-muted">Open this huddle</span>
+                <span className="text-[13.5px] font-bold text-muted">Open this powwow</span>
                 <span className="font-display text-[13.5px] font-extrabold text-brand-ink">
                   Open →
                 </span>
@@ -195,7 +195,7 @@ export default async function GroupsPage() {
             <span className="grid h-[46px] w-[46px] place-items-center rounded-[14px] bg-surface-2 text-2xl">
               +
             </span>
-            <span className="font-display text-[14.5px] font-extrabold">New huddle</span>
+            <span className="font-display text-[14.5px] font-extrabold">New powwow</span>
           </Link>
         </div>
       )}

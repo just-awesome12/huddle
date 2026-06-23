@@ -19,7 +19,7 @@ const lato = Lato({
 });
 
 export const metadata: Metadata = {
-  title: 'Huddle',
+  title: 'Powwow',
   description: 'Group-based idea sharing for events, activities, food, and places.',
 };
 

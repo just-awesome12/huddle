@@ -190,7 +190,7 @@ export function PickerClient({
       <div className="mt-6 rounded-2xl border border-dashed border-line px-6 py-8 text-center">
         <p className="text-sm font-semibold text-content">Not enough ideas to pick from yet</p>
         <p className="mt-1 text-sm text-muted">
-          Add at least two on-the-radar ideas, then come back to let Huddle choose.
+          Add at least two on-the-radar ideas, then come back to let Powwow choose.
         </p>
         <Link
           href={`/groups/${groupId}/ideas/new`}

@@ -30,12 +30,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             animation: 'hud-float 10s ease-in-out infinite',
           }}
         />
-        <Link href="/" className="relative self-start" aria-label="Huddle home">
+        <Link href="/" className="relative self-start" aria-label="Powwow home">
           {/* Wordmark forced white on the violet panel. */}
           <span className="inline-flex items-center gap-2">
             <img src="/logo.png" alt="" className="h-8 w-auto shrink-0" />
             <span className="font-display text-lg font-black tracking-[0.06em] text-white">
-              HUDDLE
+              POWWOW
             </span>
           </span>
         </Link>
@@ -64,7 +64,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               S
             </span>
           </span>
-          Join the crews already huddling.
+          Join the crews already powwowing.
         </div>
       </div>
 

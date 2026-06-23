@@ -13,9 +13,9 @@ export function Logo({ wordmark = true }: { wordmark?: boolean }) {
         source={require('../../assets/images/logo.png')}
         style={styles.mark}
         resizeMode="contain"
-        accessibilityLabel="Huddle"
+        accessibilityLabel="Powwow"
       />
-      {wordmark ? <Text style={[styles.word, { color: c.brandInk }]}>HUDDLE</Text> : null}
+      {wordmark ? <Text style={[styles.word, { color: c.brandInk }]}>POWWOW</Text> : null}
     </View>
   );
 }

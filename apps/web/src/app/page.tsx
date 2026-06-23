@@ -79,7 +79,7 @@ export default async function LandingPage() {
               &ldquo;idk, what do <span className="text-accent-100">you</span> wanna do?&rdquo;
             </h1>
             <p className="mt-[22px] max-w-[30ch] text-[clamp(17px,2vw,20px)] leading-[1.5] text-brand-100">
-              Toss your plans into a huddle, let everyone weigh in — and when you still can&rsquo;t
+              Toss your plans into a powwow, let everyone weigh in — and when you still can&rsquo;t
               agree, the picker decides for you. No more group-chat paralysis.
             </p>
             <div className="mt-[34px] flex flex-wrap gap-[14px]">
@@ -88,7 +88,7 @@ export default async function LandingPage() {
                 className="rounded-full bg-accent-400 px-[30px] py-4 font-display text-[17px] font-extrabold text-white transition-transform hover:-translate-y-0.5"
                 style={{ boxShadow: '0 16px 34px -12px var(--color-accent-400)' }}
               >
-                Start a huddle — free
+                Start a powwow — free
               </Link>
               <a
                 href="#how-it-works"
@@ -118,7 +118,7 @@ export default async function LandingPage() {
       <section className="mx-auto max-w-[1180px] px-6 pb-5 pt-20">
         <div className="mx-auto max-w-[620px] text-center">
           <span className="font-display text-[13px] font-extrabold uppercase tracking-[0.12em] text-accent-400">
-            Inside a huddle
+            Inside a powwow
           </span>
           <h2 className="mt-[10px] font-display text-[clamp(28px,4vw,42px)] font-black leading-[1.08] tracking-[-0.01em] text-brand-ink">
             Everyone&rsquo;s ideas, in one place
@@ -200,7 +200,7 @@ export default async function LandingPage() {
             n="02"
             tileClass="bg-brand-50"
             emoji="👥"
-            title="Huddle on them"
+            title="Powwow on them"
             body="Upvote, comment, and shortlist together. Everything updates live as the group chimes in."
           />
           <Step
@@ -230,7 +230,7 @@ export default async function LandingPage() {
           <h2 className="relative font-display text-[clamp(30px,4.5vw,48px)] font-black leading-[1.05] tracking-[-0.01em]">
             Your group&rsquo;s next hangout
             <br />
-            is one huddle away.
+            is one powwow away.
           </h2>
           <p className="relative mb-8 mt-[18px] text-[18px] text-accent-50">
             Free to start. Bring the whole crew.
@@ -240,7 +240,7 @@ export default async function LandingPage() {
             className="relative inline-block rounded-full bg-surface px-[38px] py-[17px] font-display text-[18px] font-black text-accent-600 transition-transform hover:-translate-y-0.5"
             style={{ boxShadow: '0 18px 36px -14px rgba(0,0,0,.4)' }}
           >
-            Create your first huddle
+            Create your first powwow
           </Link>
         </div>
       </section>
@@ -248,7 +248,7 @@ export default async function LandingPage() {
       {/* ============ Footer ============ */}
       <footer className="border-t border-line px-6 py-7">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-[14px] text-[14px] text-faint">
-          <span className="font-display font-black tracking-[0.06em] text-brand-ink">HUDDLE</span>
+          <span className="font-display font-black tracking-[0.06em] text-brand-ink">POWWOW</span>
           <span>Group plans, finally decided.</span>
         </div>
       </footer>

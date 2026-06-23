@@ -1,4 +1,6 @@
-# Huddle — Project Roadmap
+# Powwow — Project Roadmap
+
+<!-- Rebranded Huddle → Powwow (D105). "Huddle" / `@huddle/` below is the retained internal codename; the product is Powwow (powwow.co, co.powwow.app). -->
 
 > **Status:** Phase 0 scaffolding generated; pending local validation by builder
 > **Last updated:** 2026-05-13
